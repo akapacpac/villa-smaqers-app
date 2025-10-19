@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test - Villa des Smaqers Brisés</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-title {
+            color: #6c5ce7;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .test-step {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #6c5ce7;
+        }
+        .test-step h3 {
+            margin: 0 0 10px 0;
+            color: #2d3436;
+        }
+        .test-step p {
+            margin: 5px 0;
+            color: #636e72;
+        }
+        .code {
+            background: #2d3436;
+            color: #00b894;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+        .success {
+            background: #00b894;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .warning {
+            background: #f39c12;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-card">
+        <div class="test-title">🧪 Test de l'App Villa des Smaqers Brisés</div>
+        
+        <div class="test-step">
+            <h3>1. Test de la sélection de rôle</h3>
+            <p>✅ Cliquez sur "Étudiant" - La carte doit se surligner</p>
+            <p>✅ Cliquez sur "Membre Société" - La carte doit se surligner + champ code apparaît</p>
+            <p>✅ Le champ code doit apparaître/disparaître selon le choix</p>
+        </div>
+        
+        <div class="test-step">
+            <h3>2. Test des codes d'accès</h3>
+            <p>✅ Code <strong>paco</strong> → Admin</p>
+            <p>✅ Code <strong>member123</strong> → Membre</p>
+            <p>✅ Code <strong>test</strong> → Admin</p>
+            <p>✅ Code <strong>admin</strong> → Admin</p>
+        </div>
+        
+        <div class="test-step">
+            <h3>3. Test de la barre de navigation</h3>
+            <p>✅ <strong>Étudiant :</strong> Accueil, Commander, Mes commandes, Paramètres</p>
+            <p>✅ <strong>Membre :</strong> + Statistiques</p>
+            <p>✅ <strong>Admin :</strong> + Statistiques + Gestion</p>
+        </div>
+        
+        <div class="test-step">
+            <h3>4. Test des fonctionnalités</h3>
+            <p>✅ Créer un compte étudiant (pas de code)</p>
+            <p>✅ Créer un compte membre (avec code)</p>
+            <p>✅ Créer un compte admin (avec code paco)</p>
+            <p>✅ Passer une commande</p>
+            <p>✅ Voir les statistiques (membres/admins)</p>
+        </div>
+        
+        <div class="success">
+            <strong>🎉 Votre app est prête !</strong><br>
+            Barre de navigation en bas + Rôles + Firebase + Codes d'accès
+        </div>
+        
+        <div class="warning">
+            <strong>📱 Pour tester sur mobile :</strong><br>
+            Ouvrez l'app sur votre téléphone et testez la barre de navigation en bas !
+        </div>
+    </div>
+</body>
+</html>

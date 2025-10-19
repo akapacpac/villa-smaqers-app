@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Timing Corrigé - Villa des Smaqers Brisés</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .title {
+            color: #6c5ce7;
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-step {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #6c5ce7;
+        }
+        .test-step h3 {
+            margin: 0 0 10px 0;
+            color: #2d3436;
+        }
+        .success {
+            background: #00b894;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 1.2rem;
+            margin: 20px 0;
+        }
+        .error {
+            background: #e74c3c;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 1.2rem;
+            margin: 20px 0;
+        }
+        .warning {
+            background: #f39c12;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 1.2rem;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1 class="title">⏰ Test Timing Corrigé</h1>
+        
+        <div class="test-step">
+            <h3>🐛 Problèmes identifiés :</h3>
+            <p>❌ <strong>Code invalide</strong> - Le code n'était pas reconnu</p>
+            <p>❌ <strong>Timing incorrect</strong> - Email envoyé trop tôt</p>
+        </div>
+        
+        <div class="test-step">
+            <h3>✅ Corrections apportées :</h3>
+            <p>✅ <strong>Vérification renforcée</strong> - Logs détaillés pour debug</p>
+            <p>✅ <strong>Timing corrigé</strong> - Email envoyé après remplissage complet</p>
+            <p>✅ <strong>Messages clairs</strong> - Instructions plus précises</p>
+        </div>
+        
+        <div class="test-step">
+            <h3>🧪 Nouveau processus :</h3>
+            <p><strong>1. Remplir le formulaire complet :</strong></p>
+            <p>• Prénom, Nom, Email, Téléphone, Âge</p>
+            <p>• Code d'accès (si membre)</p>
+            
+            <p><strong>2. Envoyer le code :</strong></p>
+            <p>• Cliquer "Envoyer code"</p>
+            <p>• Vérifier l'email</p>
+            
+            <p><strong>3. Entrer le code :</strong></p>
+            <p>• Saisir le code reçu</p>
+            <p>• Créer le compte</p>
+        </div>
+        
+        <div class="warning">
+            <strong>⚠️ Debug :</strong><br>
+            Ouvrez la console (F12) pour voir les logs détaillés<br>
+            Vous verrez : "Code généré: XXXXXX" et "Code saisi: XXXXXX"
+        </div>
+        
+        <div class="success">
+            <strong>🎯 Testez maintenant :</strong><br>
+            1. Remplissez TOUS les champs<br>
+            2. Cliquez "Envoyer code"<br>
+            3. Vérifiez l'email<br>
+            4. Entrez le code exact<br>
+            5. Créez le compte
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Démarrer le Serveur - Villa des Smaqers Brisés</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .title {
+            color: #6c5ce7;
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .step {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #6c5ce7;
+        }
+        .step h3 {
+            margin: 0 0 10px 0;
+            color: #2d3436;
+        }
+        .success {
+            background: #00b894;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 1.2rem;
+            margin: 20px 0;
+        }
+        .error {
+            background: #e74c3c;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 1.2rem;
+            margin: 20px 0;
+        }
+        .code {
+            background: #2d3436;
+            color: #00b894;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+        .btn {
+            background: #6c5ce7;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            margin: 10px 0;
+        }
+        .btn:hover {
+            background: #5a4fcf;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1 class="title">🚀 Démarrer le Serveur</h1>
+        
+        <div class="error">
+            <strong>❌ Problème CORS détecté !</strong><br>
+            Vous ouvrez les fichiers directement dans le navigateur (file://)<br>
+            Il faut utiliser un serveur web pour éviter les erreurs CORS
+        </div>
+        
+        <div class="step">
+            <h3>🔧 Solution 1 : Serveur Python (Recommandé)</h3>
+            <p><strong>1. Ouvrez le Terminal :</strong></p>
+            <div class="code">cd "/Users/pascalmartin-lalande/Desktop/BDE Dating/VillaDesSmaqersBrises"</div>
+            
+            <p><strong>2. Démarrez le serveur :</strong></p>
+            <div class="code">python3 -m http.server 8000</div>
+            
+            <p><strong>3. Ouvrez dans le navigateur :</strong></p>
+            <div class="code">http://localhost:8000/app-with-login.html</div>
+        </div>
+        
+        <div class="step">
+            <h3>🔧 Solution 2 : Serveur Node.js</h3>
+            <p><strong>1. Installez http-server :</strong></p>
+            <div class="code">npm install -g http-server</div>
+            
+            <p><strong>2. Démarrez le serveur :</strong></p>
+            <div class="code">http-server -p 8000</div>
+            
+            <p><strong>3. Ouvrez dans le navigateur :</strong></p>
+            <div class="code">http://localhost:8000/app-with-login.html</div>
+        </div>
+        
+        <div class="step">
+            <h3>🔧 Solution 3 : Live Server (VS Code)</h3>
+            <p><strong>1. Installez l'extension Live Server</strong></p>
+            <p><strong>2. Clic droit sur app-with-login.html</strong></p>
+            <p><strong>3. Sélectionnez "Open with Live Server"</strong></p>
+        </div>
+        
+        <div class="success">
+            <strong>✅ Après avoir démarré le serveur :</strong><br>
+            1. Ouvrez http://localhost:8000/app-with-login.html<br>
+            2. Testez l'inscription et la connexion<br>
+            3. L'onglet Statistiques devrait apparaître
+        </div>
+        
+        <button onclick="openTerminal()" class="btn">💻 Ouvrir le Terminal</button>
+    </div>
+
+    <script>
+        function openTerminal() {
+            alert('Ouvrez le Terminal et exécutez :\n\ncd "/Users/pascalmartin-lalande/Desktop/BDE Dating/VillaDesSmaqersBrises"\npython3 -m http.server 8000\n\nPuis ouvrez : http://localhost:8000/app-with-login.html');
+        }
+    </script>
+</body>
+</html>

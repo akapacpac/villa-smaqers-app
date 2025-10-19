@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Flux Complet - Villa des Smaqers Brisés</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .title {
+            color: #6c5ce7;
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .step {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #6c5ce7;
+        }
+        .step h3 {
+            margin: 0 0 10px 0;
+            color: #2d3436;
+        }
+        .success {
+            background: #00b894;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 1.2rem;
+            margin: 20px 0;
+        }
+        .btn {
+            background: #6c5ce7;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            margin: 10px 0;
+        }
+        .btn:hover {
+            background: #5a4fcf;
+        }
+        .btn-secondary {
+            background: #636e72;
+        }
+        .btn-secondary:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1 class="title">🧪 Test Flux Complet</h1>
+        
+        <div class="step">
+            <h3>📋 Étapes de test :</h3>
+            <p><strong>1. Vider la base de données</strong></p>
+            <p>• Ouvrez <code>clear-database.html</code></p>
+            <p>• Cliquez "Supprimer tous les comptes"</p>
+            
+            <p><strong>2. Tester l'inscription</strong></p>
+            <p>• Ouvrez <code>app-with-login.html</code></p>
+            <p>• Cliquez "Inscription"</p>
+            <p>• Remplissez le formulaire avec mot de passe</p>
+            <p>• Créez le compte</p>
+            <p>• Vérifiez l'email</p>
+            
+            <p><strong>3. Tester la connexion</strong></p>
+            <p>• Cliquez "Connexion"</p>
+            <p>• Entrez email + mot de passe</p>
+            <p>• Connectez-vous</p>
+            <p>• <strong>Doit rediriger vers l'app principale</strong></p>
+        </div>
+        
+        <div class="step">
+            <h3>🔑 Codes de test :</h3>
+            <p><strong>Admin :</strong> paco, test, admin</p>
+            <p><strong>Membre :</strong> member001, member002, member003</p>
+        </div>
+        
+        <div class="step">
+            <h3>📧 Test email :</h3>
+            <p>• Utilisez votre vraie adresse email</p>
+            <p>• Vérifiez la boîte de réception</p>
+            <p>• Le code de 6 chiffres doit arriver</p>
+        </div>
+        
+        <div class="success">
+            <strong>🎯 Résultat attendu :</strong><br>
+            Après connexion, vous devez être redirigé vers l'app principale<br>
+            avec toutes les fonctionnalités (commander, statistiques, etc.)
+        </div>
+        
+        <button onclick="testFlow()" class="btn">🚀 Commencer le test</button>
+        <button onclick="clearData()" class="btn btn-secondary">🗑️ Vider les données locales</button>
+    </div>
+
+    <script>
+        function testFlow() {
+            // Open clear database page
+            window.open('clear-database.html', '_blank');
+            
+            setTimeout(() => {
+                alert('1. Videz la base de données\n2. Ouvrez app-with-login.html\n3. Testez l\'inscription et la connexion');
+            }, 1000);
+        }
+        
+        function clearData() {
+            localStorage.clear();
+            alert('✅ Données locales supprimées !');
+        }
+    </script>
+</body>
+</html>
