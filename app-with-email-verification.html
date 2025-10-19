@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Villa des Smaqers Brisés</title>
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#6c5ce7">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Villa Smaqers">
+    <link rel="apple-touch-icon" href="./assets/icon.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            min-height: 100vh;
+            color: #2d3436;
+        }
+        
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            padding: 30px 20px;
+            text-align: center;
+            color: white;
+        }
+        
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .subtitle {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 20px;
+        }
+        
+        .section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #6c5ce7;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2d3436;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-icon {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #2d3436;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #6c5ce7;
+        }
+        
+        .btn {
+            background: #6c5ce7;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+            width: 100%;
+        }
+        
+        .btn:hover {
+            background: #5a4fcf;
+        }
+        
+        .btn-secondary {
+            background: #636e72;
+        }
+        
+        .btn-secondary:hover {
+            background: #2d3436;
+        }
+        
+        .btn-success {
+            background: #00b894;
+        }
+        
+        .btn-success:hover {
+            background: #00a085;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .verification-section {
+            background: #e8f5e8;
+            border-left-color: #00b894;
+        }
+        
+        .verification-code {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00b894;
+            text-align: center;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            margin: 15px 0;
+            letter-spacing: 3px;
+        }
+        
+        .success-message {
+            background: #00b894;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            text-align: center;
+        }
+        
+        .error-message {
+            background: #e74c3c;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            text-align: center;
+        }
+        
+        .profile-info {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .profile-info h3 {
+            color: #00b894;
+            margin-bottom: 10px;
+        }
+        
+        .profile-info p {
+            margin: 5px 0;
+            color: #2d3436;
+        }
+        
+        .menu-item {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .menu-item:hover {
+            transform: translateY(-2px);
+        }
+        
+        .menu-item-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #2d3436;
+            margin-bottom: 5px;
+        }
+        
+        .menu-item-desc {
+            font-size: 14px;
+            color: #636e72;
+        }
+        
+        .classroom-select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            background: white;
+        }
+        
+        .order-summary {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        .order-summary h3 {
+            color: #6c5ce7;
+            margin-bottom: 10px;
+        }
+        
+        .order-summary p {
+            margin: 5px 0;
+            color: #2d3436;
+        }
+        
+        .resend-btn {
+            background: #f39c12;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        .resend-btn:hover {
+            background: #e67e22;
+        }
+        
+        .resend-btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="title">Villa des Smaqers Brisés</div>
+            <div class="subtitle">Commande gratuite de crêpes, cookies et glaces</div>
+        </div>
+        
+        <div class="content">
+            <!-- Profile Section -->
+            <div id="profile-section" class="section">
+                <div class="section-title">
+                    <span class="section-icon">👤</span>
+                    Mon Profil
+                </div>
+                
+                <div id="profile-info" class="profile-info hidden">
+                    <h3>Profil vérifié ✅</h3>
+                    <p><strong>Nom:</strong> <span id="profile-name"></span></p>
+                    <p><strong>Email:</strong> <span id="profile-email"></span></p>
+                    <p><strong>Téléphone:</strong> <span id="profile-phone"></span></p>
+                    <p><strong>Âge:</strong> <span id="profile-age"></span> ans</p>
+                    <button class="btn btn-secondary" onclick="editProfile()">Modifier le profil</button>
+                </div>
+                
+                <div id="profile-form">
+                    <div class="form-group">
+                        <label class="form-label">Prénom *</label>
+                        <input type="text" id="firstName" class="form-input" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Nom *</label>
+                        <input type="text" id="lastName" class="form-input" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Email *</label>
+                        <input type="email" id="email" class="form-input" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Téléphone *</label>
+                        <input type="tel" id="phone" class="form-input" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Âge *</label>
+                        <input type="number" id="age" class="form-input" required min="16" max="99">
+                    </div>
+                    
+                    <button class="btn" onclick="sendVerificationCode()">Envoyer le code de vérification</button>
+                </div>
+            </div>
+            
+            <!-- Email Verification Section -->
+            <div id="verification-section" class="section verification-section hidden">
+                <div class="section-title">
+                    <span class="section-icon">📧</span>
+                    Vérification Email
+                </div>
+                
+                <p>Un code de vérification a été envoyé à <strong id="verification-email"></strong></p>
+                <p>Vérifiez votre boîte email et entrez le code ci-dessous :</p>
+                
+                <div class="verification-code" id="verification-code-display">123456</div>
+                <p style="text-align: center; color: #636e72; font-size: 14px;">
+                    (Code affiché pour la démo - en production, il sera envoyé par email)
+                </p>
+                
+                <div class="form-group">
+                    <label class="form-label">Code de vérification *</label>
+                    <input type="text" id="verification-input" class="form-input" placeholder="Entrez le code à 6 chiffres" maxlength="6">
+                </div>
+                
+                <button class="btn btn-success" onclick="verifyEmail()">Vérifier l'email</button>
+                <button class="resend-btn" id="resend-btn" onclick="resendCode()">Renvoyer le code</button>
+            </div>
+            
+            <!-- Menu Section -->
+            <div id="menu-section" class="section hidden">
+                <div class="section-title">
+                    <span class="section-icon">🍽️</span>
+                    Notre Menu
+                </div>
+                
+                <div class="menu-item" onclick="selectItem('Crêpes')">
+                    <div class="menu-item-title">🥞 Crêpes</div>
+                    <div class="menu-item-desc">Délicieuses crêpes sucrées ou salées</div>
+                </div>
+                
+                <div class="menu-item" onclick="selectItem('Cookies')">
+                    <div class="menu-item-title">🍪 Cookies</div>
+                    <div class="menu-item-desc">Cookies maison aux pépites de chocolat</div>
+                </div>
+                
+                <div class="menu-item" onclick="selectItem('Glaces')">
+                    <div class="menu-item-title">🍦 Glaces</div>
+                    <div class="menu-item-desc">Glaces artisanales aux saveurs variées</div>
+                </div>
+            </div>
+            
+            <!-- Order Section -->
+            <div id="order-section" class="section hidden">
+                <div class="section-title">
+                    <span class="section-icon">📝</span>
+                    Ma Commande
+                </div>
+                
+                <div class="order-summary">
+                    <h3>Article sélectionné</h3>
+                    <p><strong>Produit:</strong> <span id="selected-item"></span></p>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Salle de classe *</label>
+                    <select id="classroom" class="classroom-select" required>
+                        <option value="">Choisissez votre salle</option>
+                        <option value="A101">A101</option>
+                        <option value="A102">A102</option>
+                        <option value="B201">B201</option>
+                        <option value="B202">B202</option>
+                        <option value="C301">C301</option>
+                        <option value="C302">C302</option>
+                        <option value="Autre">Autre</option>
+                    </select>
+                </div>
+                
+                <div id="other-classroom" class="form-group hidden">
+                    <label class="form-label">Précisez la salle</label>
+                    <input type="text" id="customClassroom" class="form-input" placeholder="Ex: D401">
+                </div>
+                
+                <button class="btn" onclick="placeOrder()">Passer la commande</button>
+                <button class="btn btn-secondary" onclick="backToMenu()">Retour au menu</button>
+            </div>
+            
+            <!-- Success Message -->
+            <div id="success-message" class="success-message hidden">
+                <h3>✅ Commande confirmée !</h3>
+                <p>Votre commande a été enregistrée. Vous recevrez votre <span id="success-item"></span> dans la salle <span id="success-classroom"></span>.</p>
+                <button class="btn" onclick="newOrder()">Nouvelle commande</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let verificationCode = '';
+        let resendTimer = 0;
+        
+        // Check if profile exists and is verified
+        function checkProfile() {
+            const profile = localStorage.getItem('villa-smaqers-profile');
+            if (profile) {
+                const profileData = JSON.parse(profile);
+                if (profileData.verified) {
+                    showProfileInfo(profileData);
+                    showMenu();
+                } else {
+                    showProfileForm();
+                }
+            } else {
+                showProfileForm();
+            }
+        }
+        
+        // Show profile form
+        function showProfileForm() {
+            document.getElementById('profile-form').classList.remove('hidden');
+            document.getElementById('profile-info').classList.add('hidden');
+            document.getElementById('verification-section').classList.add('hidden');
+            document.getElementById('menu-section').classList.add('hidden');
+        }
+        
+        // Show profile info
+        function showProfileInfo(profile) {
+            document.getElementById('profile-form').classList.add('hidden');
+            document.getElementById('profile-info').classList.remove('hidden');
+            document.getElementById('profile-name').textContent = profile.firstName + ' ' + profile.lastName;
+            document.getElementById('profile-email').textContent = profile.email;
+            document.getElementById('profile-phone').textContent = profile.phone;
+            document.getElementById('profile-age').textContent = profile.age;
+            showMenu();
+        }
+        
+        // Show menu
+        function showMenu() {
+            document.getElementById('menu-section').classList.remove('hidden');
+        }
+        
+        // Send verification code
+        function sendVerificationCode() {
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
+            const age = document.getElementById('age').value;
+            
+            if (!firstName || !lastName || !email || !phone || !age) {
+                alert('Veuillez remplir tous les champs');
+                return;
+            }
+            
+            // Generate 6-digit code
+            verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+            
+            // Show verification section
+            document.getElementById('verification-email').textContent = email;
+            document.getElementById('verification-code-display').textContent = verificationCode;
+            document.getElementById('verification-section').classList.remove('hidden');
+            document.getElementById('profile-form').classList.add('hidden');
+            
+            // Start resend timer
+            startResendTimer();
+            
+            // In a real app, you would send this code via email
+            console.log(`Code de vérification pour ${email}: ${verificationCode}`);
+        }
+        
+        // Verify email
+        function verifyEmail() {
+            const inputCode = document.getElementById('verification-input').value;
+            
+            if (inputCode === verificationCode) {
+                // Save verified profile
+                const profile = {
+                    firstName: document.getElementById('firstName').value,
+                    lastName: document.getElementById('lastName').value,
+                    email: document.getElementById('email').value,
+                    phone: document.getElementById('phone').value,
+                    age: parseInt(document.getElementById('age').value),
+                    verified: true,
+                    verificationDate: new Date().toISOString()
+                };
+                
+                localStorage.setItem('villa-smaqers-profile', JSON.stringify(profile));
+                
+                // Save user to users list
+                let users = JSON.parse(localStorage.getItem('villa-smaqers-users') || '[]');
+                const existingUserIndex = users.findIndex(user => user.email === profile.email);
+                if (existingUserIndex === -1) {
+                    users.push({
+                        ...profile,
+                        registrationDate: new Date().toISOString()
+                    });
+                    localStorage.setItem('villa-smaqers-users', JSON.stringify(users));
+                }
+                
+                showProfileInfo(profile);
+                document.getElementById('verification-section').classList.add('hidden');
+            } else {
+                alert('Code de vérification incorrect. Veuillez réessayer.');
+            }
+        }
+        
+        // Resend code
+        function resendCode() {
+            if (resendTimer > 0) {
+                alert(`Veuillez attendre ${resendTimer} secondes avant de renvoyer le code.`);
+                return;
+            }
+            
+            verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+            document.getElementById('verification-code-display').textContent = verificationCode;
+            document.getElementById('verification-input').value = '';
+            startResendTimer();
+            
+            console.log(`Nouveau code de vérification: ${verificationCode}`);
+        }
+        
+        // Start resend timer
+        function startResendTimer() {
+            resendTimer = 60;
+            const btn = document.getElementById('resend-btn');
+            btn.disabled = true;
+            
+            const timer = setInterval(() => {
+                resendTimer--;
+                btn.textContent = `Renvoyer le code (${resendTimer}s)`;
+                
+                if (resendTimer <= 0) {
+                    clearInterval(timer);
+                    btn.disabled = false;
+                    btn.textContent = 'Renvoyer le code';
+                }
+            }, 1000);
+        }
+        
+        // Edit profile
+        function editProfile() {
+            const profile = JSON.parse(localStorage.getItem('villa-smaqers-profile'));
+            document.getElementById('firstName').value = profile.firstName;
+            document.getElementById('lastName').value = profile.lastName;
+            document.getElementById('email').value = profile.email;
+            document.getElementById('phone').value = profile.phone;
+            document.getElementById('age').value = profile.age;
+            showProfileForm();
+        }
+        
+        // Select item
+        function selectItem(item) {
+            document.getElementById('selected-item').textContent = item;
+            document.getElementById('order-section').classList.remove('hidden');
+            document.getElementById('menu-section').classList.add('hidden');
+        }
+        
+        // Back to menu
+        function backToMenu() {
+            document.getElementById('menu-section').classList.remove('hidden');
+            document.getElementById('order-section').classList.add('hidden');
+        }
+        
+        // Place order
+        function placeOrder() {
+            const classroom = document.getElementById('classroom').value;
+            const customClassroom = document.getElementById('customClassroom').value;
+            const selectedItem = document.getElementById('selected-item').textContent;
+            
+            if (!classroom) {
+                alert('Veuillez sélectionner une salle de classe');
+                return;
+            }
+            
+            const finalClassroom = classroom === 'Autre' ? customClassroom : classroom;
+            
+            if (classroom === 'Autre' && !customClassroom) {
+                alert('Veuillez préciser la salle de classe');
+                return;
+            }
+            
+            // Save order
+            const order = {
+                id: Date.now().toString(),
+                item: selectedItem,
+                classroom: finalClassroom,
+                timestamp: new Date().toLocaleString('fr-FR'),
+                profile: JSON.parse(localStorage.getItem('villa-smaqers-profile')),
+                status: 'pending'
+            };
+            
+            let orders = JSON.parse(localStorage.getItem('villa-smaqers-orders') || '[]');
+            orders.push(order);
+            localStorage.setItem('villa-smaqers-orders', JSON.stringify(orders));
+            
+            // Show success
+            document.getElementById('success-item').textContent = selectedItem;
+            document.getElementById('success-classroom').textContent = finalClassroom;
+            document.getElementById('success-message').classList.remove('hidden');
+            document.getElementById('order-section').classList.add('hidden');
+        }
+        
+        // New order
+        function newOrder() {
+            document.getElementById('success-message').classList.add('hidden');
+            document.getElementById('menu-section').classList.remove('hidden');
+            document.getElementById('classroom').value = '';
+            document.getElementById('customClassroom').value = '';
+        }
+        
+        // Handle classroom selection
+        document.getElementById('classroom').addEventListener('change', function() {
+            const otherDiv = document.getElementById('other-classroom');
+            if (this.value === 'Autre') {
+                otherDiv.classList.remove('hidden');
+            } else {
+                otherDiv.classList.add('hidden');
+            }
+        });
+        
+        // Initialize app
+        checkProfile();
+    </script>
+</body>
+</html>
