@@ -323,6 +323,17 @@
             console.log(`[${type.toUpperCase()}] ${message}`);
         }
 
+        // Fonction pour nettoyer les profils orphelins
+        async function cleanupOrphanedProfiles() {
+            try {
+                logToRemote('Nettoyage des profils orphelins...', 'info');
+                // Cette fonction pourrait être appelée périodiquement
+                // pour nettoyer les profils Firestore qui n'ont plus d'utilisateur Auth correspondant
+            } catch (error) {
+                logToRemote(`Erreur nettoyage profils: ${error.message}`, 'error');
+            }
+        }
+
         // Fonctions utilitaires
         function showError(message) {
             errorDiv.textContent = message;
@@ -470,16 +481,33 @@
 
                 logToRemote(`Compte créé: ${email}`, 'success');
 
-                // Créer le profil utilisateur dans Firestore
-                await setDoc(doc(db, 'users', user.uid), {
-                    email: email,
-                    role: role,
-                    firstName: '',
-                    lastName: '',
-                    createdAt: new Date().toISOString()
-                });
+                // Vérifier si un profil existe déjà dans Firestore
+                const userDocRef = doc(db, 'users', user.uid);
+                const userDoc = await getDoc(userDocRef);
+                
+                if (userDoc.exists()) {
+                    logToRemote(`Profil Firestore existant trouvé pour: ${email}, mise à jour`, 'warning');
+                    // Mettre à jour le profil existant
+                    await setDoc(userDocRef, {
+                        email: email,
+                        role: role,
+                        firstName: userDoc.data().firstName || '',
+                        lastName: userDoc.data().lastName || '',
+                        updatedAt: new Date().toISOString()
+                    }, { merge: true });
+                } else {
+                    logToRemote(`Création nouveau profil Firestore pour: ${email}`, 'info');
+                    // Créer un nouveau profil
+                    await setDoc(userDocRef, {
+                        email: email,
+                        role: role,
+                        firstName: '',
+                        lastName: '',
+                        createdAt: new Date().toISOString()
+                    });
+                }
 
-                logToRemote(`Profil Firestore créé: ${email}`, 'success');
+                logToRemote(`Profil Firestore configuré: ${email}`, 'success');
 
                 // Envoyer l'email de vérification
                 await user.sendEmailVerification();
@@ -505,7 +533,8 @@
                 logToRemote(`Erreur inscription ${email}: ${error.code} - ${error.message}`, 'error');
                 
                 if (error.code === 'auth/email-already-in-use') {
-                    showError('Cet email est déjà utilisé');
+                    showError('Cet email est déjà utilisé. Si vous venez de le supprimer, attendez quelques minutes avant de réessayer.');
+                    logToRemote(`Email déjà utilisé: ${email} - Possible conflit Firestore`, 'warning');
                 } else if (error.code === 'auth/weak-password') {
                     showError('Le mot de passe est trop faible');
                 } else if (error.code === 'auth/invalid-email') {
@@ -516,6 +545,8 @@
                     showError('Erreur de connexion réseau');
                 } else if (error.code === 'auth/too-many-requests') {
                     showError('Trop de tentatives. Réessayez plus tard');
+                } else if (error.code === 'auth/user-disabled') {
+                    showError('Ce compte a été désactivé');
                 } else {
                     showError('Erreur lors de la création du compte: ' + error.message);
                 }
