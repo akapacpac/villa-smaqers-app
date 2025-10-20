@@ -749,6 +749,17 @@
         .btn-deliver { background: #0984e3; color: white; }
         .btn-cancel { background: #636e72; color: white; }
     </style>
+    <script>
+      (function(){
+        try {
+          const hasLocal = localStorage.getItem('villa-smaqers-profile');
+          const firebaseUser = localStorage.getItem('firebase:authUser:villa-smaqers-brises:[DEFAULT]');
+          if (!hasLocal && !firebaseUser) {
+            window.location.replace('app-with-auth.html');
+          }
+        } catch (e) {}
+      })();
+    </script>
 </head>
 <body>
     <div class="app-container">
