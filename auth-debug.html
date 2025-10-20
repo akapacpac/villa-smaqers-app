@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Auth DEBUG • Villa</title>
+<style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;padding:24px;background:#f7f7fb} .card{background:#fff;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,.06);padding:18px;margin:0 auto;max-width:780px} h1{margin:0 0 12px;color:#6c5ce7} pre{background:#0b1020;color:#e7f0ff;padding:12px;border-radius:8px;overflow:auto;font-size:12px} .row{display:flex;gap:16px;flex-wrap:wrap} .col{flex:1 1 320px} input,select{width:100%;padding:10px;border:2px solid #e3e6ef;border-radius:10px;margin:6px 0} button{padding:10px 12px;border:none;border-radius:10px;background:#6c5ce7;color:#fff;font-weight:700;cursor:pointer} .ok{color:#0a7f2e} .err{color:#b00020} .muted{color:#666} .pill{display:inline-block;background:#eef;border-radius:999px;padding:4px 8px;margin-left:6px;color:#445}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Auth DEBUG <span id="ver" class="pill"></span></h1>
+  <div id="status" class="muted">Initialisation…</div>
+  <div class="row" style="margin-top:12px">
+    <div class="col">
+      <h3>Créer un compte</h3>
+      <input id="r-first" placeholder="Prénom">
+      <input id="r-last" placeholder="Nom">
+      <input id="r-email" placeholder="Email" type="email">
+      <input id="r-pass" placeholder="Mot de passe" type="password">
+      <select id="r-role">
+        <option value="student">Étudiant</option>
+        <option value="member">Membre</option>
+      </select>
+      <input id="r-code" placeholder="Code (paco=admin)"/>
+      <button id="btn-register">Créer</button>
+    </div>
+    <div class="col">
+      <h3>Connexion</h3>
+      <input id="l-email" placeholder="Email" type="email">
+      <input id="l-pass" placeholder="Mot de passe" type="password">
+      <button id="btn-login">Se connecter</button>
+      <button id="btn-logout" style="background:#555;margin-left:6px">Se déconnecter</button>
+    </div>
+  </div>
+  <h3 style="margin-top:16px">État Auth</h3>
+  <pre id="authState">(aucun)</pre>
+  <h3>Logs</h3>
+  <pre id="logs"></pre>
+</div>
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { getAuth, setPersistence, browserLocalPersistence, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, sendEmailVerification } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import { getFirestore, doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+const verEl = document.getElementById('ver'); verEl.textContent = 'v=debug1';
+const log = (m)=>{ const el=document.getElementById('logs'); el.textContent += (m+'\n'); el.scrollTop=el.scrollHeight; };
+const setState = (obj)=>{ document.getElementById('authState').textContent = JSON.stringify(obj, null, 2); };
+const setStatus = (t,c)=>{ const s=document.getElementById('status'); s.textContent=t; s.className=c||''; };
+const cfg = { apiKey:'AIzaSyDqCYiGvSYitgoPnGdxMzkautcYl511E3I', authDomain:'villa-smaqers-brises.firebaseapp.com', projectId:'villa-smaqers-brises', storageBucket:'villa-smaqers-brises.firebasestorage.app', messagingSenderId:'387262093007', appId:'1:387262093007:web:76173a1e3cd49d80a249ba', measurementId:'G-TBNFR17E82' };
+let app, auth, db; try { app = initializeApp(cfg); auth = getAuth(app); db = getFirestore(app); setPersistence(auth, browserLocalPersistence); setStatus('Firebase initialisé', 'ok'); } catch(e){ setStatus('Init Firebase KO: '+e.message,'err'); log(e.stack||e.message); }
+onAuthStateChanged(auth, (user)=>{ setState(user? { uid:user.uid, email:user.email, emailVerified:user.emailVerified } : { user:null }); });
+// Register
+document.getElementById('btn-register').onclick = async ()=>{
+  try{
+    const first = document.getElementById('r-first').value.trim();
+    const last  = document.getElementById('r-last').value.trim();
+    const email = document.getElementById('r-email').value.trim();
+    const pass  = document.getElementById('r-pass').value;
+    let role = document.getElementById('r-role').value;
+    const code  = document.getElementById('r-code').value.trim();
+    if(!first||!last||!email||!pass){ setStatus('Champs requis manquants','err'); return; }
+    if(role==='member') role = (code.toLowerCase()==='paco') ? 'admin':'member';
+    const cred = await createUserWithEmailAndPassword(auth, email, pass);
+    await updateProfile(cred.user, { displayName: `${first} ${last}` });
+    await setDoc(doc(db,'users',cred.user.uid), { uid:cred.user.uid, firstName:first, lastName:last, email, role, registrationDate:new Date().toISOString() });
+    setStatus('Compte créé. Envoi e-mail…');
+    try { await sendEmailVerification(cred.user, { url:'https://akapacpac.github.io/villa-smaqers-app/app-with-auth.html', handleCodeInApp:false }); setStatus('Email envoyé à '+email,'ok'); }
+    catch(e2){ setStatus('Échec envoi e-mail: '+e2.message,'err'); log(e2.stack||e2.message); }
+  }catch(e){ setStatus('Inscription KO: '+e.message,'err'); log(e.stack||e.message); }
+};
+// Login
+document.getElementById('btn-login').onclick = async ()=>{
+  try{ const email=document.getElementById('l-email').value.trim(); const pass=document.getElementById('l-pass').value; const cred=await signInWithEmailAndPassword(auth,email,pass); setStatus(cred.user.emailVerified? 'Connecté (vérifié)':'Connecté (non vérifié)','ok'); }
+  catch(e){ setStatus('Connexion KO: '+e.message,'err'); log(e.stack||e.message); }
+};
+// Logout
+document.getElementById('btn-logout').onclick = async ()=>{ try{ await auth.signOut(); setStatus('Déconnecté'); } catch(e){ setStatus('Logout KO: '+e.message,'err'); } };
+</script>
+</body>
+</html>
