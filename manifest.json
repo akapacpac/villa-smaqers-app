@@ -1,0 +1,27 @@
+{
+  "name": "Villa des Smaqers Brisés",
+  "short_name": "Villa Smaqers",
+  "description": "Application de commande gratuite de crêpes, cookies et glaces pour les étudiants",
+  "start_url": "./mobile-preview.html",
+  "display": "standalone",
+  "background_color": "#6c5ce7",
+  "theme_color": "#6c5ce7",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "./assets/icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./assets/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["food", "education", "lifestyle"],
+  "lang": "fr",
+  "dir": "ltr"
+}
