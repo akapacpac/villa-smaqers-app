@@ -326,6 +326,242 @@
             font-weight: 500;
         }
 
+        /* Styles pour les tableaux Excel */
+        .excel-table-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .excel-table-header {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .excel-table-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .excel-table-subtitle {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        .excel-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .excel-table th {
+            background: #667eea;
+            color: white;
+            padding: 15px 10px;
+            text-align: left;
+            font-weight: 600;
+            border-right: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .excel-table th:last-child {
+            border-right: none;
+        }
+
+        .excel-table td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #e9ecef;
+            border-right: 1px solid #e9ecef;
+        }
+
+        .excel-table td:last-child {
+            border-right: none;
+        }
+
+        .excel-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .excel-table tbody tr:nth-child(even) {
+            background: #fafbfc;
+        }
+
+        .excel-table tbody tr:nth-child(even):hover {
+            background: #f0f1f2;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-align: center;
+            min-width: 80px;
+            display: inline-block;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-validated {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .status-delivered {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-cancelled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.8rem;
+            margin: 2px;
+            transition: all 0.3s;
+        }
+
+        .btn-validate {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-validate:hover {
+            background: #218838;
+        }
+
+        .btn-deliver {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn-deliver:hover {
+            background: #138496;
+        }
+
+        .btn-cancel {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-cancel:hover {
+            background: #c82333;
+        }
+
+        .btn-delete {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background: #5a6268;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 15px;
+            width: 95%;
+            max-width: 1200px;
+            max-height: 80vh;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            background: #667eea;
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .close {
+            color: white;
+            font-size: 2rem;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .close:hover {
+            opacity: 0.7;
+        }
+
+        .modal-body {
+            padding: 0;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 15px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab-btn.active {
+            background: white;
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-btn:hover {
+            background: #e9ecef;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
         @media (max-width: 768px) {
             .header {
                 flex-direction: column;
@@ -438,6 +674,28 @@
         </div>
     </div>
 
+    <!-- Modal pour les tableaux Excel -->
+    <div id="excelModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle">Gestion des Commandes</div>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchTab('all')">Toutes</button>
+                    <button class="tab-btn" onclick="switchTab('pending')">En attente</button>
+                    <button class="tab-btn" onclick="switchTab('validated')">Validées</button>
+                    <button class="tab-btn" onclick="switchTab('delivered')">Livrées</button>
+                    <button class="tab-btn" onclick="switchTab('cancelled')">Annulées</button>
+                </div>
+                <div id="excelTableContent">
+                    <!-- Le contenu du tableau sera généré dynamiquement -->
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Données simulées pour les tests
         let orders = [
@@ -460,6 +718,46 @@
                 classroom: 'B201',
                 status: 'delivered',
                 timestamp: new Date(Date.now() - 86400000).toISOString()
+            },
+            {
+                id: '3',
+                productType: 'Glaces',
+                productIcon: '🍦',
+                quantity: 1,
+                totalPrice: 3.00,
+                classroom: 'C301',
+                status: 'validated',
+                timestamp: new Date(Date.now() - 3600000).toISOString()
+            },
+            {
+                id: '4',
+                productType: 'Crêpes',
+                productIcon: '🥞',
+                quantity: 4,
+                totalPrice: 10.00,
+                classroom: 'A103',
+                status: 'pending',
+                timestamp: new Date(Date.now() - 1800000).toISOString()
+            },
+            {
+                id: '5',
+                productType: 'Cookies',
+                productIcon: '🍪',
+                quantity: 2,
+                totalPrice: 3.00,
+                classroom: 'B202',
+                status: 'cancelled',
+                timestamp: new Date(Date.now() - 7200000).toISOString()
+            },
+            {
+                id: '6',
+                productType: 'Glaces',
+                productIcon: '🍦',
+                quantity: 3,
+                totalPrice: 9.00,
+                classroom: 'C302',
+                status: 'delivered',
+                timestamp: new Date(Date.now() - 172800000).toISOString()
             }
         ];
 
@@ -597,9 +895,159 @@
 
         window.showOrders = function(status) {
             console.log('📋 Affichage des commandes:', status);
-            // Ici on pourrait filtrer les commandes par statut
-            displayOrders();
+            showExcelTable(status);
         };
+
+        // Fonctions pour les tableaux Excel
+        let currentTab = 'all';
+
+        function showExcelTable(status) {
+            currentTab = status;
+            document.getElementById('excelModal').style.display = 'block';
+            document.getElementById('modalTitle').textContent = getTabTitle(status);
+            switchTab(status);
+        }
+
+        function switchTab(status) {
+            // Mettre à jour les onglets actifs
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            currentTab = status;
+            displayExcelTable(status);
+        }
+
+        function displayExcelTable(status) {
+            const filteredOrders = status === 'all' ? orders : orders.filter(order => order.status === status);
+            const container = document.getElementById('excelTableContent');
+            
+            if (filteredOrders.length === 0) {
+                container.innerHTML = `
+                    <div class="excel-table-container">
+                        <div class="excel-table-header">
+                            <div class="excel-table-title">${getTabTitle(status)}</div>
+                            <div class="excel-table-subtitle">Aucune commande trouvée</div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="excel-table-container">
+                    <div class="excel-table-header">
+                        <div class="excel-table-title">${getTabTitle(status)}</div>
+                        <div class="excel-table-subtitle">${filteredOrders.length} commande(s) trouvée(s)</div>
+                    </div>
+                    <table class="excel-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Produit</th>
+                                <th>Quantité</th>
+                                <th>Prix</th>
+                                <th>Salle</th>
+                                <th>Client</th>
+                                <th>Date</th>
+                                <th>Statut</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${filteredOrders.map(order => `
+                                <tr>
+                                    <td>#${order.id}</td>
+                                    <td>
+                                        <span style="font-size: 1.2rem; margin-right: 8px;">${order.productIcon}</span>
+                                        ${order.productType}
+                                    </td>
+                                    <td>${order.quantity}</td>
+                                    <td>${order.totalPrice.toFixed(2)}€</td>
+                                    <td>${order.classroom}</td>
+                                    <td>Pascal Martin-Lalande</td>
+                                    <td>${formatDate(order.timestamp)}</td>
+                                    <td>
+                                        <span class="status-badge ${getStatusClass(order.status)}">
+                                            ${getStatusText(order.status)}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        ${getActionButtons(order)}
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function getTabTitle(status) {
+            switch(status) {
+                case 'all': return 'Toutes les Commandes';
+                case 'pending': return 'Commandes en Attente';
+                case 'validated': return 'Commandes Validées';
+                case 'delivered': return 'Commandes Livrées';
+                case 'cancelled': return 'Commandes Annulées';
+                default: return 'Commandes';
+            }
+        }
+
+        function getActionButtons(order) {
+            let buttons = '';
+            
+            if (order.status === 'pending') {
+                buttons += `<button class="action-btn btn-validate" onclick="updateOrderStatus('${order.id}', 'validated')">✅ Valider</button>`;
+                buttons += `<button class="action-btn btn-cancel" onclick="updateOrderStatus('${order.id}', 'cancelled')">❌ Annuler</button>`;
+            } else if (order.status === 'validated') {
+                buttons += `<button class="action-btn btn-deliver" onclick="updateOrderStatus('${order.id}', 'delivered')">🚚 Livrer</button>`;
+                buttons += `<button class="action-btn btn-cancel" onclick="updateOrderStatus('${order.id}', 'cancelled')">❌ Annuler</button>`;
+            } else if (order.status === 'delivered') {
+                buttons += `<button class="action-btn btn-delete" onclick="deleteOrder('${order.id}')">🗑️ Supprimer</button>`;
+            }
+            
+            return buttons || '<span style="color: #999;">-</span>';
+        }
+
+        function updateOrderStatus(orderId, newStatus) {
+            const orderIndex = orders.findIndex(order => order.id === orderId);
+            if (orderIndex !== -1) {
+                orders[orderIndex].status = newStatus;
+                updateStatistics();
+                displayOrders();
+                displayExcelTable(currentTab);
+                
+                const statusText = getStatusText(newStatus);
+                alert(`Commande #${orderId} ${statusText.toLowerCase()} avec succès !`);
+            }
+        }
+
+        function deleteOrder(orderId) {
+            if (!confirm('Êtes-vous sûr de vouloir supprimer cette commande ?')) {
+                return;
+            }
+            
+            const orderIndex = orders.findIndex(order => order.id === orderId);
+            if (orderIndex !== -1) {
+                orders.splice(orderIndex, 1);
+                updateStatistics();
+                displayOrders();
+                displayExcelTable(currentTab);
+                alert('Commande supprimée avec succès !');
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('excelModal').style.display = 'none';
+        }
+
+        // Fermer la modal en cliquant à l'extérieur
+        window.onclick = function(event) {
+            const modal = document.getElementById('excelModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
 
         window.logout = function() {
             if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
