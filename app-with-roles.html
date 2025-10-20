@@ -1550,29 +1550,86 @@
         }
         
         // Load user - Firebase guard handles auth; no localStorage login
-        function loadUser() {
-            // Intentionally left minimal. Auth state is enforced by Firebase guard in <head>.
-            const registrationForm = document.getElementById('registration-form');
-            const mainApp = document.getElementById('main-app');
-            if (registrationForm) registrationForm.style.display = 'none';
-            if (mainApp) mainApp.style.display = 'block';
+        async function loadUser() {
+            try {
+                // Intentionally left minimal. Auth state is enforced by Firebase guard in <head>.
+                const registrationForm = document.getElementById('registration-form');
+                const mainApp = document.getElementById('main-app');
+                if (registrationForm) registrationForm.style.display = 'none';
+                if (mainApp) mainApp.style.display = 'block';
+                
+                // Load user data from Firebase
+                await loadUserFromFirebase();
+            } catch (error) {
+                console.error('Erreur lors du chargement de l\'utilisateur:', error);
+            }
         }
         
-        // Load user from Firebase (for future use)
-        async function loadUserFromFirebase(email) {
+        // Load user from Firebase
+        async function loadUserFromFirebase() {
             try {
-                const usersSnapshot = await getDocs(collection(db, 'users'));
-                const users = [];
-                usersSnapshot.forEach(doc => {
-                    users.push({ id: doc.id, ...doc.data() });
-                });
+                // Get current Firebase user
+                const user = auth.currentUser;
+                if (!user) {
+                    console.log('Aucun utilisateur connecté');
+                    return false;
+                }
                 
-                const user = users.find(u => u.email === email);
-                if (user) { currentUser = user; return true; }
-                return false;
+                // Load user profile from Firestore
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                if (userDoc.exists()) {
+                    currentUser = { ...user, ...userDoc.data() };
+                    console.log('Utilisateur chargé:', currentUser);
+                    
+                    // Update UI with user data
+                    updateUserProfileUI();
+                    return true;
+                } else {
+                    // Create basic user profile if doesn't exist
+                    currentUser = { 
+                        ...user, 
+                        firstName: 'Utilisateur',
+                        lastName: '',
+                        phone: '',
+                        age: '',
+                        role: 'student'
+                    };
+                    console.log('Profil utilisateur créé:', currentUser);
+                    updateUserProfileUI();
+                    return true;
+                }
             } catch (error) {
                 console.error('Erreur lors du chargement de l\'utilisateur:', error);
                 return false;
+            }
+        }
+        
+        // Update user profile UI
+        function updateUserProfileUI() {
+            if (!currentUser) return;
+            
+            // Update profile display
+            const nameElement = document.querySelector('#profile-name');
+            const emailElement = document.querySelector('#profile-email');
+            const phoneElement = document.querySelector('#profile-phone');
+            const ageElement = document.querySelector('#profile-age');
+            const roleElement = document.querySelector('#profile-role');
+            
+            if (nameElement) {
+                nameElement.textContent = `${currentUser.firstName || 'Prénom'} ${currentUser.lastName || 'Nom'}`;
+            }
+            if (emailElement) {
+                emailElement.textContent = currentUser.email || 'Email non disponible';
+            }
+            if (phoneElement) {
+                phoneElement.textContent = currentUser.phone || 'Non renseigné';
+            }
+            if (ageElement) {
+                ageElement.textContent = currentUser.age ? `${currentUser.age} ans` : 'Non renseigné';
+            }
+            if (roleElement) {
+                roleElement.textContent = currentUser.role === 'admin' ? 'Administrateur' : 
+                                        currentUser.role === 'member' ? 'Membre' : 'Étudiant';
             }
         }
         
@@ -1953,16 +2010,27 @@
         // Load all orders (for members)
         async function loadAllOrders() {
             try {
+                console.log('Chargement des commandes...');
                 const ordersSnapshot = await getDocs(collection(db, 'orders'));
                 allOrders = [];
                 ordersSnapshot.forEach(doc => {
                     allOrders.push({ id: doc.id, ...doc.data() });
                 });
                 
+                console.log('Commandes chargées:', allOrders.length);
                 displayFilteredOrders();
             } catch (error) {
                 console.error('Erreur lors du chargement des commandes:', error);
-                document.getElementById('all-orders-list').innerHTML = '<p>Erreur lors du chargement des commandes</p>';
+                const errorMsg = `Erreur Firebase: ${error.code || error.message}`;
+                document.getElementById('all-orders-list').innerHTML = `
+                    <div style="text-align: center; padding: 20px; color: #dc3545;">
+                        <h3>❌ Erreur de connexion</h3>
+                        <p>${errorMsg}</p>
+                        <button onclick="loadAllOrders()" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                            🔄 Réessayer
+                        </button>
+                    </div>
+                `;
             }
         }
         
@@ -2681,7 +2749,8 @@
                 document.getElementById('customClassroom').value = '';
             } catch (error) {
                 console.error('Erreur lors de la commande:', error);
-                alert('Erreur lors de la commande. Veuillez réessayer.');
+                const errorMsg = `Erreur Firebase: ${error.code || error.message}`;
+                alert(`Erreur lors de la commande: ${errorMsg}\n\nVeuillez vérifier votre connexion et réessayer.`);
             }
         }
         
