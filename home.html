@@ -304,12 +304,12 @@
 
         // Vérifier l'état de connexion
         onAuthStateChanged(auth, (user) => {
-            if (user && user.emailVerified) {
-                // L'utilisateur est connecté et vérifié
+            if (user) {
+                // L'utilisateur est connecté (avec ou sans vérification email)
                 loadUserInfo(user);
             } else {
-                // L'utilisateur n'est pas connecté ou pas vérifié
-                window.location.href = 'auth.html';
+                // L'utilisateur n'est pas connecté
+                window.location.href = 'login.html';
             }
         });
     </script>

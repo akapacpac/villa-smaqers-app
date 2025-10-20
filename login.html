@@ -514,11 +514,15 @@
 
                 logToRemote(`Profil Firestore configuré: ${email}`, 'success');
 
-                // Envoyer l'email de vérification
-                await sendEmailVerification(user);
-
-                logToRemote(`Email vérification envoyé: ${email}`, 'success');
-                showSuccess('Compte créé ! Vérifiez votre email et cliquez sur le lien pour activer votre compte.');
+                // Essayer d'envoyer l'email de vérification (optionnel)
+                try {
+                    await sendEmailVerification(user);
+                    logToRemote(`Email vérification envoyé: ${email}`, 'success');
+                    showSuccess('Compte créé ! Vérifiez votre email et cliquez sur le lien pour activer votre compte.');
+                } catch (emailError) {
+                    logToRemote(`Email vérification échoué: ${emailError.message}`, 'warning');
+                    showSuccess('Compte créé avec succès ! Vous pouvez maintenant vous connecter.');
+                }
 
                 // Vider le formulaire
                 document.getElementById('signupEmail').value = '';
