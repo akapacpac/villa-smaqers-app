@@ -1211,31 +1211,43 @@
                             </div>
                         </div>
                         
-                        <!-- Gestion des Utilisateurs -->
+                        <!-- Boutons de sélection de vue -->
                         <div style="margin-top: 30px; text-align: center;">
-                            <h3 style="color: #6c5ce7; margin-bottom: 20px;">👥 Gestion des Utilisateurs</h3>
-                            <button onclick="showUsersTable()" style="background: linear-gradient(135deg, #6c5ce7, #a29bfe); color: white; border: none; padding: 12px 24px; border-radius: 25px; cursor: pointer; font-weight: bold; margin-bottom: 20px;">
-                                📋 Voir tous les utilisateurs
-                            </button>
-                            
-                            <div id="users-table-container" style="margin-top: 20px;">
-                                <!-- Tableau des utilisateurs s'affichera ici -->
-                            </div>
-                        </div>
-                        
-                        <!-- Onglets simples pour les commandes -->
-                        <div style="margin-top: 30px; text-align: center;">
-                            <h3 style="color: #6c5ce7; margin-bottom: 20px;">📋 Gestion des Commandes</h3>
-                            <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
-                                <button onclick="showSimpleTable('all')" style="background: #6c5ce7; color: white; border: none; padding: 10px 20px; border-radius: 25px; cursor: pointer;">Toutes</button>
-                                <button onclick="showSimpleTable('pending')" style="background: #f8f9fa; color: #333; border: 2px solid #dee2e6; padding: 10px 20px; border-radius: 25px; cursor: pointer;">En attente</button>
-                                <button onclick="showSimpleTable('validated')" style="background: #f8f9fa; color: #333; border: 2px solid #dee2e6; padding: 10px 20px; border-radius: 25px; cursor: pointer;">Validées</button>
-                                <button onclick="showSimpleTable('delivered')" style="background: #f8f9fa; color: #333; border: 2px solid #dee2e6; padding: 10px 20px; border-radius: 25px; cursor: pointer;">Livrées</button>
-                                <button onclick="showSimpleTable('cancelled')" style="background: #f8f9fa; color: #333; border: 2px solid #dee2e6; padding: 10px 20px; border-radius: 25px; cursor: pointer;">Annulées</button>
+                            <div style="display: flex; justify-content: center; gap: 15px; margin-bottom: 30px;">
+                                <button onclick="showManagementView('users')" class="tab-btn active" id="btn-show-users" style="background: #6c5ce7; color: white; border: none; padding: 12px 24px; border-radius: 25px; cursor: pointer; font-weight: bold;">
+                                    👥 Gérer les Utilisateurs
+                                </button>
+                                <button onclick="showManagementView('orders')" class="tab-btn" id="btn-show-orders" style="background: #f8f9fa; color: #333; border: 2px solid #dee2e6; padding: 12px 24px; border-radius: 25px; cursor: pointer; font-weight: bold;">
+                                    📋 Gérer les Commandes
+                                </button>
                             </div>
                             
-                            <div id="simple-table-container" style="margin-top: 20px;">
-                                <!-- Tableau simple s'affichera ici -->
+                            <!-- Contenu des utilisateurs -->
+                            <div id="user-management-content" style="display: block;">
+                                <h3 style="color: #6c5ce7; margin-bottom: 20px;">👥 Gestion des Utilisateurs</h3>
+                                <button onclick="showUsersTable()" style="background: linear-gradient(135deg, #6c5ce7, #a29bfe); color: white; border: none; padding: 12px 24px; border-radius: 25px; cursor: pointer; font-weight: bold; margin-bottom: 20px;">
+                                    📋 Voir tous les utilisateurs
+                                </button>
+                                
+                                <div id="users-table-container" style="margin-top: 20px;">
+                                    <!-- Tableau des utilisateurs s'affichera ici -->
+                                </div>
+                            </div>
+                            
+                            <!-- Contenu des commandes -->
+                            <div id="order-management-content" style="display: none;">
+                                <h3 style="color: #6c5ce7; margin-bottom: 20px;">📋 Gestion des Commandes</h3>
+                                <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+                                    <button onclick="showSimpleTable('all')" class="tab-btn active" id="tab-all">Toutes</button>
+                                    <button onclick="showSimpleTable('pending')" class="tab-btn" id="tab-pending">En attente</button>
+                                    <button onclick="showSimpleTable('validated')" class="tab-btn" id="tab-validated">Validées</button>
+                                    <button onclick="showSimpleTable('delivered')" class="tab-btn" id="tab-delivered">Livrées</button>
+                                    <button onclick="showSimpleTable('cancelled')" class="tab-btn" id="tab-cancelled">Annulées</button>
+                                </div>
+                                
+                                <div id="orders-table-container" style="margin-top: 20px;">
+                                    <!-- Tableau simple s'affichera ici -->
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1903,9 +1915,11 @@
                             <div class="order-date">${new Date(timestamp).toLocaleString()}</div>
                             <div>Salle: ${classroom}</div>
                             <div class="order-actions" style="margin-top: 10px;">
-                                <button onclick="cancelOrder('${order.id}')" class="btn btn-secondary" style="padding: 5px 10px; font-size: 12px; margin-right: 5px;">
-                                    Annuler
-                                </button>
+                                ${order.status !== 'delivered' && order.status !== 'cancelled' ? `
+                                    <button onclick="cancelOrder('${order.id}')" class="btn btn-secondary" style="padding: 5px 10px; font-size: 12px; margin-right: 5px;">
+                                        Annuler
+                                    </button>
+                                ` : ''}
                             </div>
                         </div>
                     `;
@@ -2926,6 +2940,37 @@
                 'cancelled': '#dc3545'
             };
             return colors[status] || '#ffc107';
+        }
+
+        // Show management view (users or orders)
+        function showManagementView(viewName) {
+            const userManagementContent = document.getElementById('user-management-content');
+            const orderManagementContent = document.getElementById('order-management-content');
+            const btnShowUsers = document.getElementById('btn-show-users');
+            const btnShowOrders = document.getElementById('btn-show-orders');
+
+            if (userManagementContent && orderManagementContent && btnShowUsers && btnShowOrders) {
+                if (viewName === 'users') {
+                    userManagementContent.style.display = 'block';
+                    orderManagementContent.style.display = 'none';
+                    btnShowUsers.style.background = '#6c5ce7';
+                    btnShowUsers.style.color = 'white';
+                    btnShowUsers.style.border = 'none';
+                    btnShowOrders.style.background = '#f8f9fa';
+                    btnShowOrders.style.color = '#333';
+                    btnShowOrders.style.border = '2px solid #dee2e6';
+                } else if (viewName === 'orders') {
+                    userManagementContent.style.display = 'none';
+                    orderManagementContent.style.display = 'block';
+                    btnShowUsers.style.background = '#f8f9fa';
+                    btnShowUsers.style.color = '#333';
+                    btnShowUsers.style.border = '2px solid #dee2e6';
+                    btnShowOrders.style.background = '#6c5ce7';
+                    btnShowOrders.style.color = 'white';
+                    btnShowOrders.style.border = 'none';
+                    showSimpleTable('all'); // Afficher automatiquement toutes les commandes
+                }
+            }
         }
 
         // Show users table
