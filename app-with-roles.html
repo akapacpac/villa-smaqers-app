@@ -384,7 +384,7 @@
         
         .menu-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(2, 1fr);
             gap: 20px;
             margin-top: 20px;
         }
@@ -863,6 +863,11 @@
                                 <div class="menu-item-icon">⚙️</div>
                                 <div class="menu-item-title">Paramètres</div>
                                 <div class="menu-item-desc">Gérer mon profil</div>
+                            </div>
+                            <div class="menu-item" onclick="navigateTo('statistics')">
+                                <div class="menu-item-icon">📊</div>
+                                <div class="menu-item-title">Statistiques</div>
+                                <div class="menu-item-desc">Voir les statistiques</div>
                             </div>
                         </div>
                     </div>
