@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Villa des Smaqers Brisés - Connexion</title>
+    <title>Villa des Smaqers - Debug</title>
     <style>
         * {
             margin: 0;
@@ -13,31 +13,39 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
+            background: #f5f5f5;
+            height: 100vh;
             display: flex;
-            align-items: center;
-            justify-content: center;
+        }
+
+        .auth-panel {
+            width: 400px;
+            background: white;
+            border-right: 2px solid #ddd;
+            overflow-y: auto;
+        }
+
+        .logs-panel {
+            flex: 1;
+            background: #1a1a1a;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            overflow-y: auto;
         }
 
         .auth-container {
-            background: white;
-            padding: 2rem;
-            border-radius: 10px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            width: 100%;
-            max-width: 400px;
+            padding: 20px;
         }
 
         .logo {
             text-align: center;
-            margin-bottom: 2rem;
+            margin-bottom: 20px;
         }
 
         .logo h1 {
             color: #333;
             font-size: 1.5rem;
-            margin-bottom: 0.5rem;
+            margin-bottom: 5px;
         }
 
         .logo p {
@@ -46,23 +54,22 @@
         }
 
         .form-group {
-            margin-bottom: 1rem;
+            margin-bottom: 15px;
         }
 
         .form-group label {
             display: block;
-            margin-bottom: 0.5rem;
+            margin-bottom: 5px;
             color: #333;
             font-weight: 500;
         }
 
         .form-group input {
             width: 100%;
-            padding: 0.75rem;
+            padding: 10px;
             border: 2px solid #e1e5e9;
             border-radius: 5px;
             font-size: 1rem;
-            transition: border-color 0.3s;
         }
 
         .form-group input:focus {
@@ -72,7 +79,7 @@
 
         .btn {
             width: 100%;
-            padding: 0.75rem;
+            padding: 10px;
             background: #667eea;
             color: white;
             border: none;
@@ -80,8 +87,7 @@
             font-size: 1rem;
             font-weight: 500;
             cursor: pointer;
-            transition: background 0.3s;
-            margin-bottom: 0.5rem;
+            margin-bottom: 10px;
         }
 
         .btn:hover {
@@ -104,29 +110,24 @@
         .error {
             background: #f8d7da;
             color: #721c24;
-            padding: 0.75rem;
+            padding: 10px;
             border-radius: 5px;
-            margin-bottom: 1rem;
+            margin-bottom: 15px;
             display: none;
         }
 
         .success {
             background: #d4edda;
             color: #155724;
-            padding: 0.75rem;
+            padding: 10px;
             border-radius: 5px;
-            margin-bottom: 1rem;
+            margin-bottom: 15px;
             display: none;
-        }
-
-        .loading {
-            text-align: center;
-            color: #666;
         }
 
         .form-toggle {
             text-align: center;
-            margin-top: 1rem;
+            margin-top: 15px;
         }
 
         .form-toggle a {
@@ -138,73 +139,200 @@
         .form-toggle a:hover {
             text-decoration: underline;
         }
+
+        .logs-header {
+            background: #333;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logs-header h2 {
+            color: #00ff00;
+            font-size: 1.2rem;
+        }
+
+        .logs-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .logs-controls button {
+            background: #00ff00;
+            color: #000;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .logs-controls button:hover {
+            background: #00cc00;
+        }
+
+        .logs-container {
+            padding: 15px;
+            height: calc(100vh - 80px);
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 5px;
+            border-left: 3px solid transparent;
+            word-wrap: break-word;
+        }
+
+        .log-error {
+            border-left-color: #ff0000;
+            background: rgba(255, 0, 0, 0.1);
+            color: #ff6666;
+        }
+
+        .log-success {
+            border-left-color: #00ff00;
+            background: rgba(0, 255, 0, 0.1);
+            color: #66ff66;
+        }
+
+        .log-warning {
+            border-left-color: #ffff00;
+            background: rgba(255, 255, 0, 0.1);
+            color: #ffff66;
+        }
+
+        .log-info {
+            border-left-color: #00ffff;
+            background: rgba(0, 255, 255, 0.1);
+            color: #66ffff;
+        }
+
+        .timestamp {
+            color: #666;
+            font-size: 0.8rem;
+        }
+
+        .stats {
+            background: #333;
+            padding: 10px;
+            margin-bottom: 15px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #00ff00;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #ccc;
+        }
     </style>
 </head>
 <body>
-    <div class="auth-container">
-        <div class="logo">
-            <h1>🍰 Villa des Smaqers Brisés</h1>
-            <p>Commande de crêpes, cookies et glaces</p>
+    <div class="auth-panel">
+        <div class="auth-container">
+            <div class="logo">
+                <h1>🍰 Villa des Smaqers Brisés</h1>
+                <p>Debug - Auth + Logs</p>
+            </div>
+
+            <div id="error" class="error"></div>
+            <div id="success" class="success"></div>
+
+            <!-- Formulaire de connexion -->
+            <div id="loginForm">
+                <h2 style="text-align: center; margin-bottom: 20px; color: #333;">Connexion</h2>
+                
+                <div class="form-group">
+                    <label for="loginEmail">Email</label>
+                    <input type="email" id="loginEmail" placeholder="votre@email.com" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="loginPassword">Mot de passe</label>
+                    <input type="password" id="loginPassword" placeholder="Votre mot de passe" required>
+                </div>
+                
+                <button id="loginBtn" class="btn">Se connecter</button>
+                
+                <div class="form-toggle">
+                    <a id="showSignup">Pas de compte ? S'inscrire</a>
+                </div>
+            </div>
+
+            <!-- Formulaire d'inscription -->
+            <div id="signupForm" style="display: none;">
+                <h2 style="text-align: center; margin-bottom: 20px; color: #333;">Inscription</h2>
+                
+                <div class="form-group">
+                    <label for="signupEmail">Email</label>
+                    <input type="email" id="signupEmail" placeholder="votre@email.com" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="signupPassword">Mot de passe</label>
+                    <input type="password" id="signupPassword" placeholder="Choisissez un mot de passe" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="signupPasswordConfirm">Confirmer le mot de passe</label>
+                    <input type="password" id="signupPasswordConfirm" placeholder="Confirmez votre mot de passe" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="accessCode">Code d'accès (optionnel)</label>
+                    <input type="text" id="accessCode" placeholder="Laissez vide pour être étudiant">
+                    <small style="color: #666; font-size: 0.8rem;">Code "paco" pour admin, autres codes pour membre</small>
+                </div>
+                
+                <button id="signupBtn" class="btn">S'inscrire</button>
+                
+                <div class="form-toggle">
+                    <a id="showLogin">Déjà un compte ? Se connecter</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="logs-panel">
+        <div class="logs-header">
+            <h2>📊 Logs en temps réel</h2>
+            <div class="logs-controls">
+                <button onclick="clearLogs()">Effacer</button>
+                <button onclick="toggleAutoScroll()" id="autoScrollBtn">Auto-scroll: ON</button>
+            </div>
         </div>
 
-        <div id="error" class="error"></div>
-        <div id="success" class="success"></div>
-
-        <!-- Formulaire de connexion -->
-        <div id="loginForm">
-            <h2 style="text-align: center; margin-bottom: 1.5rem; color: #333;">Connexion</h2>
-            
-            <div class="form-group">
-                <label for="loginEmail">Email</label>
-                <input type="email" id="loginEmail" placeholder="votre@email.com" required>
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-number" id="totalLogs">0</div>
+                <div class="stat-label">Total logs</div>
             </div>
-            
-            <div class="form-group">
-                <label for="loginPassword">Mot de passe</label>
-                <input type="password" id="loginPassword" placeholder="Votre mot de passe" required>
+            <div class="stat-item">
+                <div class="stat-number" id="errorCount">0</div>
+                <div class="stat-label">Erreurs</div>
             </div>
-            
-            <button id="loginBtn" class="btn">Se connecter</button>
-            
-            <div class="form-toggle">
-                <a id="showSignup">Pas de compte ? S'inscrire</a>
+            <div class="stat-item">
+                <div class="stat-number" id="successCount">0</div>
+                <div class="stat-label">Succès</div>
             </div>
         </div>
 
-        <!-- Formulaire d'inscription -->
-        <div id="signupForm" style="display: none;">
-            <h2 style="text-align: center; margin-bottom: 1.5rem; color: #333;">Inscription</h2>
-            
-            <div class="form-group">
-                <label for="signupEmail">Email</label>
-                <input type="email" id="signupEmail" placeholder="votre@email.com" required>
+        <div class="logs-container" id="logsContainer">
+            <div class="log-entry log-info">
+                <span class="timestamp">[00:00:00]</span> Système de debug initialisé
             </div>
-            
-            <div class="form-group">
-                <label for="signupPassword">Mot de passe</label>
-                <input type="password" id="signupPassword" placeholder="Choisissez un mot de passe" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="signupPasswordConfirm">Confirmer le mot de passe</label>
-                <input type="password" id="signupPasswordConfirm" placeholder="Confirmez votre mot de passe" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="accessCode">Code d'accès (optionnel)</label>
-                <input type="text" id="accessCode" placeholder="Laissez vide pour être étudiant">
-                <small style="color: #666; font-size: 0.8rem;">Code "paco" pour admin, autres codes pour membre</small>
-            </div>
-            
-            <button id="signupBtn" class="btn">S'inscrire</button>
-            
-            <div class="form-toggle">
-                <a id="showLogin">Déjà un compte ? Se connecter</a>
-            </div>
-        </div>
-
-        <div id="loading" class="loading" style="display: none;">
-            <p>Chargement...</p>
         </div>
     </div>
 
@@ -230,6 +358,13 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
+        // Variables globales
+        let logs = [];
+        let autoScroll = true;
+        let logCount = 0;
+        let errorCount = 0;
+        let successCount = 0;
+
         // Éléments DOM
         const loginForm = document.getElementById('loginForm');
         const signupForm = document.getElementById('signupForm');
@@ -239,7 +374,6 @@
         const showSignup = document.getElementById('showSignup');
         const errorDiv = document.getElementById('error');
         const successDiv = document.getElementById('success');
-        const loadingDiv = document.getElementById('loading');
 
         // Codes d'accès
         const ACCESS_CODES = {
@@ -252,20 +386,56 @@
         };
 
         // Système de logging
-        function logToServer(message, type = 'info') {
-            // Envoyer le log à la page de logs
-            if (window.parent && window.parent.addLog) {
-                window.parent.addLog(message, type);
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = {
+                id: logCount++,
+                timestamp,
+                message,
+                type
+            };
+
+            logs.push(logEntry);
+
+            if (type === 'error') errorCount++;
+            if (type === 'success') successCount++;
+
+            updateStats();
+            renderLogs();
+        }
+
+        function updateStats() {
+            document.getElementById('totalLogs').textContent = logs.length;
+            document.getElementById('errorCount').textContent = errorCount;
+            document.getElementById('successCount').textContent = successCount;
+        }
+
+        function renderLogs() {
+            const container = document.getElementById('logsContainer');
+            container.innerHTML = logs.map(log => `
+                <div class="log-entry log-${log.type}">
+                    <span class="timestamp">[${log.timestamp}]</span> ${log.message}
+                </div>
+            `).join('');
+
+            if (autoScroll) {
+                container.scrollTop = container.scrollHeight;
             }
-            
-            // Aussi envoyer via fetch si possible
-            fetch('https://akapacpac.github.io/villa-smaqers-app/logs.html', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message, type, timestamp: new Date().toISOString() })
-            }).catch(() => {}); // Ignorer les erreurs de CORS
-            
-            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        function clearLogs() {
+            logs = [];
+            logCount = 0;
+            errorCount = 0;
+            successCount = 0;
+            updateStats();
+            renderLogs();
+            addLog('Logs effacés', 'info');
+        }
+
+        function toggleAutoScroll() {
+            autoScroll = !autoScroll;
+            document.getElementById('autoScrollBtn').textContent = `Auto-scroll: ${autoScroll ? 'ON' : 'OFF'}`;
         }
 
         // Fonctions utilitaires
@@ -273,14 +443,14 @@
             errorDiv.textContent = message;
             errorDiv.style.display = 'block';
             successDiv.style.display = 'none';
-            logToServer(`Erreur: ${message}`, 'error');
+            addLog(`Erreur: ${message}`, 'error');
         }
 
         function showSuccess(message) {
             successDiv.textContent = message;
             successDiv.style.display = 'block';
             errorDiv.style.display = 'none';
-            logToServer(`Succès: ${message}`, 'success');
+            addLog(`Succès: ${message}`, 'success');
         }
 
         function hideMessages() {
@@ -288,23 +458,19 @@
             successDiv.style.display = 'none';
         }
 
-        function showLoading(show) {
-            loadingDiv.style.display = show ? 'block' : 'none';
-            loginBtn.disabled = show;
-            signupBtn.disabled = show;
-        }
-
         // Basculer entre les formulaires
         showSignup.addEventListener('click', () => {
             loginForm.style.display = 'none';
             signupForm.style.display = 'block';
             hideMessages();
+            addLog('Basculement vers le formulaire d\'inscription', 'info');
         });
 
         showLogin.addEventListener('click', () => {
             signupForm.style.display = 'none';
             loginForm.style.display = 'block';
             hideMessages();
+            addLog('Basculement vers le formulaire de connexion', 'info');
         });
 
         // Connexion
@@ -312,7 +478,7 @@
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
 
-            logToServer(`Tentative de connexion pour: ${email}`, 'info');
+            addLog(`Tentative de connexion pour: ${email}`, 'info');
 
             if (!email || !password) {
                 showError('Veuillez remplir tous les champs');
@@ -320,32 +486,33 @@
             }
 
             try {
-                showLoading(true);
+                loginBtn.disabled = true;
                 hideMessages();
-                logToServer(`Début de la connexion Firebase pour: ${email}`, 'info');
+                addLog(`Début de la connexion Firebase pour: ${email}`, 'info');
 
                 const userCredential = await signInWithEmailAndPassword(auth, email, password);
                 const user = userCredential.user;
 
-                logToServer(`Connexion Firebase réussie pour: ${email}`, 'success');
+                addLog(`Connexion Firebase réussie pour: ${email}`, 'success');
 
                 if (!user.emailVerified) {
-                    logToServer(`Email non vérifié pour: ${email}`, 'warning');
+                    addLog(`Email non vérifié pour: ${email}`, 'warning');
                     showError('Veuillez vérifier votre email avant de vous connecter');
                     await auth.signOut();
                     return;
                 }
 
-                logToServer(`Email vérifié, connexion complète pour: ${email}`, 'success');
+                addLog(`Email vérifié, connexion complète pour: ${email}`, 'success');
                 showSuccess('Connexion réussie ! Redirection...');
                 
-                // Rediriger vers la page d'accueil
                 setTimeout(() => {
                     window.location.href = 'home.html';
                 }, 1500);
 
             } catch (error) {
                 console.error('Erreur de connexion:', error);
+                addLog(`Erreur de connexion pour ${email}: ${error.code} - ${error.message}`, 'error');
+                
                 if (error.code === 'auth/user-not-found') {
                     showError('Aucun compte trouvé avec cet email');
                 } else if (error.code === 'auth/wrong-password') {
@@ -358,7 +525,7 @@
                     showError('Erreur de connexion: ' + error.message);
                 }
             } finally {
-                showLoading(false);
+                loginBtn.disabled = false;
             }
         });
 
@@ -369,7 +536,7 @@
             const passwordConfirm = document.getElementById('signupPasswordConfirm').value;
             const accessCode = document.getElementById('accessCode').value;
 
-            logToServer(`Tentative d'inscription pour: ${email}`, 'info');
+            addLog(`Tentative d'inscription pour: ${email}`, 'info');
 
             if (!email || !password || !passwordConfirm) {
                 showError('Veuillez remplir tous les champs obligatoires');
@@ -391,27 +558,27 @@
             if (accessCode) {
                 if (ACCESS_CODES[accessCode]) {
                     role = ACCESS_CODES[accessCode].role;
-                    logToServer(`Code d'accès valide: ${accessCode} -> rôle: ${role}`, 'info');
+                    addLog(`Code d'accès valide: ${accessCode} -> rôle: ${role}`, 'info');
                 } else {
                     showError('Code d\'accès invalide');
                     return;
                 }
             } else {
-                logToServer(`Pas de code d'accès -> rôle: ${role}`, 'info');
+                addLog(`Pas de code d'accès -> rôle: ${role}`, 'info');
             }
 
             try {
-                showLoading(true);
+                signupBtn.disabled = true;
                 hideMessages();
-                logToServer(`Début de la création du compte Firebase pour: ${email}`, 'info');
+                addLog(`Début de la création du compte Firebase pour: ${email}`, 'info');
 
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                 const user = userCredential.user;
 
-                logToServer(`Compte Firebase créé avec succès pour: ${email}`, 'success');
+                addLog(`Compte Firebase créé avec succès pour: ${email}`, 'success');
 
                 // Créer le profil utilisateur dans Firestore
-                logToServer(`Création du profil Firestore pour: ${email}`, 'info');
+                addLog(`Création du profil Firestore pour: ${email}`, 'info');
                 await setDoc(doc(db, 'users', user.uid), {
                     email: email,
                     role: role,
@@ -420,13 +587,13 @@
                     createdAt: new Date().toISOString()
                 });
 
-                logToServer(`Profil Firestore créé avec succès pour: ${email}`, 'success');
+                addLog(`Profil Firestore créé avec succès pour: ${email}`, 'success');
 
                 // Envoyer l'email de vérification
-                logToServer(`Envoi de l'email de vérification pour: ${email}`, 'info');
+                addLog(`Envoi de l'email de vérification pour: ${email}`, 'info');
                 await user.sendEmailVerification();
 
-                logToServer(`Email de vérification envoyé pour: ${email}`, 'success');
+                addLog(`Email de vérification envoyé pour: ${email}`, 'success');
                 showSuccess('Compte créé ! Vérifiez votre email et cliquez sur le lien pour activer votre compte.');
 
                 // Vider le formulaire
@@ -444,7 +611,7 @@
 
             } catch (error) {
                 console.error('Erreur d\'inscription:', error);
-                logToServer(`Erreur d'inscription pour ${email}: ${error.code} - ${error.message}`, 'error');
+                addLog(`Erreur d'inscription pour ${email}: ${error.code} - ${error.message}`, 'error');
                 
                 if (error.code === 'auth/email-already-in-use') {
                     showError('Cet email est déjà utilisé');
@@ -462,17 +629,25 @@
                     showError('Erreur lors de la création du compte: ' + error.message);
                 }
             } finally {
-                showLoading(false);
+                signupBtn.disabled = false;
             }
         });
 
         // Vérifier l'état de connexion
         onAuthStateChanged(auth, (user) => {
             if (user && user.emailVerified) {
-                // L'utilisateur est connecté et vérifié, rediriger
-                window.location.href = 'home.html';
+                addLog(`Utilisateur déjà connecté: ${user.email}`, 'info');
+                // Ne pas rediriger automatiquement en mode debug
+            } else if (user && !user.emailVerified) {
+                addLog(`Utilisateur connecté mais email non vérifié: ${user.email}`, 'warning');
+            } else {
+                addLog('Aucun utilisateur connecté', 'info');
             }
         });
+
+        // Log initial
+        addLog('Page de debug chargée', 'info');
+        addLog('Firebase initialisé', 'success');
     </script>
 </body>
 </html>

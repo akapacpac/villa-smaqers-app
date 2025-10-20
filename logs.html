@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Villa des Smaqers - Logs en temps réel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: #333;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #00ff00;
+            font-size: 1.5rem;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            background: #00ff00;
+            color: #000;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn:hover {
+            background: #00cc00;
+        }
+
+        .btn-danger {
+            background: #ff0000;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #cc0000;
+        }
+
+        .stats {
+            background: #333;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #00ff00;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+
+        .logs-container {
+            background: #000;
+            border: 2px solid #333;
+            border-radius: 5px;
+            height: 60vh;
+            overflow-y: auto;
+            padding: 15px;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 5px;
+            border-left: 3px solid transparent;
+            word-wrap: break-word;
+        }
+
+        .log-error {
+            border-left-color: #ff0000;
+            background: rgba(255, 0, 0, 0.1);
+            color: #ff6666;
+        }
+
+        .log-success {
+            border-left-color: #00ff00;
+            background: rgba(0, 255, 0, 0.1);
+            color: #66ff66;
+        }
+
+        .log-warning {
+            border-left-color: #ffff00;
+            background: rgba(255, 255, 0, 0.1);
+            color: #ffff66;
+        }
+
+        .log-info {
+            border-left-color: #00ffff;
+            background: rgba(0, 255, 255, 0.1);
+            color: #66ffff;
+        }
+
+        .timestamp {
+            color: #666;
+            font-size: 0.8rem;
+        }
+
+        .auto-scroll {
+            position: sticky;
+            bottom: 10px;
+            right: 10px;
+            background: #333;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 0.8rem;
+        }
+
+        .filter {
+            background: #333;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .filter select {
+            background: #000;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            padding: 5px;
+            border-radius: 3px;
+        }
+
+        .filter input {
+            background: #000;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            padding: 5px;
+            border-radius: 3px;
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔍 Villa des Smaqers - Logs en temps réel</h1>
+        <div class="controls">
+            <button class="btn" onclick="clearLogs()">Effacer</button>
+            <button class="btn" onclick="toggleAutoScroll()" id="autoScrollBtn">Auto-scroll: ON</button>
+            <button class="btn btn-danger" onclick="stopLogging()">Arrêter</button>
+        </div>
+    </div>
+
+    <div class="stats">
+        <div class="stat-item">
+            <div class="stat-number" id="totalLogs">0</div>
+            <div class="stat-label">Total logs</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number" id="errorCount">0</div>
+            <div class="stat-label">Erreurs</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number" id="successCount">0</div>
+            <div class="stat-label">Succès</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number" id="lastUpdate">--:--:--</div>
+            <div class="stat-label">Dernière MAJ</div>
+        </div>
+    </div>
+
+    <div class="filter">
+        <label>Filtrer par type:</label>
+        <select id="typeFilter" onchange="filterLogs()">
+            <option value="all">Tous</option>
+            <option value="error">Erreurs</option>
+            <option value="success">Succès</option>
+            <option value="warning">Avertissements</option>
+            <option value="info">Info</option>
+        </select>
+        <label>Rechercher:</label>
+        <input type="text" id="searchFilter" placeholder="Rechercher dans les logs..." onkeyup="filterLogs()">
+    </div>
+
+    <div class="logs-container" id="logsContainer">
+        <div class="log-entry log-info">
+            <span class="timestamp">[00:00:00]</span> Système de logs initialisé
+        </div>
+    </div>
+
+    <script>
+        let logs = [];
+        let autoScroll = true;
+        let logCount = 0;
+        let errorCount = 0;
+        let successCount = 0;
+        let isLogging = true;
+
+        // Fonction pour ajouter un log
+        function addLog(message, type = 'info') {
+            if (!isLogging) return;
+
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = {
+                id: logCount++,
+                timestamp,
+                message,
+                type,
+                visible: true
+            };
+
+            logs.push(logEntry);
+
+            if (type === 'error') errorCount++;
+            if (type === 'success') successCount++;
+
+            updateStats();
+            renderLogs();
+        }
+
+        // Fonction pour mettre à jour les statistiques
+        function updateStats() {
+            document.getElementById('totalLogs').textContent = logs.length;
+            document.getElementById('errorCount').textContent = errorCount;
+            document.getElementById('successCount').textContent = successCount;
+            document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+        }
+
+        // Fonction pour rendre les logs
+        function renderLogs() {
+            const container = document.getElementById('logsContainer');
+            const typeFilter = document.getElementById('typeFilter').value;
+            const searchFilter = document.getElementById('searchFilter').value.toLowerCase();
+
+            let visibleLogs = logs.filter(log => {
+                const typeMatch = typeFilter === 'all' || log.type === typeFilter;
+                const searchMatch = log.message.toLowerCase().includes(searchFilter);
+                return typeMatch && searchMatch;
+            });
+
+            container.innerHTML = visibleLogs.map(log => `
+                <div class="log-entry log-${log.type}">
+                    <span class="timestamp">[${log.timestamp}]</span> ${log.message}
+                </div>
+            `).join('');
+
+            if (autoScroll) {
+                container.scrollTop = container.scrollHeight;
+            }
+        }
+
+        // Fonction pour effacer les logs
+        function clearLogs() {
+            logs = [];
+            logCount = 0;
+            errorCount = 0;
+            successCount = 0;
+            updateStats();
+            renderLogs();
+            addLog('Logs effacés', 'info');
+        }
+
+        // Fonction pour basculer l'auto-scroll
+        function toggleAutoScroll() {
+            autoScroll = !autoScroll;
+            document.getElementById('autoScrollBtn').textContent = `Auto-scroll: ${autoScroll ? 'ON' : 'OFF'}`;
+        }
+
+        // Fonction pour arrêter le logging
+        function stopLogging() {
+            isLogging = false;
+            addLog('Logging arrêté', 'warning');
+        }
+
+        // Fonction pour filtrer les logs
+        function filterLogs() {
+            renderLogs();
+        }
+
+        // Simuler des logs de test
+        function simulateLogs() {
+            const messages = [
+                { msg: 'Utilisateur connecté: test@example.com', type: 'success' },
+                { msg: 'Tentative de connexion échouée', type: 'error' },
+                { msg: 'Nouvelle commande créée', type: 'info' },
+                { msg: 'Erreur Firebase: auth/user-not-found', type: 'error' },
+                { msg: 'Profil utilisateur mis à jour', type: 'success' },
+                { msg: 'Connexion à la base de données', type: 'info' },
+                { msg: 'Erreur de validation du formulaire', type: 'warning' }
+            ];
+
+            messages.forEach((msg, index) => {
+                setTimeout(() => {
+                    addLog(msg.msg, msg.type);
+                }, index * 2000);
+            });
+        }
+
+        // Démarrer la simulation (à supprimer en production)
+        // simulateLogs();
+
+        // Exposer les fonctions globalement pour les autres pages
+        window.addLog = addLog;
+        window.clearLogs = clearLogs;
+        window.toggleAutoScroll = toggleAutoScroll;
+        window.stopLogging = stopLogging;
+        window.filterLogs = filterLogs;
+
+        // Log initial
+        addLog('Page de logs chargée', 'info');
+    </script>
+</body>
+</html>
