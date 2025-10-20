@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Villa des Smaqers Brisés - Connexion</title>
+    <title>Villa des Smaqers - Auth Simple</title>
     <style>
         * {
             margin: 0;
@@ -98,14 +98,6 @@
             box-shadow: none;
         }
 
-        .btn-secondary {
-            background: #6c757d;
-        }
-
-        .btn-secondary:hover {
-            background: #5a6268;
-        }
-
         .error {
             background: #f8d7da;
             color: #721c24;
@@ -124,12 +116,6 @@
             margin-bottom: 1rem;
             display: none;
             border-left: 4px solid #28a745;
-        }
-
-        .loading {
-            text-align: center;
-            color: #666;
-            padding: 1rem;
         }
 
         .form-toggle {
@@ -176,6 +162,15 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        .no-email-warning {
+            background: #fff3cd;
+            color: #856404;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid #ffc107;
+        }
     </style>
 </head>
 <body>
@@ -183,6 +178,11 @@
         <div class="logo">
             <h1>🍰 Villa des Smaqers Brisés</h1>
             <p>Commande de crêpes, cookies et glaces</p>
+        </div>
+
+        <div class="no-email-warning">
+            <strong>⚠️ Mode sans email :</strong><br>
+            Les comptes sont créés directement sans vérification email.
         </div>
 
         <div id="error" class="error"></div>
@@ -260,7 +260,7 @@
     <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, sendEmailVerification } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
         import { getFirestore, doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
         // Configuration Firebase
@@ -302,41 +302,21 @@
             'membre5': { role: 'member', permanent: false }
         };
 
-        // Système de logging distant
+        // Système de logging simple
         function logToRemote(message, type = 'info') {
-            const logData = {
-                message,
-                type,
-                timestamp: new Date().toISOString(),
-                userAgent: navigator.userAgent,
-                url: window.location.href
-            };
-
+            console.log(`[${type.toUpperCase()}] ${message}`);
+            
             // Envoyer vers les logs simples
-            if (window.parent && window.parent.addLog) {
-                window.parent.addLog(message, type);
-            }
-
-            // Aussi envoyer vers un service de logging
             fetch('https://httpbin.org/post', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(logData)
+                body: JSON.stringify({
+                    message,
+                    type,
+                    timestamp: new Date().toISOString(),
+                    url: window.location.href
+                })
             }).catch(() => {});
-
-            // Logger localement
-            console.log(`[${type.toUpperCase()}] ${message}`);
-        }
-
-        // Fonction pour nettoyer les profils orphelins
-        async function cleanupOrphanedProfiles() {
-            try {
-                logToRemote('Nettoyage des profils orphelins...', 'info');
-                // Cette fonction pourrait être appelée périodiquement
-                // pour nettoyer les profils Firestore qui n'ont plus d'utilisateur Auth correspondant
-            } catch (error) {
-                logToRemote(`Erreur nettoyage profils: ${error.message}`, 'error');
-            }
         }
 
         // Fonctions utilitaires
@@ -404,15 +384,6 @@
                 const user = userCredential.user;
 
                 logToRemote(`Connexion réussie: ${email}`, 'success');
-
-                if (!user.emailVerified) {
-                    logToRemote(`Email non vérifié: ${email}`, 'warning');
-                    showError('Veuillez vérifier votre email avant de vous connecter');
-                    await auth.signOut();
-                    return;
-                }
-
-                logToRemote(`Connexion complète: ${email}`, 'success');
                 showSuccess('Connexion réussie ! Redirection...');
                 
                 setTimeout(() => {
@@ -468,13 +439,13 @@
             if (accessCode) {
                 if (ACCESS_CODES[accessCode]) {
                     role = ACCESS_CODES[accessCode].role;
-                    logToRemote(`Code valide: ${accessCode} -> ${role}`, 'info');
+                    logToRemote(`Code valide: ${accessCode} -> rôle: ${role}`, 'info');
                 } else {
                     showError('Code d\'accès invalide');
                     return;
                 }
             } else {
-                logToRemote(`Pas de code -> ${role}`, 'info');
+                logToRemote(`Pas de code -> rôle: ${role}`, 'info');
             }
 
             try {
@@ -492,7 +463,6 @@
                 
                 if (userDoc.exists()) {
                     logToRemote(`Profil Firestore existant trouvé pour: ${email}, mise à jour`, 'warning');
-                    // Mettre à jour le profil existant
                     await setDoc(userDocRef, {
                         email: email,
                         role: role,
@@ -502,7 +472,6 @@
                     }, { merge: true });
                 } else {
                     logToRemote(`Création nouveau profil Firestore pour: ${email}`, 'info');
-                    // Créer un nouveau profil
                     await setDoc(userDocRef, {
                         email: email,
                         role: role,
@@ -513,12 +482,7 @@
                 }
 
                 logToRemote(`Profil Firestore configuré: ${email}`, 'success');
-
-                // Envoyer l'email de vérification
-                await sendEmailVerification(user);
-
-                logToRemote(`Email vérification envoyé: ${email}`, 'success');
-                showSuccess('Compte créé ! Vérifiez votre email et cliquez sur le lien pour activer votre compte.');
+                showSuccess('Compte créé avec succès ! Vous pouvez maintenant vous connecter.');
 
                 // Vider le formulaire
                 document.getElementById('signupEmail').value = '';
@@ -538,8 +502,7 @@
                 logToRemote(`Erreur inscription ${email}: ${error.code} - ${error.message}`, 'error');
                 
                 if (error.code === 'auth/email-already-in-use') {
-                    showError('Cet email est déjà utilisé. Si vous venez de le supprimer, attendez quelques minutes avant de réessayer.');
-                    logToRemote(`Email déjà utilisé: ${email} - Possible conflit Firestore`, 'warning');
+                    showError('Cet email est déjà utilisé');
                 } else if (error.code === 'auth/weak-password') {
                     showError('Le mot de passe est trop faible');
                 } else if (error.code === 'auth/invalid-email') {
@@ -562,14 +525,14 @@
 
         // Vérifier l'état de connexion
         onAuthStateChanged(auth, (user) => {
-            if (user && user.emailVerified) {
+            if (user) {
                 logToRemote(`Utilisateur connecté: ${user.email}`, 'info');
                 window.location.href = 'home.html';
             }
         });
 
         // Log initial
-        logToRemote('Page de connexion chargée', 'info');
+        logToRemote('Page d\'authentification simple chargée', 'info');
     </script>
 </body>
 </html>
