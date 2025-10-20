@@ -568,7 +568,7 @@
         onAuthStateChanged(auth, (user) => {
             if (user && user.emailVerified) {
                 logToRemote(`Utilisateur connecté: ${user.email}`, 'info');
-                window.location.href = 'home.html';
+                window.location.href = 'final-app.html';
             }
         });
 
