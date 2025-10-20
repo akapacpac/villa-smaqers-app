@@ -2308,10 +2308,14 @@
             const orderList = orders.map(order => `
                 <div style="border: 1px solid #ddd; padding: 10px; margin: 5px 0; border-radius: 5px;">
                     <strong>${order.item}</strong><br>
-                    <small>Client: ${order.profile.firstName} ${order.profile.lastName}</small><br>
+                    <small>Client: ${(order.profile && order.profile.firstName && order.profile.lastName) ? `${order.profile.firstName} ${order.profile.lastName}` : 'Nom inconnu'}</small><br>
                     <small>Email: ${order.profile.email}</small><br>
                     <small>Salle: ${order.classroom}</small><br>
-                    <small>Date: ${new Date(order.timestamp).toLocaleString()}</small>
+                    <small>Date: ${(function() { 
+                        if (!order.timestamp) return 'Date non disponible';
+                        const d = new Date(order.timestamp);
+                        return isNaN(d.getTime()) ? 'Date non disponible' : d.toLocaleString('fr-FR');
+                    })()}</small>
                 </div>
             `).join('');
             
@@ -2395,7 +2399,7 @@
             const orderList = todayOrders.map(order => `
                 <div style="border: 1px solid #ddd; padding: 10px; margin: 5px 0; border-radius: 5px;">
                     <strong>${order.item}</strong><br>
-                    <small>Client: ${order.profile.firstName} ${order.profile.lastName}</small><br>
+                    <small>Client: ${(order.profile && order.profile.firstName && order.profile.lastName) ? `${order.profile.firstName} ${order.profile.lastName}` : 'Nom inconnu'}</small><br>
                     <small>Salle: ${order.classroom}</small><br>
                     <small>Heure: ${new Date(order.timestamp).toLocaleTimeString()}</small>
                 </div>
@@ -2438,9 +2442,13 @@
             const orderList = pendingOrders.map(order => `
                 <div style="border: 1px solid #ddd; padding: 10px; margin: 5px 0; border-radius: 5px;">
                     <strong>${order.item}</strong><br>
-                    <small>Client: ${order.profile.firstName} ${order.profile.lastName}</small><br>
+                    <small>Client: ${(order.profile && order.profile.firstName && order.profile.lastName) ? `${order.profile.firstName} ${order.profile.lastName}` : 'Nom inconnu'}</small><br>
                     <small>Salle: ${order.classroom}</small><br>
-                    <small>Date: ${new Date(order.timestamp).toLocaleString()}</small>
+                    <small>Date: ${(function() { 
+                        if (!order.timestamp) return 'Date non disponible';
+                        const d = new Date(order.timestamp);
+                        return isNaN(d.getTime()) ? 'Date non disponible' : d.toLocaleString('fr-FR');
+                    })()}</small>
                 </div>
             `).join('');
             
@@ -2497,7 +2505,7 @@
                             ${orders.map(order => `
                                 <tr>
                                     <td>${order.timestamp}</td>
-                                    <td>${order.profile.firstName} ${order.profile.lastName}</td>
+                                    <td>${(order.profile && order.profile.firstName && order.profile.lastName) ? `${order.profile.firstName} ${order.profile.lastName}` : 'Nom inconnu'}</td>
                                     <td>${order.profile.email}</td>
                                     <td>${order.item}</td>
                                     <td>${order.classroom}</td>
@@ -2857,8 +2865,12 @@
                             <tbody>
                                 ${orders.map(order => `
                                     <tr style="border-bottom: 1px solid #dee2e6;">
-                                        <td style="padding: 15px;">${order.timestamp ? new Date(order.timestamp).toLocaleString('fr-FR') : new Date().toLocaleString('fr-FR')}</td>
-                                        <td style="padding: 15px; font-weight: 500;">${order.userName}</td>
+                                        <td style="padding: 15px;">${(function() { 
+                                            if (!order.timestamp) return 'Date non disponible';
+                                            const d = new Date(order.timestamp);
+                                            return isNaN(d.getTime()) ? 'Date non disponible' : d.toLocaleString('fr-FR');
+                                        })()}</td>
+                                        <td style="padding: 15px; font-weight: 500;">${order.userName || order.firstName + ' ' + order.lastName || 'Nom inconnu'}</td>
                                         <td style="padding: 15px;">${order.item}</td>
                                         <td style="padding: 15px;">${order.classroom}</td>
                                         <td style="padding: 15px;">
