@@ -1498,11 +1498,19 @@
                     if (mainApp) mainApp.style.display = 'block';
                 } else {
                     // User not verified, redirect to login
-                    window.location.href = 'app-with-login.html';
+                    // Show registration form instead of redirecting
+                const registrationForm = document.getElementById("registration-form");
+                const mainApp = document.getElementById("main-app");
+                if (registrationForm) registrationForm.style.display = "block";
+                if (mainApp) mainApp.style.display = "none";
                 }
             } else {
                 // No user logged in, redirect to login
-                window.location.href = 'app-with-login.html';
+                // Show registration form instead of redirecting
+                const registrationForm = document.getElementById("registration-form");
+                const mainApp = document.getElementById("main-app");
+                if (registrationForm) registrationForm.style.display = "block";
+                if (mainApp) mainApp.style.display = "none";
             }
         }
         
