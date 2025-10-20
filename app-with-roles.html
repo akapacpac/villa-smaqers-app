@@ -1210,6 +1210,22 @@
                                 <div class="stat-label">À livrer</div>
                             </div>
                         </div>
+                        
+                        <!-- Onglets simples pour les commandes -->
+                        <div style="margin-top: 30px; text-align: center;">
+                            <h3 style="color: #6c5ce7; margin-bottom: 20px;">📋 Gestion des Commandes</h3>
+                            <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+                                <button onclick="showSimpleTable('all')" style="background: #6c5ce7; color: white; border: none; padding: 10px 20px; border-radius: 25px; cursor: pointer;">Toutes</button>
+                                <button onclick="showSimpleTable('pending')" style="background: #f8f9fa; color: #333; border: 2px solid #dee2e6; padding: 10px 20px; border-radius: 25px; cursor: pointer;">En attente</button>
+                                <button onclick="showSimpleTable('validated')" style="background: #f8f9fa; color: #333; border: 2px solid #dee2e6; padding: 10px 20px; border-radius: 25px; cursor: pointer;">Validées</button>
+                                <button onclick="showSimpleTable('delivered')" style="background: #f8f9fa; color: #333; border: 2px solid #dee2e6; padding: 10px 20px; border-radius: 25px; cursor: pointer;">Livrées</button>
+                                <button onclick="showSimpleTable('cancelled')" style="background: #f8f9fa; color: #333; border: 2px solid #dee2e6; padding: 10px 20px; border-radius: 25px; cursor: pointer;">Annulées</button>
+                            </div>
+                            
+                            <div id="simple-table-container" style="margin-top: 20px;">
+                                <!-- Tableau simple s'affichera ici -->
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
@@ -2749,7 +2765,134 @@
         
         // Show delivery orders (5th card)
         function showDeliveryOrders() {
-            alert('Commandes à livrer - Fonctionnalité en cours de développement');
+            showSimpleTable('validated');
+        }
+
+        // Show simple table for orders
+        async function showSimpleTable(tabName) {
+            console.log('Showing simple table for:', tabName);
+            
+            try {
+                // Load orders from Firebase
+                const ordersRef = collection(db, 'orders');
+                const snapshot = await getDocs(ordersRef);
+                const allOrders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                // Filter orders based on tab
+                let filteredOrders = [];
+                switch(tabName) {
+                    case 'all':
+                        filteredOrders = allOrders;
+                        break;
+                    case 'pending':
+                        filteredOrders = allOrders.filter(order => order.status === 'pending' || !order.status);
+                        break;
+                    case 'validated':
+                        filteredOrders = allOrders.filter(order => order.status === 'validated');
+                        break;
+                    case 'delivered':
+                        filteredOrders = allOrders.filter(order => order.status === 'delivered');
+                        break;
+                    case 'cancelled':
+                        filteredOrders = allOrders.filter(order => order.status === 'cancelled');
+                        break;
+                }
+                
+                // Display simple table
+                displaySimpleTable(filteredOrders, tabName);
+                
+            } catch (error) {
+                console.error('Erreur chargement commandes:', error);
+                alert('Erreur lors du chargement des commandes');
+            }
+        }
+
+        // Display simple table
+        function displaySimpleTable(orders, tabName) {
+            const container = document.getElementById('simple-table-container');
+            
+            if (orders.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #666; background: white; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                        <div style="font-size: 48px; margin-bottom: 20px;">📋</div>
+                        <h3>Aucune commande ${getTabTitle(tabName).toLowerCase()}</h3>
+                    </div>
+                `;
+                return;
+            }
+            
+            const tableHTML = `
+                <div style="background: white; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow: hidden;">
+                    <div style="background: linear-gradient(135deg, #6c5ce7, #a29bfe); color: white; padding: 20px; font-weight: bold; font-size: 18px;">
+                        📊 ${getTabTitle(tabName)} (${orders.length} commande${orders.length > 1 ? 's' : ''})
+                    </div>
+                    
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: #f8f9fa;">
+                                    <th style="padding: 15px; text-align: left; border-bottom: 2px solid #dee2e6; font-weight: bold;">Date</th>
+                                    <th style="padding: 15px; text-align: left; border-bottom: 2px solid #dee2e6; font-weight: bold;">Nom</th>
+                                    <th style="padding: 15px; text-align: left; border-bottom: 2px solid #dee2e6; font-weight: bold;">Produit</th>
+                                    <th style="padding: 15px; text-align: left; border-bottom: 2px solid #dee2e6; font-weight: bold;">Salle</th>
+                                    <th style="padding: 15px; text-align: left; border-bottom: 2px solid #dee2e6; font-weight: bold;">Statut</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${orders.map(order => `
+                                    <tr style="border-bottom: 1px solid #dee2e6;">
+                                        <td style="padding: 15px;">${new Date(order.timestamp).toLocaleString('fr-FR')}</td>
+                                        <td style="padding: 15px; font-weight: 500;">${order.userName}</td>
+                                        <td style="padding: 15px;">${order.item}</td>
+                                        <td style="padding: 15px;">${order.classroom}</td>
+                                        <td style="padding: 15px;">
+                                            <span style="padding: 6px 12px; border-radius: 15px; font-size: 12px; font-weight: bold; text-transform: uppercase; background: ${getStatusColor(order.status)}; color: white;">
+                                                ${getStatusText(order.status)}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+            
+            container.innerHTML = tableHTML;
+        }
+
+        // Get tab title
+        function getTabTitle(tabName) {
+            const titles = {
+                'all': 'Toutes les commandes',
+                'pending': 'Commandes en attente',
+                'validated': 'Commandes validées',
+                'delivered': 'Commandes livrées',
+                'cancelled': 'Commandes annulées'
+            };
+            return titles[tabName] || tabName;
+        }
+
+        // Get status text
+        function getStatusText(status) {
+            const statusTexts = {
+                'pending': 'En attente',
+                'validated': 'Validée',
+                'delivered': 'Livrée',
+                'cancelled': 'Annulée'
+            };
+            return statusTexts[status] || 'En attente';
+        }
+
+        // Get status color
+        function getStatusColor(status) {
+            const colors = {
+                'pending': '#ffc107',
+                'validated': '#28a745',
+                'delivered': '#007bff',
+                'cancelled': '#dc3545'
+            };
+            return colors[status] || '#ffc107';
         }
 
         // Debug function for statistics
