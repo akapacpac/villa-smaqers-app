@@ -588,6 +588,20 @@
             window.location.href = 'test-app.html';
         };
 
+        // Vérifier si c'est une déconnexion
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('logout')) {
+            // Forcer la déconnexion Firebase
+            signOut(auth).then(() => {
+                console.log('Déconnexion Firebase forcée');
+                logToRemote('Déconnexion forcée effectuée', 'info');
+                // Nettoyer l'URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }).catch((error) => {
+                console.log('Erreur lors de la déconnexion forcée:', error);
+            });
+        }
+
         // Log initial
         logToRemote('Page de connexion chargée', 'info');
     </script>
