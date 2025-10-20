@@ -2799,6 +2799,13 @@
             console.log('Showing simple table for:', tabName);
             currentTab = tabName; // Save current tab
             
+            // Update active tab
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            const activeTabBtn = document.getElementById('tab-' + tabName);
+            if (activeTabBtn) {
+                activeTabBtn.classList.add('active');
+            }
+            
             try {
                 // Load orders from Firebase
                 const ordersRef = collection(db, 'orders');
@@ -2836,7 +2843,7 @@
 
         // Display simple table
         function displaySimpleTable(orders, tabName) {
-            const container = document.getElementById('simple-table-container');
+            const container = document.getElementById('orders-table-container');
             
             if (orders.length === 0) {
                 container.innerHTML = `
