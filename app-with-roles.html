@@ -811,7 +811,7 @@
 
       onAuthStateChanged(auth, async (user) => {
         if (!user) { showAuthRequired('Connectez-vous pour accéder à l\'application.'); return; }
-        if (!user.emailVerified) { showAuthRequired('Votre email n\'est pas vérifié. Vérifiez-le puis reconnectez-vous.'); return; }
+        // Ne pas vérifier l'email pour simplifier
         await ensureUserProfile(user);
       });
     </script>
