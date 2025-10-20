@@ -510,7 +510,7 @@
                 logToRemote(`Profil Firestore configuré: ${email}`, 'success');
 
                 // Envoyer l'email de vérification
-                await user.sendEmailVerification();
+                await sendEmailVerification(user);
 
                 logToRemote(`Email vérification envoyé: ${email}`, 'success');
                 showSuccess('Compte créé ! Vérifiez votre email et cliquez sur le lien pour activer votre compte.');
