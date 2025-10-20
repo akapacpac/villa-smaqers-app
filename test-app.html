@@ -1051,7 +1051,12 @@
 
         window.logout = function() {
             if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
-                window.location.href = 'login.html';
+                // Simuler une vraie déconnexion
+                alert('Déconnexion réussie ! Redirection vers la page de connexion...');
+                // Attendre un peu avant la redirection
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 1000);
             }
         };
 

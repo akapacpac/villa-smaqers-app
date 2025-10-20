@@ -206,6 +206,12 @@
                 <span id="loginText">Se connecter</span>
             </button>
             
+            <div class="form-group" id="appAccess" style="display: none;">
+                <button type="button" onclick="goToApp()" class="btn btn-success">
+                    🚀 Accéder à l'application
+                </button>
+            </div>
+            
             <div class="form-toggle">
                 <a id="showSignup">Pas de compte ? S'inscrire</a>
             </div>
@@ -568,9 +574,19 @@
         onAuthStateChanged(auth, (user) => {
             if (user && user.emailVerified) {
                 logToRemote(`Utilisateur connecté: ${user.email}`, 'info');
-                window.location.href = 'final-app.html';
+                // Afficher le bouton d'accès à l'application
+                document.getElementById('appAccess').style.display = 'block';
+                console.log('Utilisateur connecté, bouton d\'accès affiché');
+            } else {
+                // Masquer le bouton si pas connecté
+                document.getElementById('appAccess').style.display = 'none';
             }
         });
+
+        // Fonction pour accéder à l'application
+        window.goToApp = function() {
+            window.location.href = 'test-app.html';
+        };
 
         // Log initial
         logToRemote('Page de connexion chargée', 'info');
