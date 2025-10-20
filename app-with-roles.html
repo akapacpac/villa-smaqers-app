@@ -2611,19 +2611,23 @@
             
             try {
                 // Save order to Firebase
+                const now = new Date();
                 const order = {
                     item: selectedItem,
                     classroom: finalClassroom,
-                    timestamp: new Date().toISOString(),
+                    timestamp: now.toISOString(),
+                    timestampReadable: now.toLocaleString('fr-FR'),
                     profile: currentUser,
                     userName: `${currentUser.firstName} ${currentUser.lastName}`,
                     userEmail: currentUser.email,
-                    status: 'pending'
+                    status: 'pending',
+                    createdAt: now.getTime()
                 };
                 
                 await addDoc(collection(db, 'orders'), order);
                 
-                alert('Commande passée avec succès !');
+                // Show festive popup
+                showOrderSuccessPopup();
                 backToMenu();
                 document.getElementById('classroom').value = '';
                 document.getElementById('customClassroom').value = '';
@@ -2868,7 +2872,7 @@
                             <tbody>
                                 ${orders.map(order => `
                                     <tr style="border-bottom: 1px solid #dee2e6;">
-                                        <td style="padding: 15px;">${(function() { 
+                                        <td style="padding: 15px;">${order.timestampReadable || (function() { 
                                             if (!order.timestamp) return 'Date non disponible';
                                             const d = new Date(order.timestamp);
                                             return isNaN(d.getTime()) ? 'Date non disponible' : d.toLocaleString('fr-FR');
@@ -3167,6 +3171,99 @@
 
         // Test function - call this in console to debug
         window.debugOrders = debugOrderData;
+
+        // Show festive order success popup
+        function showOrderSuccessPopup() {
+            // Create popup overlay
+            const overlay = document.createElement('div');
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 10000;
+                animation: fadeIn 0.3s ease;
+            `;
+
+            // Create popup content
+            const popup = document.createElement('div');
+            popup.style.cssText = `
+                background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+                color: white;
+                padding: 40px;
+                border-radius: 20px;
+                text-align: center;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+                animation: slideIn 0.5s ease;
+                max-width: 400px;
+                margin: 20px;
+            `;
+
+            popup.innerHTML = `
+                <div style="font-size: 60px; margin-bottom: 20px; animation: bounce 1s ease infinite;">🎉</div>
+                <h2 style="margin: 0 0 15px 0; font-size: 28px; font-weight: bold;">Merci !</h2>
+                <p style="margin: 0 0 20px 0; font-size: 18px; opacity: 0.9;">Votre commande est passée avec succès !</p>
+                <div style="font-size: 24px; margin-bottom: 20px;">🍰✨🎊</div>
+                <button onclick="this.parentElement.parentElement.remove()" style="
+                    background: rgba(255, 255, 255, 0.2);
+                    border: 2px solid white;
+                    color: white;
+                    padding: 12px 30px;
+                    border-radius: 25px;
+                    font-size: 16px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                " onmouseover="this.style.background='white'; this.style.color='#6c5ce7';" onmouseout="this.style.background='rgba(255, 255, 255, 0.2)'; this.style.color='white';">
+                    Parfait ! ✨
+                </button>
+            `;
+
+            // Add CSS animations
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                @keyframes slideIn {
+                    from { transform: translateY(-50px) scale(0.8); opacity: 0; }
+                    to { transform: translateY(0) scale(1); opacity: 1; }
+                }
+                @keyframes bounce {
+                    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+                    40% { transform: translateY(-10px); }
+                    60% { transform: translateY(-5px); }
+                }
+            `;
+            document.head.appendChild(style);
+
+            overlay.appendChild(popup);
+            document.body.appendChild(overlay);
+
+            // Auto-remove after 4 seconds
+            setTimeout(() => {
+                if (overlay.parentElement) {
+                    overlay.style.animation = 'fadeOut 0.3s ease';
+                    setTimeout(() => overlay.remove(), 300);
+                }
+            }, 4000);
+
+            // Add fadeOut animation
+            const fadeOutStyle = document.createElement('style');
+            fadeOutStyle.textContent = `
+                @keyframes fadeOut {
+                    from { opacity: 1; }
+                    to { opacity: 0; }
+                }
+            `;
+            document.head.appendChild(fadeOutStyle);
+        }
 
         // Initialize app when page loads
         document.addEventListener('DOMContentLoaded', initApp);
