@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vérification Email Firebase</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .step {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border-left: 4px solid #ffc107;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border-left: 4px solid #28a745;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border-left: 4px solid #dc3545;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        .code {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+        .logs {
+            background: #000;
+            color: #0f0;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Vérification Email Firebase</h1>
+        
+        <div class="warning">
+            <strong>⚠️ Problème détecté :</strong><br>
+            L'email dit "envoyé" mais tu ne reçois rien. Vérifions la configuration Firebase.
+        </div>
+
+        <div class="step">
+            <h3>1. Vérifier la configuration Firebase</h3>
+            <p>Va dans Firebase Console → Authentication → Settings → Templates</p>
+            <p>Vérifie que l'email de vérification est activé et configuré.</p>
+        </div>
+
+        <div class="step">
+            <h3>2. Tester l'envoi d'email</h3>
+            <p>Testons l'envoi d'email avec ton compte existant :</p>
+            <input type="email" id="testEmail" placeholder="pascalmartinlalande@gmail.com" style="width: 100%; padding: 10px; margin: 10px 0;">
+            <br>
+            <button class="btn" onclick="testEmailSending()">Tester l'envoi d'email</button>
+            <div id="emailTestResult"></div>
+        </div>
+
+        <div class="step">
+            <h3>3. Vérifier les logs Firebase</h3>
+            <p>Va dans Firebase Console → Functions → Logs</p>
+            <p>Cherche des erreurs liées à l'envoi d'emails.</p>
+        </div>
+
+        <div class="step">
+            <h3>4. Vérifier les paramètres du projet</h3>
+            <p>Va dans Firebase Console → Project Settings → General</p>
+            <p>Vérifie que le domaine autorisé est bien configuré.</p>
+        </div>
+
+        <div class="step">
+            <h3>5. Test de configuration</h3>
+            <button class="btn btn-success" onclick="checkFirebaseConfig()">Vérifier la config Firebase</button>
+            <button class="btn btn-warning" onclick="testEmailVerification()">Test Email Verification</button>
+            <div id="configResult"></div>
+        </div>
+
+        <div class="logs" id="logs">
+            <div>[00:00:00] Système de vérification initialisé</div>
+        </div>
+
+        <div class="step">
+            <h3>6. Solutions possibles</h3>
+            <ul>
+                <li><strong>Vérifier les spams</strong> - L'email peut être dans le dossier spam</li>
+                <li><strong>Attendre 5-10 minutes</strong> - Parfois il y a un délai</li>
+                <li><strong>Vérifier le domaine autorisé</strong> dans Firebase</li>
+                <li><strong>Vérifier les quotas</strong> Firebase (limite d'emails gratuits)</li>
+                <li><strong>Vérifier la configuration SMTP</strong> si utilisée</li>
+            </ul>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInWithEmailAndPassword, sendEmailVerification } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDqCYiGvSYitgoPnGdxMzkautcYl511E3I",
+            authDomain: "villa-smaqers-brises.firebaseapp.com",
+            projectId: "villa-smaqers-brises",
+            storageBucket: "villa-smaqers-brises.firebasestorage.app",
+            messagingSenderId: "387262093007",
+            appId: "1:387262093007:web:76173a1e3cd49d80a249ba",
+            measurementId: "G-TBNFR17E82"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        function addLog(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const log = `[${timestamp}] ${message}`;
+            const div = document.createElement('div');
+            div.textContent = log;
+            document.getElementById('logs').appendChild(div);
+            document.getElementById('logs').scrollTop = document.getElementById('logs').scrollHeight;
+            console.log(log);
+        }
+
+        window.checkFirebaseConfig = function() {
+            addLog('=== VÉRIFICATION CONFIG FIREBASE ===');
+            addLog(`API Key: ${firebaseConfig.apiKey.substring(0, 10)}...`);
+            addLog(`Auth Domain: ${firebaseConfig.authDomain}`);
+            addLog(`Project ID: ${firebaseConfig.projectId}`);
+            addLog(`App ID: ${firebaseConfig.appId}`);
+            
+            document.getElementById('configResult').innerHTML = `
+                <div class="success">
+                    <strong>✅ Configuration Firebase :</strong><br>
+                    API Key: ${firebaseConfig.apiKey.substring(0, 20)}...<br>
+                    Auth Domain: ${firebaseConfig.authDomain}<br>
+                    Project ID: ${firebaseConfig.projectId}
+                </div>
+            `;
+        };
+
+        window.testEmailSending = async function() {
+            const email = document.getElementById('testEmail').value;
+            if (!email) {
+                addLog('❌ Veuillez entrer un email');
+                return;
+            }
+
+            addLog(`=== TEST ENVOI EMAIL POUR: ${email} ===`);
+            
+            try {
+                // Essayer de se connecter d'abord
+                addLog('1. Tentative de connexion...');
+                const password = prompt('Entrez votre mot de passe:');
+                if (!password) {
+                    addLog('❌ Mot de passe requis');
+                    return;
+                }
+
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                addLog(`✅ Connexion réussie: ${user.email}`);
+                addLog(`   - UID: ${user.uid}`);
+                addLog(`   - Email vérifié: ${user.emailVerified}`);
+
+                // Tester l'envoi d'email
+                addLog('2. Test envoi email de vérification...');
+                await sendEmailVerification(user);
+                addLog('✅ Email de vérification envoyé avec succès');
+                
+                document.getElementById('emailTestResult').innerHTML = `
+                    <div class="success">
+                        <strong>✅ Email envoyé !</strong><br>
+                        Vérifiez votre boîte mail (et spam) pour ${email}
+                    </div>
+                `;
+
+            } catch (error) {
+                addLog(`❌ Erreur: ${error.message}`);
+                addLog(`   - Code: ${error.code}`);
+                
+                document.getElementById('emailTestResult').innerHTML = `
+                    <div class="error">
+                        <strong>❌ Erreur:</strong><br>
+                        ${error.message}<br>
+                        Code: ${error.code}
+                    </div>
+                `;
+            }
+        };
+
+        window.testEmailVerification = function() {
+            addLog('=== TEST FONCTION SENDEMAILVERIFICATION ===');
+            addLog(`Type de sendEmailVerification: ${typeof sendEmailVerification}`);
+            addLog(`Fonction disponible: ${sendEmailVerification ? 'OUI' : 'NON'}`);
+            
+            if (typeof sendEmailVerification === 'function') {
+                addLog('✅ La fonction sendEmailVerification est disponible');
+            } else {
+                addLog('❌ La fonction sendEmailVerification n\'est pas disponible');
+            }
+        };
+
+        addLog('Système de vérification email chargé');
+        addLog('Prêt pour les tests');
+    </script>
+</body>
+</html>
