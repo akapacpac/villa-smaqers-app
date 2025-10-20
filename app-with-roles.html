@@ -752,6 +752,7 @@
     <script type="module">
       import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
       import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+      import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
       const firebaseConfig = {
         apiKey: "AIzaSyDqCYiGvSYitgoPnGdxMzkautcYl511E3I",
         authDomain: "villa-smaqers-brises.firebaseapp.com",
@@ -763,6 +764,33 @@
       };
       const app = initializeApp(firebaseConfig);
       const auth = getAuth(app);
+      const db = getFirestore(app);
+
+      const ADMIN_EMAILS = ['pascalmartinlalande@gmail.com'];
+
+      async function ensureUserProfile(user){
+        try {
+          const uid = user.uid;
+          const ref = doc(db, 'users', uid);
+          const snap = await getDoc(ref);
+          const email = user.email || '';
+          const displayName = user.displayName || '';
+          const names = displayName.split(' ');
+          const firstName = names[0] || '';
+          const lastName = names.slice(1).join(' ') || '';
+          const role = ADMIN_EMAILS.includes(email) ? 'admin' : 'student';
+          if (!snap.exists()) {
+            await setDoc(ref, {
+              uid,
+              email,
+              firstName,
+              lastName,
+              role,
+              registrationDate: serverTimestamp()
+            });
+          }
+        } catch(e){ /* no-op */ }
+      }
 
       // Show blocking overlay instead of redirect to avoid loops
       function showAuthRequired(reasonText) {
@@ -778,14 +806,10 @@
         if (document.readyState !== 'loading') document.body.appendChild(overlay);
       }
 
-      onAuthStateChanged(auth, (user) => {
-        if (!user) {
-          showAuthRequired('Connectez-vous pour accéder à l\'application.');
-          return;
-        }
-        if (!user.emailVerified) {
-          showAuthRequired('Votre email n\'est pas vérifié. Vérifiez-le puis reconnectez-vous.');
-        }
+      onAuthStateChanged(auth, async (user) => {
+        if (!user) { showAuthRequired('Connectez-vous pour accéder à l\'application.'); return; }
+        if (!user.emailVerified) { showAuthRequired('Votre email n\'est pas vérifié. Vérifiez-le puis reconnectez-vous.'); return; }
+        await ensureUserProfile(user);
       });
     </script>
 </head>
