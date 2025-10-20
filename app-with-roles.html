@@ -2925,6 +2925,9 @@
                     updatedAt: new Date().toISOString()
                 });
                 
+                // Reload statistics first
+                await loadStatistics();
+                
                 // Reload the current table
                 showSimpleTable(currentTab);
                 
