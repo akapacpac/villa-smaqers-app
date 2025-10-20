@@ -866,6 +866,20 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- Statistiques publiques -->
+                    <div class="card" style="margin-top: 20px;">
+                        <div class="card-title">
+                            <span class="card-icon">📊</span>
+                            Statistiques
+                        </div>
+                        <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 20px;">
+                            <div class="stat-card" style="background: linear-gradient(135deg, #00b894, #00cec9); color: white; padding: 20px; border-radius: 15px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                                <div class="stat-number" id="public-delivered-orders" style="font-size: 2.5em; font-weight: bold; margin-bottom: 10px;">0</div>
+                                <div class="stat-label" style="font-size: 1.1em; opacity: 0.9;">Produits livrés</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
                 <!-- Registration Page -->
@@ -2249,12 +2263,21 @@
                 // Calculate delivery orders (validated but not delivered)
                 const deliveryOrders = orders.filter(order => order.status === 'validated');
                 
+                // Calculate delivered orders (for public stats)
+                const deliveredOrders = orders.filter(order => order.status === 'delivered');
+                
                 // Update statistics numbers
                 document.getElementById('total-orders').textContent = orders.length;
                 document.getElementById('total-users').textContent = users.length;
                 document.getElementById('today-orders').textContent = todayOrders.length;
                 document.getElementById('pending-orders').textContent = pendingOrders.length;
                 document.getElementById('delivery-orders').textContent = deliveryOrders.length;
+                
+                // Update public statistics (visible to all users)
+                const publicDeliveredElement = document.getElementById('public-delivered-orders');
+                if (publicDeliveredElement) {
+                    publicDeliveredElement.textContent = deliveredOrders.length;
+                }
                 
                 // Store data for detail views
                 window.statsData = {
@@ -2860,6 +2883,11 @@
                                                         ❌ Annuler
                                                     </button>
                                                 ` : ''}
+                                                ${order.status === 'delivered' ? `
+                                                    <button onclick="deleteOrder('${order.id}')" style="background: #6c757d; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 12px;" title="Supprimer de l'historique">
+                                                        🗑️ Supprimer
+                                                    </button>
+                                                ` : ''}
                                             </div>
                                         </td>
                                     </tr>
@@ -3028,6 +3056,30 @@
             } catch (error) {
                 console.error('Erreur suppression utilisateur:', error);
                 alert('Erreur lors de la suppression de l\'utilisateur');
+            }
+        }
+
+        // Delete order (for delivered orders only)
+        async function deleteOrder(orderId) {
+            if (!confirm('Êtes-vous sûr de vouloir supprimer cette commande livrée de l\'historique ?\n\nCette action est irréversible !')) {
+                return;
+            }
+            
+            try {
+                // Delete order from Firebase
+                await deleteDoc(doc(db, 'orders', orderId));
+                
+                // Reload statistics
+                await loadStatistics();
+                
+                // Reload current table
+                showOrdersTable(currentTab);
+                
+                alert('Commande supprimée de l\'historique avec succès !');
+                
+            } catch (error) {
+                console.error('Erreur suppression commande:', error);
+                alert('Erreur lors de la suppression de la commande');
             }
         }
 
