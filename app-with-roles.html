@@ -1189,66 +1189,31 @@
                             Statistiques
                         </div>
                         <div class="stats-grid">
-                            <div class="stat-card" onclick="showSimpleTable('all')" style="cursor: pointer;">
+                            <div class="stat-card" onclick="showOrdersTable('all')" style="cursor: pointer;">
                                 <div class="stat-number" id="total-orders">0</div>
                                 <div class="stat-label">Commandes totales</div>
                             </div>
-                            <div class="stat-card" onclick="showSimpleTable('all')" style="cursor: pointer;">
+                            <div class="stat-card" onclick="showUsersTable()" style="cursor: pointer;">
                                 <div class="stat-number" id="total-users">0</div>
                                 <div class="stat-label">Utilisateurs</div>
                             </div>
-                            <div class="stat-card" onclick="showSimpleTable('all')" style="cursor: pointer;">
+                            <div class="stat-card" onclick="showOrdersTable('all')" style="cursor: pointer;">
                                 <div class="stat-number" id="today-orders">0</div>
                                 <div class="stat-label">Aujourd'hui</div>
                             </div>
-                            <div class="stat-card" onclick="showSimpleTable('pending')" style="cursor: pointer;">
+                            <div class="stat-card" onclick="showOrdersTable('pending')" style="cursor: pointer;">
                                 <div class="stat-number" id="pending-orders">0</div>
                                 <div class="stat-label">En attente</div>
                             </div>
-                            <div class="stat-card" onclick="showSimpleTable('validated')" style="cursor: pointer;">
+                            <div class="stat-card" onclick="showOrdersTable('validated')" style="cursor: pointer;">
                                 <div class="stat-number" id="delivery-orders">0</div>
                                 <div class="stat-label">À livrer</div>
                             </div>
                         </div>
                         
-                        <!-- Boutons de sélection de vue -->
-                        <div style="margin-top: 30px; text-align: center;">
-                            <div style="display: flex; justify-content: center; gap: 15px; margin-bottom: 30px;">
-                                <button onclick="showManagementView('users')" class="tab-btn active" id="btn-show-users" style="background: #6c5ce7; color: white; border: none; padding: 12px 24px; border-radius: 25px; cursor: pointer; font-weight: bold;">
-                                    👥 Gérer les Utilisateurs
-                                </button>
-                                <button onclick="showManagementView('orders')" class="tab-btn" id="btn-show-orders" style="background: #f8f9fa; color: #333; border: 2px solid #dee2e6; padding: 12px 24px; border-radius: 25px; cursor: pointer; font-weight: bold;">
-                                    📋 Gérer les Commandes
-                                </button>
-                            </div>
-                            
-                            <!-- Contenu des utilisateurs -->
-                            <div id="user-management-content" style="display: block;">
-                                <h3 style="color: #6c5ce7; margin-bottom: 20px;">👥 Gestion des Utilisateurs</h3>
-                                <button onclick="showUsersTable()" style="background: linear-gradient(135deg, #6c5ce7, #a29bfe); color: white; border: none; padding: 12px 24px; border-radius: 25px; cursor: pointer; font-weight: bold; margin-bottom: 20px;">
-                                    📋 Voir tous les utilisateurs
-                                </button>
-                                
-                                <div id="users-table-container" style="margin-top: 20px;">
-                                    <!-- Tableau des utilisateurs s'affichera ici -->
-                                </div>
-                            </div>
-                            
-                            <!-- Contenu des commandes -->
-                            <div id="order-management-content" style="display: none;">
-                                <h3 style="color: #6c5ce7; margin-bottom: 20px;">📋 Gestion des Commandes</h3>
-                                <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
-                                    <button onclick="showSimpleTable('all')" class="tab-btn active" id="tab-all">Toutes</button>
-                                    <button onclick="showSimpleTable('pending')" class="tab-btn" id="tab-pending">En attente</button>
-                                    <button onclick="showSimpleTable('validated')" class="tab-btn" id="tab-validated">Validées</button>
-                                    <button onclick="showSimpleTable('delivered')" class="tab-btn" id="tab-delivered">Livrées</button>
-                                    <button onclick="showSimpleTable('cancelled')" class="tab-btn" id="tab-cancelled">Annulées</button>
-                                </div>
-                                
-                                <div id="orders-table-container" style="margin-top: 20px;">
-                                    <!-- Tableau simple s'affichera ici -->
-                                </div>
-                            </div>
+                        <!-- Conteneur pour les tableaux Excel -->
+                        <div id="excel-tables-container" style="margin-top: 30px; text-align: center;">
+                            <!-- Les tableaux Excel s'afficheront ici -->
                         </div>
                     </div>
                 </div>
@@ -2791,20 +2756,13 @@
         
         // Show delivery orders (5th card)
         function showDeliveryOrders() {
-            showSimpleTable('validated');
+            showOrdersTable('validated');
         }
 
-        // Show simple table for orders
-        async function showSimpleTable(tabName) {
-            console.log('Showing simple table for:', tabName);
+        // Show orders table directly
+        async function showOrdersTable(tabName) {
+            console.log('Showing orders table for:', tabName);
             currentTab = tabName; // Save current tab
-            
-            // Update active tab
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            const activeTabBtn = document.getElementById('tab-' + tabName);
-            if (activeTabBtn) {
-                activeTabBtn.classList.add('active');
-            }
             
             try {
                 // Load orders from Firebase
@@ -2843,7 +2801,7 @@
 
         // Display simple table
         function displaySimpleTable(orders, tabName) {
-            const container = document.getElementById('orders-table-container');
+            const container = document.getElementById('excel-tables-container');
             
             if (orders.length === 0) {
                 container.innerHTML = `
@@ -2949,36 +2907,6 @@
             return colors[status] || '#ffc107';
         }
 
-        // Show management view (users or orders)
-        function showManagementView(viewName) {
-            const userManagementContent = document.getElementById('user-management-content');
-            const orderManagementContent = document.getElementById('order-management-content');
-            const btnShowUsers = document.getElementById('btn-show-users');
-            const btnShowOrders = document.getElementById('btn-show-orders');
-
-            if (userManagementContent && orderManagementContent && btnShowUsers && btnShowOrders) {
-                if (viewName === 'users') {
-                    userManagementContent.style.display = 'block';
-                    orderManagementContent.style.display = 'none';
-                    btnShowUsers.style.background = '#6c5ce7';
-                    btnShowUsers.style.color = 'white';
-                    btnShowUsers.style.border = 'none';
-                    btnShowOrders.style.background = '#f8f9fa';
-                    btnShowOrders.style.color = '#333';
-                    btnShowOrders.style.border = '2px solid #dee2e6';
-                } else if (viewName === 'orders') {
-                    userManagementContent.style.display = 'none';
-                    orderManagementContent.style.display = 'block';
-                    btnShowUsers.style.background = '#f8f9fa';
-                    btnShowUsers.style.color = '#333';
-                    btnShowUsers.style.border = '2px solid #dee2e6';
-                    btnShowOrders.style.background = '#6c5ce7';
-                    btnShowOrders.style.color = 'white';
-                    btnShowOrders.style.border = 'none';
-                    showSimpleTable('all'); // Afficher automatiquement toutes les commandes
-                }
-            }
-        }
 
         // Show users table
         async function showUsersTable() {
@@ -2988,8 +2916,8 @@
                 const snapshot = await getDocs(usersRef);
                 const users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 
-                // Display users table
-                displayUsersTable(users);
+                // Display users table in the main container
+                displayUsersTable(users, 'excel-tables-container');
                 
             } catch (error) {
                 console.error('Erreur chargement utilisateurs:', error);
@@ -2998,8 +2926,8 @@
         }
 
         // Display users table
-        function displayUsersTable(users) {
-            const container = document.getElementById('users-table-container');
+        function displayUsersTable(users, containerId = 'users-table-container') {
+            const container = document.getElementById(containerId);
             
             if (users.length === 0) {
                 container.innerHTML = `
@@ -3116,7 +3044,7 @@
                 await loadStatistics();
                 
                 // Reload the current table
-                showSimpleTable(currentTab);
+                showOrdersTable(currentTab);
                 
                 // Show success message
                 const statusTexts = {
