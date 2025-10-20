@@ -1205,6 +1205,10 @@
                                 <div class="stat-number" id="pending-orders">0</div>
                                 <div class="stat-label">En attente</div>
                             </div>
+                            <div class="stat-card" onclick="showDeliveryOrders()" style="cursor: pointer;">
+                                <div class="stat-number" id="delivery-orders">0</div>
+                                <div class="stat-label">À livrer</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -2235,11 +2239,15 @@
                     order.status === 'pending' || !order.status
                 );
                 
+                // Calculate delivery orders (validated but not delivered)
+                const deliveryOrders = orders.filter(order => order.status === 'validated');
+                
                 // Update statistics numbers
                 document.getElementById('total-orders').textContent = orders.length;
                 document.getElementById('total-users').textContent = users.length;
                 document.getElementById('today-orders').textContent = todayOrders.length;
                 document.getElementById('pending-orders').textContent = pendingOrders.length;
+                document.getElementById('delivery-orders').textContent = deliveryOrders.length;
                 
                 // Store data for detail views
                 window.statsData = {
@@ -2739,6 +2747,11 @@
             }
         }
         
+        // Show delivery orders (5th card)
+        function showDeliveryOrders() {
+            alert('Commandes à livrer - Fonctionnalité en cours de développement');
+        }
+
         // Debug function for statistics
         function debugStats() {
             console.log('=== DEBUG STATISTIQUES ===');
