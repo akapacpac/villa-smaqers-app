@@ -2771,6 +2771,7 @@
         // Show simple table for orders
         async function showSimpleTable(tabName) {
             console.log('Showing simple table for:', tabName);
+            currentTab = tabName; // Save current tab
             
             try {
                 // Load orders from Firebase
@@ -2836,12 +2837,13 @@
                                     <th style="padding: 15px; text-align: left; border-bottom: 2px solid #dee2e6; font-weight: bold;">Produit</th>
                                     <th style="padding: 15px; text-align: left; border-bottom: 2px solid #dee2e6; font-weight: bold;">Salle</th>
                                     <th style="padding: 15px; text-align: left; border-bottom: 2px solid #dee2e6; font-weight: bold;">Statut</th>
+                                    <th style="padding: 15px; text-align: left; border-bottom: 2px solid #dee2e6; font-weight: bold;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 ${orders.map(order => `
                                     <tr style="border-bottom: 1px solid #dee2e6;">
-                                        <td style="padding: 15px;">${order.timestamp ? new Date(order.timestamp).toLocaleString('fr-FR') : 'Date inconnue'}</td>
+                                        <td style="padding: 15px;">${order.timestamp ? new Date(order.timestamp).toLocaleString('fr-FR') : new Date().toLocaleString('fr-FR')}</td>
                                         <td style="padding: 15px; font-weight: 500;">${order.userName}</td>
                                         <td style="padding: 15px;">${order.item}</td>
                                         <td style="padding: 15px;">${order.classroom}</td>
@@ -2849,6 +2851,25 @@
                                             <span style="padding: 6px 12px; border-radius: 15px; font-size: 12px; font-weight: bold; text-transform: uppercase; background: ${getStatusColor(order.status)}; color: white;">
                                                 ${getStatusText(order.status)}
                                             </span>
+                                        </td>
+                                        <td style="padding: 15px;">
+                                            <div style="display: flex; gap: 5px;">
+                                                ${(order.status === 'pending' || !order.status) ? `
+                                                    <button onclick="updateOrderStatus('${order.id}', 'validated')" style="background: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 12px;" title="Valider">
+                                                        ✅ Valider
+                                                    </button>
+                                                ` : ''}
+                                                ${order.status === 'validated' ? `
+                                                    <button onclick="updateOrderStatus('${order.id}', 'delivered')" style="background: #007bff; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 12px;" title="Marquer comme livré">
+                                                        🚚 Livré
+                                                    </button>
+                                                ` : ''}
+                                                ${order.status !== 'delivered' && order.status !== 'cancelled' ? `
+                                                    <button onclick="updateOrderStatus('${order.id}', 'cancelled')" style="background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 12px;" title="Annuler">
+                                                        ❌ Annuler
+                                                    </button>
+                                                ` : ''}
+                                            </div>
                                         </td>
                                     </tr>
                                 `).join('')}
@@ -2893,6 +2914,32 @@
                 'cancelled': '#dc3545'
             };
             return colors[status] || '#ffc107';
+        }
+
+        // Update order status
+        async function updateOrderStatus(orderId, newStatus) {
+            try {
+                const orderRef = doc(db, 'orders', orderId);
+                await updateDoc(orderRef, {
+                    status: newStatus,
+                    updatedAt: new Date().toISOString()
+                });
+                
+                // Reload the current table
+                showSimpleTable(currentTab);
+                
+                // Show success message
+                const statusTexts = {
+                    'validated': 'validée',
+                    'delivered': 'livrée',
+                    'cancelled': 'annulée'
+                };
+                alert(`Commande ${statusTexts[newStatus]} avec succès !`);
+                
+            } catch (error) {
+                console.error('Erreur mise à jour commande:', error);
+                alert('Erreur lors de la mise à jour de la commande');
+            }
         }
 
         // Debug function for statistics
