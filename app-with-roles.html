@@ -1522,27 +1522,13 @@
             updateUI();
         }
         
-        // Load user from localStorage
+        // Load user - Firebase guard handles auth; no localStorage login
         function loadUser() {
-            const profile = localStorage.getItem('villa-smaqers-profile');
-            if (profile) {
-                currentUser = JSON.parse(profile);
-                // Check if user is verified
-                if (currentUser.emailVerified) {
-                    // User is logged in and verified, show main app
-                    const registrationForm = document.getElementById('registration-form');
-                    const mainApp = document.getElementById('main-app');
-                    
-                    if (registrationForm) registrationForm.style.display = 'none';
-                    if (mainApp) mainApp.style.display = 'block';
-                } else {
-                    // User not verified, redirect to login
-                    window.location.href = 'app-with-login.html';
-                }
-            } else {
-                // No user logged in, redirect to login
-                window.location.href = 'app-with-login.html';
-            }
+            // Intentionally left minimal. Auth state is enforced by Firebase guard in <head>.
+            const registrationForm = document.getElementById('registration-form');
+            const mainApp = document.getElementById('main-app');
+            if (registrationForm) registrationForm.style.display = 'none';
+            if (mainApp) mainApp.style.display = 'block';
         }
         
         // Load user from Firebase (for future use)
@@ -1555,11 +1541,7 @@
                 });
                 
                 const user = users.find(u => u.email === email);
-                if (user) {
-                    currentUser = user;
-                    localStorage.setItem('villa-smaqers-profile', JSON.stringify(currentUser));
-                    return true;
-                }
+                if (user) { currentUser = user; return true; }
                 return false;
             } catch (error) {
                 console.error('Erreur lors du chargement de l\'utilisateur:', error);
