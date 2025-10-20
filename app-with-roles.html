@@ -749,16 +749,25 @@
         .btn-deliver { background: #0984e3; color: white; }
         .btn-cancel { background: #636e72; color: white; }
     </style>
-    <script>
-      (function(){
-        try {
-          const hasLocal = localStorage.getItem('villa-smaqers-profile');
-          const firebaseUser = localStorage.getItem('firebase:authUser:villa-smaqers-brises:[DEFAULT]');
-          if (!hasLocal && !firebaseUser) {
-            window.location.replace('app-with-auth.html');
-          }
-        } catch (e) {}
-      })();
+    <script type="module">
+      import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+      import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+      const firebaseConfig = {
+        apiKey: "AIzaSyDqCYiGvSYitgoPnGdxMzkautcYl511E3I",
+        authDomain: "villa-smaqers-brises.firebaseapp.com",
+        projectId: "villa-smaqers-brises",
+        storageBucket: "villa-smaqers-brises.firebasestorage.app",
+        messagingSenderId: "387262093007",
+        appId: "1:387262093007:web:76173a1e3cd49d80a249ba",
+        measurementId: "G-TBNFR17E82"
+      };
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      onAuthStateChanged(auth, (user) => {
+        if (!user) {
+          window.location.replace('app-with-auth.html');
+        }
+      });
     </script>
 </head>
 <body>
