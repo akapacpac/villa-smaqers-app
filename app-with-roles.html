@@ -1189,23 +1189,23 @@
                             Statistiques
                         </div>
                         <div class="stats-grid">
-                            <div class="stat-card" onclick="showOrderDetails()" style="cursor: pointer;">
+                            <div class="stat-card" onclick="showSimpleTable('all')" style="cursor: pointer;">
                                 <div class="stat-number" id="total-orders">0</div>
                                 <div class="stat-label">Commandes totales</div>
                             </div>
-                            <div class="stat-card" onclick="showUserDetails()" style="cursor: pointer;">
+                            <div class="stat-card" onclick="showSimpleTable('all')" style="cursor: pointer;">
                                 <div class="stat-number" id="total-users">0</div>
                                 <div class="stat-label">Utilisateurs</div>
                             </div>
-                            <div class="stat-card" onclick="showTodayOrders()" style="cursor: pointer;">
+                            <div class="stat-card" onclick="showSimpleTable('all')" style="cursor: pointer;">
                                 <div class="stat-number" id="today-orders">0</div>
                                 <div class="stat-label">Aujourd'hui</div>
                             </div>
-                            <div class="stat-card" onclick="showPendingOrders()" style="cursor: pointer;">
+                            <div class="stat-card" onclick="showSimpleTable('pending')" style="cursor: pointer;">
                                 <div class="stat-number" id="pending-orders">0</div>
                                 <div class="stat-label">En attente</div>
                             </div>
-                            <div class="stat-card" onclick="showDeliveryOrders()" style="cursor: pointer;">
+                            <div class="stat-card" onclick="showSimpleTable('validated')" style="cursor: pointer;">
                                 <div class="stat-number" id="delivery-orders">0</div>
                                 <div class="stat-label">À livrer</div>
                             </div>
@@ -2841,7 +2841,7 @@
                             <tbody>
                                 ${orders.map(order => `
                                     <tr style="border-bottom: 1px solid #dee2e6;">
-                                        <td style="padding: 15px;">${new Date(order.timestamp).toLocaleString('fr-FR')}</td>
+                                        <td style="padding: 15px;">${order.timestamp ? new Date(order.timestamp).toLocaleString('fr-FR') : 'Date inconnue'}</td>
                                         <td style="padding: 15px; font-weight: 500;">${order.userName}</td>
                                         <td style="padding: 15px;">${order.item}</td>
                                         <td style="padding: 15px;">${order.classroom}</td>
