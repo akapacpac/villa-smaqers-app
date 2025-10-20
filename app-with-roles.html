@@ -864,24 +864,15 @@
                                 <div class="menu-item-title">Paramètres</div>
                                 <div class="menu-item-desc">Gérer mon profil</div>
                             </div>
-                            <div class="menu-item" onclick="navigateTo('statistics')">
+                            <div class="menu-item" style="cursor: default;">
                                 <div class="menu-item-icon">📊</div>
                                 <div class="menu-item-title">Statistiques</div>
-                                <div class="menu-item-desc">Voir les statistiques</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Statistiques publiques -->
-                    <div class="card" style="margin-top: 20px;">
-                        <div class="card-title">
-                            <span class="card-icon">📊</span>
-                            Statistiques
-                        </div>
-                        <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 20px;">
-                            <div class="stat-card" style="background: linear-gradient(135deg, #00b894, #00cec9); color: white; padding: 20px; border-radius: 15px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-                                <div class="stat-number" id="public-delivered-orders" style="font-size: 2.5em; font-weight: bold; margin-bottom: 10px;">0</div>
-                                <div class="stat-label" style="font-size: 1.1em; opacity: 0.9;">Produits livrés</div>
+                                <div class="menu-item-desc" style="font-size: 14px; margin-top: 10px;">
+                                    <div style="font-weight: bold; color: #6c5ce7; font-size: 18px;" id="home-total-orders">0</div>
+                                    <div style="font-size: 12px; color: #666;">commandes passées</div>
+                                    <div style="font-weight: bold; color: #00b894; font-size: 16px; margin-top: 5px;" id="home-delivered-orders">0</div>
+                                    <div style="font-size: 12px; color: #666;">produits livrés</div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -2281,10 +2272,14 @@
                 document.getElementById('pending-orders').textContent = pendingOrders.length;
                 document.getElementById('delivery-orders').textContent = deliveryOrders.length;
                 
-                // Update public statistics (visible to all users)
-                const publicDeliveredElement = document.getElementById('public-delivered-orders');
-                if (publicDeliveredElement) {
-                    publicDeliveredElement.textContent = deliveredOrders.length;
+                // Update home statistics (visible in the 4th card)
+                const homeTotalElement = document.getElementById('home-total-orders');
+                const homeDeliveredElement = document.getElementById('home-delivered-orders');
+                if (homeTotalElement) {
+                    homeTotalElement.textContent = orders.length;
+                }
+                if (homeDeliveredElement) {
+                    homeDeliveredElement.textContent = deliveredOrders.length;
                 }
                 
                 // Store data for detail views
