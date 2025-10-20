@@ -580,6 +580,10 @@
             } else {
                 // Masquer le bouton si pas connecté
                 document.getElementById('appAccess').style.display = 'none';
+                // Forcer la déconnexion si pas d'utilisateur
+                signOut(auth).catch(() => {
+                    // Ignorer les erreurs de déconnexion
+                });
             }
         });
 

@@ -1052,24 +1052,8 @@
 
         window.logout = function() {
             if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
-                // Nettoyer complètement la session
-                try {
-                    // Effacer le localStorage
-                    localStorage.clear();
-                    // Effacer le sessionStorage
-                    sessionStorage.clear();
-                    // Effacer les cookies
-                    document.cookie.split(";").forEach(function(c) { 
-                        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
-                    });
-                    console.log('Session complètement nettoyée');
-                } catch (error) {
-                    console.log('Erreur lors du nettoyage:', error);
-                }
-                
-                alert('Déconnexion réussie ! Redirection vers la page de connexion...');
-                // Redirection avec paramètre pour forcer le rechargement
-                window.location.href = 'login.html?logout=' + Date.now();
+                // Redirection vers la page de déconnexion dédiée
+                window.location.href = 'logout.html';
             }
         };
 

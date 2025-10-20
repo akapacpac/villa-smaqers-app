@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Déconnexion - Villa des Smaqers Brisés</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logout-container {
+            background: white;
+            padding: 3rem;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .logo {
+            margin-bottom: 2rem;
+        }
+
+        .logo h1 {
+            color: #333;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 2rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .message {
+            color: #555;
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+        }
+
+        .btn {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            transition: all 0.3s;
+            margin: 0.5rem;
+        }
+
+        .btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="logout-container">
+        <div class="logo">
+            <h1>🍰 Villa des Smaqers Brisés</h1>
+        </div>
+        
+        <div class="spinner"></div>
+        
+        <div class="message" id="message">
+            Déconnexion en cours...
+        </div>
+        
+        <a href="login.html" class="btn" id="loginBtn" style="display: none;">
+            Se connecter
+        </a>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        
+        // Configuration Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBvQZvQZvQZvQZvQZvQZvQZvQZvQZvQZvQ",
+            authDomain: "villa-smaqers-app.firebaseapp.com",
+            projectId: "villa-smaqers-app",
+            storageBucket: "villa-smaqers-app.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdef123456789"
+        };
+        
+        // Initialiser Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        
+        // Fonction de déconnexion complète
+        async function performLogout() {
+            const messageEl = document.getElementById('message');
+            const loginBtn = document.getElementById('loginBtn');
+            
+            try {
+                messageEl.textContent = 'Déconnexion Firebase...';
+                
+                // Déconnexion Firebase
+                await signOut(auth);
+                console.log('Déconnexion Firebase réussie');
+                
+                messageEl.textContent = 'Nettoyage des données...';
+                
+                // Nettoyer complètement
+                localStorage.clear();
+                sessionStorage.clear();
+                
+                // Effacer les cookies
+                document.cookie.split(";").forEach(function(c) { 
+                    document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+                });
+                
+                // Attendre un peu pour s'assurer que tout est nettoyé
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                messageEl.textContent = 'Déconnexion réussie !';
+                loginBtn.style.display = 'inline-block';
+                
+                console.log('Déconnexion complète terminée');
+                
+            } catch (error) {
+                console.error('Erreur lors de la déconnexion:', error);
+                messageEl.textContent = 'Déconnexion réussie !';
+                loginBtn.style.display = 'inline-block';
+            }
+        }
+        
+        // Démarrer la déconnexion
+        performLogout();
+    </script>
+</body>
+</html>
