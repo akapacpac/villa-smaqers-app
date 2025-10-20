@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Villa des Smaqers Brisés - Application</title>
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#6c5ce7">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Villa Smaqers">
+    
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, getDoc, setDoc, collection, addDoc, getDocs, updateDoc, deleteDoc, query, where, orderBy, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Configuration Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDqCYiGvSYitgoPnGdxMzkautcYl511E3I",
+            authDomain: "villa-smaqers-brises.firebaseapp.com",
+            projectId: "villa-smaqers-brises",
+            storageBucket: "villa-smaqers-brises.firebasestorage.app",
+            messagingSenderId: "387262093007",
+            appId: "1:387262093007:web:76173a1e3cd49d80a249ba",
+            measurementId: "G-TBNFR17E82"
+        };
+
+        // Initialiser Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Variables globales
+        let currentUser = null;
+        let allOrders = [];
+        let currentTab = 'all';
+
+        // Emails admin
+        const ADMIN_EMAILS = ['pascalmartinlalande@gmail.com'];
+
+        // Créer ou récupérer le profil utilisateur
+        async function ensureUserProfile(user) {
+            try {
+                const uid = user.uid;
+                const ref = doc(db, 'users', uid);
+                const snap = await getDoc(ref);
+                const email = user.email || '';
+                const displayName = user.displayName || '';
+                const names = displayName.split(' ');
+                const firstName = names[0] || '';
+                const lastName = names.slice(1).join(' ') || '';
+                const role = ADMIN_EMAILS.includes(email) ? 'admin' : 'student';
+                
+                if (!snap.exists()) {
+                    await setDoc(ref, {
+                        uid,
+                        email,
+                        firstName,
+                        lastName,
+                        role,
+                        registrationDate: serverTimestamp()
+                    });
+                }
+                
+                // Charger les données complètes
+                const userDoc = await getDoc(ref);
+                currentUser = { ...user, ...userDoc.data() };
+                console.log('Utilisateur chargé:', currentUser);
+                
+                // Mettre à jour l'interface
+                updateUserInterface();
+                loadOrders();
+                
+            } catch (error) {
+                console.error('Erreur lors de la création du profil:', error);
+                // Créer un profil basique en cas d'erreur
+                currentUser = {
+                    ...user,
+                    firstName: 'Utilisateur',
+                    lastName: '',
+                    role: ADMIN_EMAILS.includes(user.email) ? 'admin' : 'student'
+                };
+                updateUserInterface();
+            }
+        }
+
+        // Mettre à jour l'interface utilisateur
+        function updateUserInterface() {
+            if (!currentUser) return;
+            
+            // Mettre à jour le nom d'utilisateur
+            const userNameElement = document.getElementById('user-name');
+            if (userNameElement) {
+                userNameElement.textContent = `${currentUser.firstName || 'Prénom'} ${currentUser.lastName || 'Nom'}`;
+            }
+            
+            // Mettre à jour le rôle
+            const userRoleElement = document.getElementById('user-role');
+            if (userRoleElement) {
+                const roleText = currentUser.role === 'admin' ? 'Administrateur' : 
+                                currentUser.role === 'member' ? 'Membre' : 'Étudiant';
+                userRoleElement.textContent = roleText;
+            }
+            
+            // Mettre à jour l'email
+            const userEmailElement = document.getElementById('user-email');
+            if (userEmailElement) {
+                userEmailElement.textContent = currentUser.email || 'Email non disponible';
+            }
+            
+            // Afficher/masquer les sections admin
+            const adminSections = document.querySelectorAll('.admin-only');
+            adminSections.forEach(section => {
+                if (currentUser.role === 'admin' || currentUser.role === 'member') {
+                    section.style.display = 'block';
+                } else {
+                    section.style.display = 'none';
+                }
+            });
+        }
+
+        // Charger les commandes
+        async function loadOrders() {
+            try {
+                console.log('Chargement des commandes...');
+                const ordersQuery = query(collection(db, 'orders'), orderBy('timestamp', 'desc'));
+                const ordersSnapshot = await getDocs(ordersQuery);
+                allOrders = ordersSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                
+                console.log('Commandes chargées:', allOrders.length);
+                updateStatistics();
+                displayOrders();
+                
+            } catch (error) {
+                console.error('Erreur lors du chargement des commandes:', error);
+                showError('Erreur lors du chargement des commandes');
+            }
+        }
+
+        // Mettre à jour les statistiques
+        function updateStatistics() {
+            const total = allOrders.length;
+            const pending = allOrders.filter(order => order.status === 'pending').length;
+            const validated = allOrders.filter(order => order.status === 'validated').length;
+            const delivered = allOrders.filter(order => order.status === 'delivered').length;
+            const cancelled = allOrders.filter(order => order.status === 'cancelled').length;
+            
+            // Mettre à jour les éléments de statistiques
+            const totalElement = document.getElementById('total-orders');
+            const pendingElement = document.getElementById('pending-orders');
+            const validatedElement = document.getElementById('validated-orders');
+            const deliveredElement = document.getElementById('delivered-orders');
+            const cancelledElement = document.getElementById('cancelled-orders');
+            
+            if (totalElement) totalElement.textContent = total;
+            if (pendingElement) pendingElement.textContent = pending;
+            if (validatedElement) validatedElement.textContent = validated;
+            if (deliveredElement) deliveredElement.textContent = delivered;
+            if (cancelledElement) cancelledElement.textContent = cancelled;
+        }
+
+        // Afficher les commandes
+        function displayOrders() {
+            const ordersList = document.getElementById('orders-list');
+            if (!ordersList) return;
+            
+            const userOrders = allOrders.filter(order => order.userId === currentUser.uid);
+            
+            if (userOrders.length === 0) {
+                ordersList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📋</div>
+                        <div class="empty-title">Aucune commande</div>
+                        <div class="empty-description">Vous n'avez pas encore passé de commande.</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            ordersList.innerHTML = userOrders.map(order => `
+                <div class="order-card">
+                    <div class="order-header">
+                        <div class="order-product">
+                            <span class="product-icon">${order.productIcon || '🍽️'}</span>
+                            <span class="product-name">${order.productType || 'Produit'}</span>
+                        </div>
+                        <div class="order-status ${getStatusClass(order.status)}">
+                            ${getStatusText(order.status)}
+                        </div>
+                    </div>
+                    <div class="order-details">
+                        <div><strong>Quantité:</strong> ${order.quantity || 1}</div>
+                        <div><strong>Prix total:</strong> ${(order.totalPrice || 0).toFixed(2)}€</div>
+                        <div><strong>Salle:</strong> ${order.classroom || 'Non spécifiée'}</div>
+                        <div><strong>Date:</strong> ${formatDate(order.timestamp)}</div>
+                        ${order.selectedOptions && order.selectedOptions.length > 0 ? `
+                            <div><strong>Options:</strong> ${order.selectedOptions.join(', ')}</div>
+                        ` : ''}
+                    </div>
+                    <div class="order-actions">
+                        ${order.status === 'pending' ? `
+                            <button class="action-btn cancel-btn" onclick="cancelOrder('${order.id}')">
+                                ❌ Annuler
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Fonctions utilitaires
+        function getStatusText(status) {
+            switch(status) {
+                case 'pending': return 'En attente';
+                case 'validated': return 'Validée';
+                case 'delivered': return 'Livrée';
+                case 'cancelled': return 'Annulée';
+                default: return status;
+            }
+        }
+
+        function getStatusClass(status) {
+            switch(status) {
+                case 'pending': return 'status-pending';
+                case 'validated': return 'status-validated';
+                case 'delivered': return 'status-delivered';
+                case 'cancelled': return 'status-cancelled';
+                default: return 'status-pending';
+            }
+        }
+
+        function formatDate(timestamp) {
+            try {
+                if (!timestamp) return 'Date non disponible';
+                const date = new Date(timestamp);
+                if (isNaN(date.getTime())) return 'Date non disponible';
+                return date.toLocaleString('fr-FR');
+            } catch (error) {
+                return 'Date non disponible';
+            }
+        }
+
+        function showError(message) {
+            console.error(message);
+            // Ici on pourrait afficher une notification d'erreur
+        }
+
+        // Fonctions globales pour les boutons
+        window.cancelOrder = async function(orderId) {
+            if (!confirm('Êtes-vous sûr de vouloir annuler cette commande ?')) {
+                return;
+            }
+
+            try {
+                await updateDoc(doc(db, 'orders', orderId), {
+                    status: 'cancelled',
+                    cancelledAt: new Date().toISOString()
+                });
+
+                loadOrders();
+                alert('Commande annulée avec succès');
+            } catch (error) {
+                console.error('Erreur lors de l\'annulation:', error);
+                alert('Erreur lors de l\'annulation de la commande');
+            }
+        };
+
+        window.logout = async function() {
+            try {
+                await signOut(auth);
+                window.location.href = 'login.html';
+            } catch (error) {
+                console.error('Erreur lors de la déconnexion:', error);
+            }
+        };
+
+        // Vérifier l'état de connexion
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                ensureUserProfile(user);
+            } else {
+                window.location.href = 'login.html';
+            }
+        });
+    </script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo h1 {
+            color: #333;
+            font-size: 1.8rem;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-role {
+            background: #e9ecef;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .role-admin {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .role-member {
+            background: #cce5ff;
+            color: #004085;
+        }
+
+        .role-student {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .logout-btn:hover {
+            background: #c82333;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .stat-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+            border-color: #667eea;
+        }
+
+        .product-icon {
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+        }
+
+        .product-name {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .product-description {
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        .product-price {
+            color: #667eea;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .order-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.3s;
+        }
+
+        .order-btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+
+        .orders-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            color: #333;
+            font-size: 2rem;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .order-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s;
+        }
+
+        .order-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .order-product {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .product-icon {
+            font-size: 1.5rem;
+        }
+
+        .product-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1rem;
+        }
+
+        .order-details {
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .order-status {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-align: center;
+            min-width: 100px;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-validated {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .status-delivered {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-cancelled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .order-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .action-btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .cancel-btn {
+            background: #dc3545;
+            color: white;
+        }
+
+        .cancel-btn:hover {
+            background: #c82333;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .empty-description {
+            font-size: 1rem;
+            margin-bottom: 30px;
+        }
+
+        .admin-only {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            .menu-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <span style="font-size: 2rem;">🍰</span>
+                <h1>Villa des Smaqers Brisés</h1>
+            </div>
+            <div class="user-info">
+                <div>
+                    <div id="user-name">Chargement...</div>
+                    <div id="user-email" style="font-size: 0.9rem; color: #666;">Chargement...</div>
+                </div>
+                <div class="user-role" id="user-role">Chargement...</div>
+                <button class="logout-btn" onclick="logout()">Déconnexion</button>
+            </div>
+        </div>
+
+        <!-- Statistiques (admin/member seulement) -->
+        <div class="stats-grid admin-only">
+            <div class="stat-card">
+                <div class="stat-icon">📊</div>
+                <div class="stat-number" id="total-orders">0</div>
+                <div class="stat-label">Commandes totales</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⏳</div>
+                <div class="stat-number" id="pending-orders">0</div>
+                <div class="stat-label">En attente</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">✅</div>
+                <div class="stat-number" id="validated-orders">0</div>
+                <div class="stat-label">Validées</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🚚</div>
+                <div class="stat-number" id="delivered-orders">0</div>
+                <div class="stat-label">Livrées</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">❌</div>
+                <div class="stat-number" id="cancelled-orders">0</div>
+                <div class="stat-label">Annulées</div>
+            </div>
+        </div>
+
+        <!-- Menu des produits -->
+        <div class="menu-grid">
+            <div class="product-card">
+                <div class="product-icon">🥞</div>
+                <div class="product-name">Crêpes</div>
+                <div class="product-description">
+                    Crêpes faites maison avec différents parfums :<br>
+                    • Nutella • Confiture • Sucre • Beurre
+                </div>
+                <div class="product-price">2,50€</div>
+                <button class="order-btn" onclick="orderProduct('crepes')">Commander des crêpes</button>
+            </div>
+
+            <div class="product-card">
+                <div class="product-icon">🍪</div>
+                <div class="product-name">Cookies</div>
+                <div class="product-description">
+                    Cookies moelleux aux pépites de chocolat :<br>
+                    • Chocolat noir • Chocolat au lait • Chocolat blanc
+                </div>
+                <div class="product-price">1,50€</div>
+                <button class="order-btn" onclick="orderProduct('cookies')">Commander des cookies</button>
+            </div>
+
+            <div class="product-card">
+                <div class="product-icon">🍦</div>
+                <div class="product-name">Glaces</div>
+                <div class="product-description">
+                    Glaces artisanales aux parfums variés :<br>
+                    • Vanille • Chocolat • Fraise • Pistache
+                </div>
+                <div class="product-price">3,00€</div>
+                <button class="order-btn" onclick="orderProduct('glaces')">Commander des glaces</button>
+            </div>
+        </div>
+
+        <!-- Mes commandes -->
+        <div class="orders-section">
+            <h2 class="section-title">📋 Mes Commandes</h2>
+            <div id="orders-list">
+                <div class="empty-state">
+                    <div class="empty-icon">⏳</div>
+                    <div class="empty-title">Chargement...</div>
+                    <div class="empty-description">Chargement de vos commandes...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Fonction pour commander un produit
+        window.orderProduct = function(productType) {
+            if (!currentUser) {
+                alert('Vous devez être connecté pour passer une commande');
+                return;
+            }
+            
+            // Ici on pourrait ouvrir une popup de commande ou rediriger
+            alert(`Commande de ${productType} - Fonctionnalité à implémenter`);
+        };
+    </script>
+</body>
+</html>
