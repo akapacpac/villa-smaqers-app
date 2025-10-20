@@ -1255,6 +1255,11 @@
                 <div class="nav-icon-bottom">📊</div>
                 <div class="nav-text-bottom">Statistiques</div>
             </div>
+            <!-- Debug button -->
+            <div class="nav-item-bottom" onclick="debugStats()" style="background: #ff6b6b; color: white;">
+                <div class="nav-icon-bottom">🐛</div>
+                <div class="nav-text-bottom">Debug Stats</div>
+            </div>
             <div class="nav-item-bottom" onclick="navigateToBottom('settings')">
                 <div class="nav-icon-bottom">⚙️</div>
                 <div class="nav-text-bottom">Paramètres</div>
@@ -2734,6 +2739,28 @@
             }
         }
         
+        // Debug function for statistics
+        function debugStats() {
+            console.log('=== DEBUG STATISTIQUES ===');
+            console.log('Current user:', currentUser);
+            console.log('User role:', currentUser ? currentUser.role : 'null');
+            
+            const statsNav = document.getElementById('stats-nav');
+            console.log('Stats nav element:', statsNav);
+            console.log('Stats nav display:', statsNav ? statsNav.style.display : 'not found');
+            
+            // Force show stats nav
+            if (statsNav) {
+                statsNav.style.display = 'flex';
+                console.log('Stats nav forcé à être visible');
+            }
+            
+            // Force load statistics
+            loadStatistics();
+            
+            alert('Debug terminé ! Vérifiez la console pour les détails.');
+        }
+
         // Recover access code when user is deleted
         function recoverAccessCode(code) {
             if (ACCESS_CODES[code]) {
