@@ -2616,6 +2616,8 @@
                     classroom: finalClassroom,
                     timestamp: new Date().toISOString(),
                     profile: currentUser,
+                    userName: `${currentUser.firstName} ${currentUser.lastName}`,
+                    userEmail: currentUser.email,
                     status: 'pending'
                 };
                 
@@ -2871,7 +2873,16 @@
                                             const d = new Date(order.timestamp);
                                             return isNaN(d.getTime()) ? 'Date non disponible' : d.toLocaleString('fr-FR');
                                         })()}</td>
-                                        <td style="padding: 15px; font-weight: 500;">${order.userName || order.firstName + ' ' + order.lastName || 'Nom inconnu'}</td>
+                                        <td style="padding: 15px; font-weight: 500;">${(function() {
+                                            if (order.userName) return order.userName;
+                                            if (order.profile && order.profile.firstName && order.profile.lastName) {
+                                                return `${order.profile.firstName} ${order.profile.lastName}`;
+                                            }
+                                            if (order.firstName && order.lastName) {
+                                                return `${order.firstName} ${order.lastName}`;
+                                            }
+                                            return 'Nom inconnu';
+                                        })()}</td>
                                         <td style="padding: 15px;">${order.item}</td>
                                         <td style="padding: 15px;">${order.classroom}</td>
                                         <td style="padding: 15px;">
@@ -3137,6 +3148,26 @@
         
         // Get status text
         
+        // Debug function to check order data structure
+        function debugOrderData() {
+            console.log('=== DEBUG ORDER DATA ===');
+            const ordersRef = collection(db, 'orders');
+            getDocs(ordersRef).then(snapshot => {
+                snapshot.docs.forEach(doc => {
+                    const order = { id: doc.id, ...doc.data() };
+                    console.log('Order ID:', order.id);
+                    console.log('Order data:', order);
+                    console.log('Timestamp:', order.timestamp);
+                    console.log('UserName:', order.userName);
+                    console.log('Profile:', order.profile);
+                    console.log('---');
+                });
+            });
+        }
+
+        // Test function - call this in console to debug
+        window.debugOrders = debugOrderData;
+
         // Initialize app when page loads
         document.addEventListener('DOMContentLoaded', initApp);
     </script>
