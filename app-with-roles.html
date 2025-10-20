@@ -1283,11 +1283,6 @@
                 <div class="nav-icon-bottom">📊</div>
                 <div class="nav-text-bottom">Statistiques</div>
             </div>
-            <!-- Debug button -->
-            <div class="nav-item-bottom" onclick="debugStats()" style="background: #ff6b6b; color: white;">
-                <div class="nav-icon-bottom">🐛</div>
-                <div class="nav-text-bottom">Debug Stats</div>
-            </div>
             <div class="nav-item-bottom" onclick="navigateToBottom('settings')">
                 <div class="nav-icon-bottom">⚙️</div>
                 <div class="nav-text-bottom">Paramètres</div>
@@ -1896,7 +1891,11 @@
                                 <strong>${item}</strong>
                                 <span class="order-status status-${status}">${getStatusText(status)}</span>
                             </div>
-                            <div class="order-date">${new Date(timestamp).toLocaleString()}</div>
+                            <div class="order-date">${(function() { 
+                                if (!timestamp) return 'Date non disponible';
+                                const d = new Date(timestamp);
+                                return isNaN(d.getTime()) ? 'Date non disponible' : d.toLocaleString('fr-FR');
+                            })()}</div>
                             <div>Salle: ${classroom}</div>
                             <div class="order-actions" style="margin-top: 10px;">
                                 ${order.status !== 'delivered' && order.status !== 'cancelled' ? `
@@ -2003,7 +2002,7 @@
                             <span class="order-status status-${status}">${getStatusText(status)}</span>
                         </div>
                         <div class="order-date">${new Date(timestamp).toLocaleString()}</div>
-                        <div><strong>Client:</strong> ${userName}</div>
+                        <div><strong>Client:</strong> ${userName || 'Nom inconnu'}</div>
                         <div><strong>Email:</strong> ${userEmail}</div>
                         <div><strong>Salle:</strong> ${classroom}</div>
                         <div class="order-actions" style="margin-top: 10px;">
@@ -2196,7 +2195,11 @@
                         <td>${userName}</td>
                         <td style="font-size: 12px; color: #666;">${userEmail}</td>
                         <td style="font-weight: bold; color: #0984e3;">${classroom}</td>
-                        <td style="font-size: 12px; color: #666;">${new Date(timestamp).toLocaleString()}</td>
+                        <td style="font-size: 12px; color: #666;">${(function() { 
+                            if (!timestamp) return 'Date non disponible';
+                            const d = new Date(timestamp);
+                            return isNaN(d.getTime()) ? 'Date non disponible' : d.toLocaleString('fr-FR');
+                        })()}</td>
                         <td>
                             <span class="status-badge status-${status}">${getStatusText(status)}</span>
                         </td>
@@ -3129,27 +3132,6 @@
             }
         }
 
-        // Debug function for statistics
-        function debugStats() {
-            console.log('=== DEBUG STATISTIQUES ===');
-            console.log('Current user:', currentUser);
-            console.log('User role:', currentUser ? currentUser.role : 'null');
-            
-            const statsNav = document.getElementById('stats-nav');
-            console.log('Stats nav element:', statsNav);
-            console.log('Stats nav display:', statsNav ? statsNav.style.display : 'not found');
-            
-            // Force show stats nav
-            if (statsNav) {
-                statsNav.style.display = 'flex';
-                console.log('Stats nav forcé à être visible');
-            }
-            
-            // Force load statistics
-            loadStatistics();
-            
-            alert('Debug terminé ! Vérifiez la console pour les détails.');
-        }
 
         // Recover access code when user is deleted
         function recoverAccessCode(code) {
