@@ -424,7 +424,7 @@
 
                 // Envoyer l'email de vérification
                 logToServer(`Envoi de l'email de vérification pour: ${email}`, 'info');
-                await user.sendEmailVerification();
+                await sendEmailVerification(user);
 
                 logToServer(`Email de vérification envoyé pour: ${email}`, 'success');
                 showSuccess('Compte créé ! Vérifiez votre email et cliquez sur le lien pour activer votre compte.');
