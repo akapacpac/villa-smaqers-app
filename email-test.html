@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Email Verification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border-left: 4px solid #28a745;
+        }
+        .info {
+            background: #cce5ff;
+            color: #004085;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border-left: 4px solid #007bff;
+        }
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border-left: 4px solid #ffc107;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+        .email-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .step {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+        }
+        .step h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📧 Test Email Verification</h1>
+        
+        <div class="success">
+            <strong>✅ Account created successfully!</strong><br>
+            The email verification should have been sent.
+        </div>
+
+        <div class="step">
+            <h3>🔍 Step 1: Check these locations</h3>
+            <ul>
+                <li><strong>Spam/Junk folder</strong> - Most common place</li>
+                <li><strong>Promotions tab</strong> (Gmail) - Check all tabs</li>
+                <li><strong>All Mail folder</strong> - Sometimes hidden there</li>
+                <li><strong>Trash folder</strong> - In case it was auto-deleted</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <h3>⏰ Step 2: Wait a bit</h3>
+            <p>Email delivery can take:</p>
+            <ul>
+                <li><strong>Gmail:</strong> 2-10 minutes</li>
+                <li><strong>Outlook:</strong> 5-15 minutes</li>
+                <li><strong>Other providers:</strong> 1-30 minutes</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <h3>🔄 Step 3: Try resending</h3>
+            <p>If you don't receive it, you can try to resend:</p>
+            <button class="btn btn-warning" onclick="resendEmail()">Resend Verification Email</button>
+            <div id="resendResult" style="margin-top: 10px;"></div>
+        </div>
+
+        <div class="step">
+            <h3>🔧 Step 4: Check Firebase Console</h3>
+            <p>Go to Firebase Console → Authentication → Users</p>
+            <p>Check if your user is there and if email is verified</p>
+        </div>
+
+        <div class="step">
+            <h3>📱 Step 5: Try logging in</h3>
+            <p>Sometimes the email verification isn't required immediately:</p>
+            <button class="btn btn-success" onclick="tryLogin()">Try to Login</button>
+            <div id="loginResult" style="margin-top: 10px;"></div>
+        </div>
+
+        <div class="email-info">
+            <strong>Email details:</strong><br>
+            From: noreply@villa-smaqers-brises.firebaseapp.com<br>
+            Subject: Verify your email address<br>
+            Contains: Verification link to activate your account
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ If still no email after 30 minutes:</strong><br>
+            There might be an issue with Firebase email delivery or your email provider is blocking it.
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, sendEmailVerification, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDqCYiGvSYitgoPnGdxMzkautcYl511E3I",
+            authDomain: "villa-smaqers-brises.firebaseapp.com",
+            projectId: "villa-smaqers-brises",
+            storageBucket: "villa-smaqers-brises.firebasestorage.app",
+            messagingSenderId: "387262093007",
+            appId: "1:387262093007:web:76173a1e3cd49d80a249ba",
+            measurementId: "G-TBNFR17E82"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        window.resendEmail = async function() {
+            const email = prompt("Enter your email address:");
+            if (!email) return;
+
+            try {
+                // Try to sign in first to get the user
+                const userCredential = await signInWithEmailAndPassword(auth, email, "temp123");
+                const user = userCredential.user;
+                
+                // Send verification email
+                await sendEmailVerification(user);
+                
+                document.getElementById('resendResult').innerHTML = 
+                    '<div class="success">✅ Verification email sent again!</div>';
+            } catch (error) {
+                document.getElementById('resendResult').innerHTML = 
+                    `<div class="warning">❌ Error: ${error.message}</div>`;
+            }
+        };
+
+        window.tryLogin = async function() {
+            const email = prompt("Enter your email address:");
+            const password = prompt("Enter your password:");
+            if (!email || !password) return;
+
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                
+                if (user.emailVerified) {
+                    document.getElementById('loginResult').innerHTML = 
+                        '<div class="success">✅ Login successful! Email is verified.</div>';
+                } else {
+                    document.getElementById('loginResult').innerHTML = 
+                        '<div class="warning">⚠️ Login successful but email not verified yet.</div>';
+                }
+            } catch (error) {
+                document.getElementById('loginResult').innerHTML = 
+                    `<div class="warning">❌ Login failed: ${error.message}</div>`;
+            }
+        };
+    </script>
+</body>
+</html>
