@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Déconnexion forcée - Villa des Smaqers Brisés</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            background: white;
+            padding: 3rem;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 600px;
+            width: 90%;
+        }
+
+        .logo {
+            margin-bottom: 2rem;
+        }
+
+        .logo h1 {
+            color: #333;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .status {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin: 1rem 0;
+            border-left: 4px solid #667eea;
+        }
+
+        .status h3 {
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .status p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .btn {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            transition: all 0.3s;
+            margin: 0.5rem;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .success {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+
+        .error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <h1>🍰 Villa des Smaqers Brisés</h1>
+            <p>Déconnexion forcée</p>
+        </div>
+        
+        <div class="status" id="status">
+            <h3>🔄 Déconnexion en cours...</h3>
+            <p id="statusText">Nettoyage de toutes les données de session...</p>
+        </div>
+        
+        <div id="actions" style="display: none;">
+            <a href="login.html" class="btn">Se connecter</a>
+            <button onclick="forceLogout()" class="btn btn-danger">Déconnexion forcée</button>
+        </div>
+    </div>
+
+    <script>
+        let step = 0;
+        const steps = [
+            "Nettoyage du localStorage...",
+            "Nettoyage du sessionStorage...",
+            "Suppression des cookies...",
+            "Déconnexion Firebase...",
+            "Nettoyage des données de navigation...",
+            "Finalisation..."
+        ];
+
+        function updateStatus(text, isSuccess = false) {
+            const statusEl = document.getElementById('status');
+            const statusTextEl = document.getElementById('statusText');
+            
+            statusTextEl.textContent = text;
+            
+            if (isSuccess) {
+                statusEl.className = 'status success';
+                statusEl.innerHTML = '<h3>✅ Déconnexion réussie !</h3><p>' + text + '</p>';
+                document.getElementById('actions').style.display = 'block';
+            } else if (text.includes('Erreur')) {
+                statusEl.className = 'status error';
+            }
+        }
+
+        async function performLogout() {
+            try {
+                // Étape 1: localStorage
+                updateStatus(steps[0]);
+                await new Promise(resolve => setTimeout(resolve, 500));
+                localStorage.clear();
+                console.log('✅ localStorage nettoyé');
+
+                // Étape 2: sessionStorage
+                updateStatus(steps[1]);
+                await new Promise(resolve => setTimeout(resolve, 500));
+                sessionStorage.clear();
+                console.log('✅ sessionStorage nettoyé');
+
+                // Étape 3: Cookies
+                updateStatus(steps[2]);
+                await new Promise(resolve => setTimeout(resolve, 500));
+                document.cookie.split(";").forEach(function(c) { 
+                    document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+                });
+                console.log('✅ Cookies supprimés');
+
+                // Étape 4: Déconnexion Firebase (si disponible)
+                updateStatus(steps[3]);
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Essayer de déconnecter Firebase si disponible
+                if (typeof firebase !== 'undefined' && firebase.auth) {
+                    try {
+                        await firebase.auth().signOut();
+                        console.log('✅ Firebase déconnecté');
+                    } catch (e) {
+                        console.log('⚠️ Firebase non disponible ou déjà déconnecté');
+                    }
+                }
+
+                // Étape 5: Nettoyage supplémentaire
+                updateStatus(steps[4]);
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // Effacer les données de navigation
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                        for(let registration of registrations) {
+                            registration.unregister();
+                        }
+                    });
+                }
+
+                // Étape 6: Finalisation
+                updateStatus(steps[5]);
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                updateStatus('Toutes les données ont été supprimées. Vous pouvez maintenant vous connecter avec un autre compte.', true);
+                console.log('✅ Déconnexion complète terminée');
+
+            } catch (error) {
+                console.error('Erreur lors de la déconnexion:', error);
+                updateStatus('Erreur lors de la déconnexion, mais la plupart des données ont été supprimées.', true);
+            }
+        }
+
+        // Fonction de déconnexion forcée
+        window.forceLogout = function() {
+            updateStatus('Déconnexion forcée en cours...');
+            performLogout();
+        };
+
+        // Démarrer automatiquement
+        performLogout();
+    </script>
+</body>
+</html>
