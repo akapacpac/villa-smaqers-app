@@ -44,10 +44,14 @@ import { getFirestore, doc, setDoc } from 'https://www.gstatic.com/firebasejs/10
 const verEl = document.getElementById('ver'); verEl.textContent = 'v=debug1';
 const log = (m)=>{ const el=document.getElementById('logs'); el.textContent += (m+'\n'); el.scrollTop=el.scrollHeight; };
 const setState = (obj)=>{ document.getElementById('authState').textContent = JSON.stringify(obj, null, 2); };
+const goToApp = ()=>{ window.location.href = 'app-with-roles.html'; };
 const setStatus = (t,c)=>{ const s=document.getElementById('status'); s.textContent=t; s.className=c||''; };
 const cfg = { apiKey:'AIzaSyDqCYiGvSYitgoPnGdxMzkautcYl511E3I', authDomain:'villa-smaqers-brises.firebaseapp.com', projectId:'villa-smaqers-brises', storageBucket:'villa-smaqers-brises.firebasestorage.app', messagingSenderId:'387262093007', appId:'1:387262093007:web:76173a1e3cd49d80a249ba', measurementId:'G-TBNFR17E82' };
 let app, auth, db; try { app = initializeApp(cfg); auth = getAuth(app); db = getFirestore(app); setPersistence(auth, browserLocalPersistence); setStatus('Firebase initialisé', 'ok'); } catch(e){ setStatus('Init Firebase KO: '+e.message,'err'); log(e.stack||e.message); }
-onAuthStateChanged(auth, (user)=>{ setState(user? { uid:user.uid, email:user.email, emailVerified:user.emailVerified } : { user:null }); });
+onAuthStateChanged(auth, (user)=>{ 
+  setState(user? { uid:user.uid, email:user.email, emailVerified:user.emailVerified } : { user:null });
+  if (user && user.emailVerified) { goToApp(); }
+});
 // Register
 document.getElementById('btn-register').onclick = async ()=>{
   try{
@@ -69,7 +73,7 @@ document.getElementById('btn-register').onclick = async ()=>{
 };
 // Login
 document.getElementById('btn-login').onclick = async ()=>{
-  try{ const email=document.getElementById('l-email').value.trim(); const pass=document.getElementById('l-pass').value; const cred=await signInWithEmailAndPassword(auth,email,pass); setStatus(cred.user.emailVerified? 'Connecté (vérifié)':'Connecté (non vérifié)','ok'); }
+  try{ const email=document.getElementById('l-email').value.trim(); const pass=document.getElementById('l-pass').value; const cred=await signInWithEmailAndPassword(auth,email,pass); setStatus(cred.user.emailVerified? 'Connecté (vérifié)':'Connecté (non vérifié)','ok'); if(cred.user.emailVerified){ goToApp(); } }
   catch(e){ setStatus('Connexion KO: '+e.message,'err'); log(e.stack||e.message); }
 };
 // Logout
