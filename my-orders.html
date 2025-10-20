@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Villa des Smaqers Brisés - Mes Commandes</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo h1 {
+            color: #333;
+            font-size: 1.8rem;
+        }
+
+        .back-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .back-btn:hover {
+            background: #5a6268;
+        }
+
+        .orders-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            color: #333;
+            font-size: 2rem;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            background: #f8f9fa;
+            color: #666;
+            border: 2px solid #e9ecef;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .tab-btn:hover:not(.active) {
+            background: #e9ecef;
+            border-color: #dee2e6;
+        }
+
+        .orders-list {
+            min-height: 200px;
+        }
+
+        .order-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s;
+        }
+
+        .order-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .order-info {
+            flex: 1;
+        }
+
+        .order-product {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .product-icon {
+            font-size: 1.5rem;
+        }
+
+        .product-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1rem;
+        }
+
+        .order-details {
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .order-status {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-align: center;
+            min-width: 100px;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .status-validated {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .status-delivered {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-cancelled {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .order-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .cancel-btn {
+            background: #dc3545;
+            color: white;
+        }
+
+        .cancel-btn:hover {
+            background: #c82333;
+        }
+
+        .cancel-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .empty-description {
+            font-size: 1rem;
+            margin-bottom: 30px;
+        }
+
+        .order-options {
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-size: 0.9rem;
+            color: #495057;
+        }
+
+        .order-classroom {
+            background: #cce5ff;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            color: #004085;
+            display: inline-block;
+            margin-top: 10px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            .order-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .order-status {
+                align-self: flex-start;
+            }
+
+            .tabs {
+                justify-content: stretch;
+            }
+
+            .tab-btn {
+                flex: 1;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <span style="font-size: 2rem;">🍰</span>
+                <h1>Villa des Smaqers Brisés</h1>
+            </div>
+            <a href="menu.html" class="back-btn">← Retour au menu</a>
+        </div>
+
+        <div class="orders-section">
+            <h2 class="section-title">📋 Mes Commandes</h2>
+            
+            <!-- Onglets -->
+            <div class="tabs">
+                <button class="tab-btn active" data-status="all">Toutes</button>
+                <button class="tab-btn" data-status="pending">En attente</button>
+                <button class="tab-btn" data-status="validated">Validées</button>
+                <button class="tab-btn" data-status="delivered">Livrées</button>
+                <button class="tab-btn" data-status="cancelled">Annulées</button>
+            </div>
+
+            <!-- Liste des commandes -->
+            <div class="orders-list" id="ordersList">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <div>Chargement de vos commandes...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, collection, query, where, getDocs, orderBy, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Configuration Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDqCYiGvSYitgoPnGdxMzkautcYl511E3I",
+            authDomain: "villa-smaqers-brises.firebaseapp.com",
+            projectId: "villa-smaqers-brises",
+            storageBucket: "villa-smaqers-brises.firebasestorage.app",
+            messagingSenderId: "387262093007",
+            appId: "1:387262093007:web:76173a1e3cd49d80a249ba",
+            measurementId: "G-TBNFR17E82"
+        };
+
+        // Initialiser Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+        let allOrders = [];
+        let currentFilter = 'all';
+
+        // Éléments DOM
+        const ordersList = document.getElementById('ordersList');
+        const tabButtons = document.querySelectorAll('.tab-btn');
+
+        // Fonctions utilitaires
+        function getStatusText(status) {
+            switch(status) {
+                case 'pending': return 'En attente';
+                case 'validated': return 'Validée';
+                case 'delivered': return 'Livrée';
+                case 'cancelled': return 'Annulée';
+                default: return status;
+            }
+        }
+
+        function getStatusClass(status) {
+            switch(status) {
+                case 'pending': return 'status-pending';
+                case 'validated': return 'status-validated';
+                case 'delivered': return 'status-delivered';
+                case 'cancelled': return 'status-cancelled';
+                default: return 'status-pending';
+            }
+        }
+
+        function formatDate(timestamp) {
+            try {
+                if (!timestamp) return 'Date non disponible';
+                const date = new Date(timestamp);
+                if (isNaN(date.getTime())) return 'Date non disponible';
+                return date.toLocaleString('fr-FR');
+            } catch (error) {
+                return 'Date non disponible';
+            }
+        }
+
+        // Charger les commandes
+        async function loadOrders() {
+            if (!currentUser) return;
+
+            try {
+                const ordersQuery = query(
+                    collection(db, 'orders'),
+                    where('userId', '==', currentUser.uid),
+                    orderBy('timestamp', 'desc')
+                );
+                
+                const snapshot = await getDocs(ordersQuery);
+                allOrders = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+
+                displayOrders();
+            } catch (error) {
+                console.error('Erreur lors du chargement des commandes:', error);
+                ordersList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">❌</div>
+                        <div class="empty-title">Erreur de chargement</div>
+                        <div class="empty-description">Impossible de charger vos commandes. Veuillez réessayer.</div>
+                    </div>
+                `;
+            }
+        }
+
+        // Afficher les commandes
+        function displayOrders() {
+            const filteredOrders = currentFilter === 'all' 
+                ? allOrders 
+                : allOrders.filter(order => order.status === currentFilter);
+
+            if (filteredOrders.length === 0) {
+                const emptyMessages = {
+                    all: { icon: '📋', title: 'Aucune commande', description: 'Vous n\'avez pas encore passé de commande.' },
+                    pending: { icon: '⏳', title: 'Aucune commande en attente', description: 'Toutes vos commandes ont été traitées.' },
+                    validated: { icon: '✅', title: 'Aucune commande validée', description: 'Aucune commande n\'a été validée pour le moment.' },
+                    delivered: { icon: '🚚', title: 'Aucune commande livrée', description: 'Aucune commande n\'a été livrée pour le moment.' },
+                    cancelled: { icon: '❌', title: 'Aucune commande annulée', description: 'Aucune commande n\'a été annulée.' }
+                };
+
+                const message = emptyMessages[currentFilter];
+                ordersList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">${message.icon}</div>
+                        <div class="empty-title">${message.title}</div>
+                        <div class="empty-description">${message.description}</div>
+                    </div>
+                `;
+                return;
+            }
+
+            ordersList.innerHTML = filteredOrders.map(order => `
+                <div class="order-card">
+                    <div class="order-header">
+                        <div class="order-info">
+                            <div class="order-product">
+                                <span class="product-icon">${order.productIcon || '🍽️'}</span>
+                                <span class="product-name">${order.productType || 'Produit'}</span>
+                            </div>
+                            <div class="order-details">
+                                <div><strong>Quantité:</strong> ${order.quantity || 1}</div>
+                                <div><strong>Prix total:</strong> ${(order.totalPrice || 0).toFixed(2)}€</div>
+                                <div><strong>Date:</strong> ${formatDate(order.timestampReadable || order.timestamp)}</div>
+                                ${order.selectedOptions && order.selectedOptions.length > 0 ? `
+                                    <div class="order-options">
+                                        <strong>Options:</strong> ${order.selectedOptions.join(', ')}
+                                    </div>
+                                ` : ''}
+                                ${order.comments ? `
+                                    <div class="order-options">
+                                        <strong>Commentaires:</strong> ${order.comments}
+                                    </div>
+                                ` : ''}
+                                <div class="order-classroom">
+                                    📚 Salle: ${order.classroom || 'Non spécifiée'}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="order-status ${getStatusClass(order.status)}">
+                            ${getStatusText(order.status)}
+                        </div>
+                    </div>
+                    <div class="order-actions">
+                        ${order.status === 'pending' ? `
+                            <button class="action-btn cancel-btn" onclick="cancelOrder('${order.id}')">
+                                ❌ Annuler
+                            </button>
+                        ` : ''}
+                        ${order.status === 'delivered' ? `
+                            <button class="action-btn cancel-btn" onclick="deleteOrder('${order.id}')" style="background: #6c757d;">
+                                🗑️ Supprimer
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Annuler une commande
+        window.cancelOrder = async function(orderId) {
+            if (!confirm('Êtes-vous sûr de vouloir annuler cette commande ?')) {
+                return;
+            }
+
+            try {
+                await updateDoc(doc(db, 'orders', orderId), {
+                    status: 'cancelled',
+                    cancelledAt: new Date().toISOString()
+                });
+
+                // Recharger les commandes
+                await loadOrders();
+                
+                alert('Commande annulée avec succès');
+            } catch (error) {
+                console.error('Erreur lors de l\'annulation:', error);
+                alert('Erreur lors de l\'annulation de la commande');
+            }
+        };
+
+        // Supprimer une commande livrée
+        window.deleteOrder = async function(orderId) {
+            if (!confirm('Êtes-vous sûr de vouloir supprimer cette commande de votre historique ?')) {
+                return;
+            }
+
+            try {
+                // Note: Dans une vraie app, on utiliserait deleteDoc
+                // Ici on marque comme supprimée pour l'utilisateur
+                await updateDoc(doc(db, 'orders', orderId), {
+                    userDeleted: true
+                });
+
+                // Recharger les commandes
+                await loadOrders();
+                
+                alert('Commande supprimée de votre historique');
+            } catch (error) {
+                console.error('Erreur lors de la suppression:', error);
+                alert('Erreur lors de la suppression de la commande');
+            }
+        };
+
+        // Gestion des onglets
+        tabButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Retirer la classe active de tous les boutons
+                tabButtons.forEach(b => b.classList.remove('active'));
+                // Ajouter la classe active au bouton cliqué
+                btn.classList.add('active');
+                // Mettre à jour le filtre
+                currentFilter = btn.dataset.status;
+                // Afficher les commandes filtrées
+                displayOrders();
+            });
+        });
+
+        // Vérifier l'état de connexion
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                loadOrders();
+            } else {
+                window.location.href = 'login.html';
+            }
+        });
+    </script>
+</body>
+</html>

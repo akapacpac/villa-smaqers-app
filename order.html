@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Villa des Smaqers Brisés - Commande</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo h1 {
+            color: #333;
+            font-size: 1.8rem;
+        }
+
+        .back-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .back-btn:hover {
+            background: #5a6268;
+        }
+
+        .order-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            color: #333;
+            font-size: 2rem;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .product-info {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+
+        .product-icon {
+            font-size: 4rem;
+            margin-bottom: 15px;
+        }
+
+        .product-name {
+            color: #333;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .product-price {
+            color: #667eea;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .quantity-selector {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .quantity-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .quantity-btn:hover {
+            background: #5a6fd8;
+        }
+
+        .quantity-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .quantity-display {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #333;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .option-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .option-item:hover {
+            border-color: #667eea;
+            background: #e3f2fd;
+        }
+
+        .option-item.selected {
+            border-color: #667eea;
+            background: #e3f2fd;
+        }
+
+        .option-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .option-price {
+            color: #667eea;
+            font-size: 0.9rem;
+        }
+
+        .total-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+
+        .total-line {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .total-line.final {
+            font-weight: bold;
+            font-size: 1.3rem;
+            color: #333;
+            border-top: 2px solid #667eea;
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+
+        .submit-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1.1rem;
+            width: 100%;
+            transition: all 0.3s;
+        }
+
+        .submit-btn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .classroom-info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196f3;
+        }
+
+        .classroom-info h4 {
+            color: #1976d2;
+            margin-bottom: 8px;
+        }
+
+        .classroom-info p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .options-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .quantity-selector {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <span style="font-size: 2rem;">🍰</span>
+                <h1>Villa des Smaqers Brisés</h1>
+            </div>
+            <a href="menu.html" class="back-btn">← Retour au menu</a>
+        </div>
+
+        <div class="order-section">
+            <h2 class="section-title">🛒 Passer une commande</h2>
+            
+            <!-- Informations produit -->
+            <div class="product-info" id="productInfo">
+                <!-- Sera rempli par JavaScript -->
+            </div>
+
+            <!-- Formulaire de commande -->
+            <form id="orderForm">
+                <!-- Quantité -->
+                <div class="form-group">
+                    <label class="form-label">Quantité</label>
+                    <div class="quantity-selector">
+                        <button type="button" class="quantity-btn" id="decreaseBtn">-</button>
+                        <div class="quantity-display" id="quantityDisplay">1</div>
+                        <button type="button" class="quantity-btn" id="increaseBtn">+</button>
+                    </div>
+                </div>
+
+                <!-- Options du produit -->
+                <div class="form-group">
+                    <label class="form-label">Options</label>
+                    <div class="options-grid" id="optionsGrid">
+                        <!-- Sera rempli par JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Salle de classe -->
+                <div class="form-group">
+                    <label class="form-label" for="classroom">Salle de classe *</label>
+                    <select class="form-select" id="classroom" required>
+                        <option value="">Sélectionner une salle</option>
+                        <option value="A101">A101</option>
+                        <option value="A102">A102</option>
+                        <option value="A103">A103</option>
+                        <option value="B201">B201</option>
+                        <option value="B202">B202</option>
+                        <option value="B203">B203</option>
+                        <option value="C301">C301</option>
+                        <option value="C302">C302</option>
+                        <option value="C303">C303</option>
+                        <option value="D401">D401</option>
+                        <option value="D402">D402</option>
+                        <option value="D403">D403</option>
+                        <option value="Autre">Autre</option>
+                    </select>
+                </div>
+
+                <!-- Commentaires -->
+                <div class="form-group">
+                    <label class="form-label" for="comments">Commentaires (optionnel)</label>
+                    <textarea class="form-textarea" id="comments" placeholder="Ajoutez des commentaires pour votre commande..."></textarea>
+                </div>
+
+                <!-- Informations sur la salle -->
+                <div class="classroom-info">
+                    <h4>📚 Information importante</h4>
+                    <p>Veuillez indiquer votre salle de classe pour que nous puissions vous livrer votre commande. Si votre salle n'est pas dans la liste, sélectionnez "Autre" et précisez dans les commentaires.</p>
+                </div>
+
+                <!-- Total -->
+                <div class="total-section">
+                    <div class="total-line">
+                        <span>Prix unitaire :</span>
+                        <span id="unitPrice">0,00€</span>
+                    </div>
+                    <div class="total-line">
+                        <span>Quantité :</span>
+                        <span id="quantityText">1</span>
+                    </div>
+                    <div class="total-line final">
+                        <span>Total :</span>
+                        <span id="totalPrice">0,00€</span>
+                    </div>
+                </div>
+
+                <!-- Bouton de commande -->
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    🚀 Passer la commande
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, getDoc, collection, addDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Configuration Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDqCYiGvSYitgoPnGdxMzkautcYl511E3I",
+            authDomain: "villa-smaqers-brises.firebaseapp.com",
+            projectId: "villa-smaqers-brises",
+            storageBucket: "villa-smaqers-brises.firebasestorage.app",
+            messagingSenderId: "387262093007",
+            appId: "1:387262093007:web:76173a1e3cd49d80a249ba",
+            measurementId: "G-TBNFR17E82"
+        };
+
+        // Initialiser Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+        let currentProduct = null;
+        let quantity = 1;
+        let selectedOptions = [];
+
+        // Configuration des produits
+        const products = {
+            crepes: {
+                name: 'Crêpes',
+                icon: '🥞',
+                basePrice: 2.50,
+                options: [
+                    { name: 'Nutella', price: 0 },
+                    { name: 'Confiture', price: 0 },
+                    { name: 'Sucre', price: 0 },
+                    { name: 'Beurre', price: 0 },
+                    { name: 'Chantilly', price: 0.50 },
+                    { name: 'Fruits frais', price: 1.00 }
+                ]
+            },
+            cookies: {
+                name: 'Cookies',
+                icon: '🍪',
+                basePrice: 1.50,
+                options: [
+                    { name: 'Chocolat noir', price: 0 },
+                    { name: 'Chocolat au lait', price: 0 },
+                    { name: 'Chocolat blanc', price: 0 },
+                    { name: 'Double chocolat', price: 0.30 },
+                    { name: 'Noix', price: 0.50 },
+                    { name: 'Pépites extra', price: 0.30 }
+                ]
+            },
+            glaces: {
+                name: 'Glaces',
+                icon: '🍦',
+                basePrice: 3.00,
+                options: [
+                    { name: 'Vanille', price: 0 },
+                    { name: 'Chocolat', price: 0 },
+                    { name: 'Fraise', price: 0 },
+                    { name: 'Pistache', price: 0 },
+                    { name: 'Chantilly', price: 0.50 },
+                    { name: 'Sauce chocolat', price: 0.30 },
+                    { name: 'Sauce caramel', price: 0.30 }
+                ]
+            }
+        };
+
+        // Éléments DOM
+        const productInfo = document.getElementById('productInfo');
+        const optionsGrid = document.getElementById('optionsGrid');
+        const quantityDisplay = document.getElementById('quantityDisplay');
+        const decreaseBtn = document.getElementById('decreaseBtn');
+        const increaseBtn = document.getElementById('increaseBtn');
+        const unitPrice = document.getElementById('unitPrice');
+        const quantityText = document.getElementById('quantityText');
+        const totalPrice = document.getElementById('totalPrice');
+        const submitBtn = document.getElementById('submitBtn');
+        const orderForm = document.getElementById('orderForm');
+
+        // Initialiser la page
+        function initPage() {
+            // Récupérer le produit depuis l'URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const productType = urlParams.get('product');
+            
+            if (!productType || !products[productType]) {
+                alert('Produit non trouvé');
+                window.location.href = 'menu.html';
+                return;
+            }
+
+            currentProduct = products[productType];
+            loadProductInfo();
+            loadOptions();
+            updateTotal();
+        }
+
+        // Charger les informations du produit
+        function loadProductInfo() {
+            productInfo.innerHTML = `
+                <div class="product-icon">${currentProduct.icon}</div>
+                <div class="product-name">${currentProduct.name}</div>
+                <div class="product-price">${currentProduct.basePrice.toFixed(2)}€</div>
+            `;
+        }
+
+        // Charger les options
+        function loadOptions() {
+            optionsGrid.innerHTML = '';
+            
+            currentProduct.options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'option-item';
+                optionElement.innerHTML = `
+                    <div class="option-name">${option.name}</div>
+                    <div class="option-price">${option.price > 0 ? '+' + option.price.toFixed(2) + '€' : 'Inclus'}</div>
+                `;
+                
+                optionElement.addEventListener('click', () => {
+                    optionElement.classList.toggle('selected');
+                    updateSelectedOptions();
+                });
+                
+                optionsGrid.appendChild(optionElement);
+            });
+        }
+
+        // Mettre à jour les options sélectionnées
+        function updateSelectedOptions() {
+            selectedOptions = [];
+            const selectedElements = optionsGrid.querySelectorAll('.option-item.selected');
+            
+            selectedElements.forEach(element => {
+                const optionName = element.querySelector('.option-name').textContent;
+                const option = currentProduct.options.find(opt => opt.name === optionName);
+                if (option) {
+                    selectedOptions.push(option);
+                }
+            });
+            
+            updateTotal();
+        }
+
+        // Mettre à jour le total
+        function updateTotal() {
+            const basePrice = currentProduct.basePrice;
+            const optionsPrice = selectedOptions.reduce((sum, option) => sum + option.price, 0);
+            const unitTotal = basePrice + optionsPrice;
+            const total = unitTotal * quantity;
+
+            unitPrice.textContent = unitTotal.toFixed(2) + '€';
+            quantityText.textContent = quantity;
+            totalPrice.textContent = total.toFixed(2) + '€';
+        }
+
+        // Gestionnaires d'événements
+        decreaseBtn.addEventListener('click', () => {
+            if (quantity > 1) {
+                quantity--;
+                quantityDisplay.textContent = quantity;
+                updateTotal();
+            }
+        });
+
+        increaseBtn.addEventListener('click', () => {
+            quantity++;
+            quantityDisplay.textContent = quantity;
+            updateTotal();
+        });
+
+        // Soumission du formulaire
+        orderForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!currentUser) {
+                alert('Vous devez être connecté pour passer une commande');
+                return;
+            }
+
+            const classroom = document.getElementById('classroom').value;
+            const comments = document.getElementById('comments').value;
+
+            if (!classroom) {
+                alert('Veuillez sélectionner une salle de classe');
+                return;
+            }
+
+            // Désactiver le bouton
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Traitement...';
+
+            try {
+                // Calculer le prix total
+                const basePrice = currentProduct.basePrice;
+                const optionsPrice = selectedOptions.reduce((sum, option) => sum + option.price, 0);
+                const unitTotal = basePrice + optionsPrice;
+                const total = unitTotal * quantity;
+
+                // Créer la commande
+                const order = {
+                    userId: currentUser.uid,
+                    userEmail: currentUser.email,
+                    userName: currentUser.displayName || 'Utilisateur',
+                    productType: currentProduct.name,
+                    productIcon: currentProduct.icon,
+                    quantity: quantity,
+                    selectedOptions: selectedOptions.map(opt => opt.name),
+                    unitPrice: unitTotal,
+                    totalPrice: total,
+                    classroom: classroom,
+                    comments: comments,
+                    status: 'pending',
+                    timestamp: new Date().toISOString(),
+                    timestampReadable: new Date().toLocaleString('fr-FR')
+                };
+
+                // Sauvegarder en base
+                await addDoc(collection(db, 'orders'), order);
+
+                // Afficher le succès
+                showSuccessMessage();
+
+            } catch (error) {
+                console.error('Erreur lors de la création de la commande:', error);
+                alert('Erreur lors de la création de la commande. Veuillez réessayer.');
+            } finally {
+                // Réactiver le bouton
+                submitBtn.disabled = false;
+                submitBtn.textContent = '🚀 Passer la commande';
+            }
+        });
+
+        // Afficher le message de succès
+        function showSuccessMessage() {
+            const message = document.createElement('div');
+            message.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: #28a745;
+                color: white;
+                padding: 30px;
+                border-radius: 15px;
+                text-align: center;
+                font-size: 1.2rem;
+                font-weight: bold;
+                z-index: 1000;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            `;
+            message.innerHTML = `
+                <div style="font-size: 3rem; margin-bottom: 15px;">🎉</div>
+                <div>Commande passée avec succès !</div>
+                <div style="font-size: 0.9rem; margin-top: 10px; opacity: 0.9;">
+                    Vous recevrez votre commande en classe ${document.getElementById('classroom').value}
+                </div>
+            `;
+            
+            document.body.appendChild(message);
+            
+            setTimeout(() => {
+                message.remove();
+                window.location.href = 'my-orders.html';
+            }, 3000);
+        }
+
+        // Vérifier l'état de connexion
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                initPage();
+            } else {
+                window.location.href = 'login.html';
+            }
+        });
+    </script>
+</body>
+</html>
