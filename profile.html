@@ -4,6 +4,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profil - Villa des Smaqers Brisés</title>
+    
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        
+        // Configuration Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDqCYiGvSYitgoPnGdxMzkautcYl511E3I",
+            authDomain: "villa-smaqers-brises.firebaseapp.com",
+            projectId: "villa-smaqers-brises",
+            storageBucket: "villa-smaqers-brises.firebasestorage.app",
+            messagingSenderId: "387262093007",
+            appId: "1:387262093007:web:76173a1e3cd49d80a249ba",
+            measurementId: "G-TBNFR17E82"
+        };
+        
+        // Initialiser Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        
+        // Rendre Firebase disponible globalement
+        window.auth = auth;
+        window.db = db;
+        window.signOut = signOut;
+        window.onAuthStateChanged = onAuthStateChanged;
+        window.getDoc = getDoc;
+        window.doc = doc;
+    </script>
     <style>
         * {
             margin: 0;
@@ -153,16 +184,7 @@
     </div>
 
     <script>
-        function loadUser() {
-            const userData = localStorage.getItem('user');
-            if (!userData) {
-                window.location.href = 'auth.html';
-                return;
-            }
-
-            const user = JSON.parse(userData);
-            displayUser(user);
-        }
+        let currentUser = null;
 
         function displayUser(user) {
             const userInfoEl = document.getElementById('userInfo');
@@ -202,10 +224,61 @@
             }
         }
 
-        function logout() {
+        async function loadUser() {
+            // Attendre que Firebase soit chargé
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            onAuthStateChanged(auth, async (user) => {
+                if (!user) {
+                    window.location.href = 'auth.html';
+                    return;
+                }
+
+                try {
+                    // Récupérer le profil depuis Firestore
+                    const userDoc = await getDoc(doc(db, 'users', user.uid));
+                    if (userDoc.exists()) {
+                        const userData = userDoc.data();
+                        currentUser = {
+                            uid: user.uid,
+                            email: user.email,
+                            firstName: userData.firstName,
+                            lastName: userData.lastName,
+                            role: userData.role
+                        };
+                        displayUser(currentUser);
+                    } else {
+                        showError('Profil utilisateur non trouvé');
+                    }
+                } catch (error) {
+                    console.error('Erreur lors du chargement du profil:', error);
+                    showError('Erreur lors du chargement du profil');
+                }
+            });
+        }
+
+        function showError(message) {
+            const userInfoEl = document.getElementById('userInfo');
+            userInfoEl.innerHTML = `
+                <div style="text-align: center; color: #dc3545; padding: 20px;">
+                    <h3>Erreur</h3>
+                    <p>${message}</p>
+                </div>
+            `;
+        }
+
+        async function logout() {
             if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
-                localStorage.removeItem('user');
-                window.location.href = 'auth.html';
+                try {
+                    await signOut(auth);
+                    localStorage.removeItem('user');
+                    window.location.href = 'auth.html';
+                } catch (error) {
+                    console.error('Erreur de déconnexion:', error);
+                    // Forcer la déconnexion même en cas d'erreur
+                    localStorage.removeItem('user');
+                    window.location.href = 'auth.html';
+                }
             }
         }
 
