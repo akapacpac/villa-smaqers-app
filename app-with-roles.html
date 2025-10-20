@@ -3,10 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <title>Villa des Smaqers Brisés - Application v3</title>
+    <title>Villa des Smaqers Brisés - FORCE REDEPLOY v2</title>
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#6c5ce7">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1550,86 +1547,29 @@
         }
         
         // Load user - Firebase guard handles auth; no localStorage login
-        async function loadUser() {
-            try {
-                // Intentionally left minimal. Auth state is enforced by Firebase guard in <head>.
-                const registrationForm = document.getElementById('registration-form');
-                const mainApp = document.getElementById('main-app');
-                if (registrationForm) registrationForm.style.display = 'none';
-                if (mainApp) mainApp.style.display = 'block';
-                
-                // Load user data from Firebase
-                await loadUserFromFirebase();
-            } catch (error) {
-                console.error('Erreur lors du chargement de l\'utilisateur:', error);
-            }
+        function loadUser() {
+            // Intentionally left minimal. Auth state is enforced by Firebase guard in <head>.
+            const registrationForm = document.getElementById('registration-form');
+            const mainApp = document.getElementById('main-app');
+            if (registrationForm) registrationForm.style.display = 'none';
+            if (mainApp) mainApp.style.display = 'block';
         }
         
-        // Load user from Firebase
-        async function loadUserFromFirebase() {
+        // Load user from Firebase (for future use)
+        async function loadUserFromFirebase(email) {
             try {
-                // Get current Firebase user
-                const user = auth.currentUser;
-                if (!user) {
-                    console.log('Aucun utilisateur connecté');
-                    return false;
-                }
+                const usersSnapshot = await getDocs(collection(db, 'users'));
+                const users = [];
+                usersSnapshot.forEach(doc => {
+                    users.push({ id: doc.id, ...doc.data() });
+                });
                 
-                // Load user profile from Firestore
-                const userDoc = await getDoc(doc(db, 'users', user.uid));
-                if (userDoc.exists()) {
-                    currentUser = { ...user, ...userDoc.data() };
-                    console.log('Utilisateur chargé:', currentUser);
-                    
-                    // Update UI with user data
-                    updateUserProfileUI();
-                    return true;
-                } else {
-                    // Create basic user profile if doesn't exist
-                    currentUser = { 
-                        ...user, 
-                        firstName: 'Utilisateur',
-                        lastName: '',
-                        phone: '',
-                        age: '',
-                        role: 'student'
-                    };
-                    console.log('Profil utilisateur créé:', currentUser);
-                    updateUserProfileUI();
-                    return true;
-                }
+                const user = users.find(u => u.email === email);
+                if (user) { currentUser = user; return true; }
+                return false;
             } catch (error) {
                 console.error('Erreur lors du chargement de l\'utilisateur:', error);
                 return false;
-            }
-        }
-        
-        // Update user profile UI
-        function updateUserProfileUI() {
-            if (!currentUser) return;
-            
-            // Update profile display
-            const nameElement = document.querySelector('#profile-name');
-            const emailElement = document.querySelector('#profile-email');
-            const phoneElement = document.querySelector('#profile-phone');
-            const ageElement = document.querySelector('#profile-age');
-            const roleElement = document.querySelector('#profile-role');
-            
-            if (nameElement) {
-                nameElement.textContent = `${currentUser.firstName || 'Prénom'} ${currentUser.lastName || 'Nom'}`;
-            }
-            if (emailElement) {
-                emailElement.textContent = currentUser.email || 'Email non disponible';
-            }
-            if (phoneElement) {
-                phoneElement.textContent = currentUser.phone || 'Non renseigné';
-            }
-            if (ageElement) {
-                ageElement.textContent = currentUser.age ? `${currentUser.age} ans` : 'Non renseigné';
-            }
-            if (roleElement) {
-                roleElement.textContent = currentUser.role === 'admin' ? 'Administrateur' : 
-                                        currentUser.role === 'member' ? 'Membre' : 'Étudiant';
             }
         }
         
@@ -2010,27 +1950,16 @@
         // Load all orders (for members)
         async function loadAllOrders() {
             try {
-                console.log('Chargement des commandes...');
                 const ordersSnapshot = await getDocs(collection(db, 'orders'));
                 allOrders = [];
                 ordersSnapshot.forEach(doc => {
                     allOrders.push({ id: doc.id, ...doc.data() });
                 });
                 
-                console.log('Commandes chargées:', allOrders.length);
                 displayFilteredOrders();
             } catch (error) {
                 console.error('Erreur lors du chargement des commandes:', error);
-                const errorMsg = `Erreur Firebase: ${error.code || error.message}`;
-                document.getElementById('all-orders-list').innerHTML = `
-                    <div style="text-align: center; padding: 20px; color: #dc3545;">
-                        <h3>❌ Erreur de connexion</h3>
-                        <p>${errorMsg}</p>
-                        <button onclick="loadAllOrders()" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                            🔄 Réessayer
-                        </button>
-                    </div>
-                `;
+                document.getElementById('all-orders-list').innerHTML = '<p>Erreur lors du chargement des commandes</p>';
             }
         }
         
@@ -2749,8 +2678,7 @@
                 document.getElementById('customClassroom').value = '';
             } catch (error) {
                 console.error('Erreur lors de la commande:', error);
-                const errorMsg = `Erreur Firebase: ${error.code || error.message}`;
-                alert(`Erreur lors de la commande: ${errorMsg}\n\nVeuillez vérifier votre connexion et réessayer.`);
+                alert('Erreur lors de la commande. Veuillez réessayer.');
             }
         }
         
