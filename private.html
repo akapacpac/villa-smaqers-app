@@ -444,16 +444,34 @@
 
         async function deleteUser(userId, userEmail) {
             // Confirmation avant suppression
-            if (!confirm(`Êtes-vous sûr de vouloir supprimer DÉFINITIVEMENT le compte de ${userEmail} ?\n\nCette action est irréversible et supprimera :\n- Le compte Firebase Authentication\n- Le profil utilisateur\n- Toutes les commandes associées\n- L'utilisateur ne pourra plus se connecter\n\n⚠️ ATTENTION : Cette action ne peut pas être annulée !`)) {
+            if (!confirm(`Êtes-vous sûr de vouloir supprimer DÉFINITIVEMENT le compte de ${userEmail} ?\n\nCette action est irréversible et supprimera :\n- Le profil utilisateur\n- Toutes les commandes associées\n- L'utilisateur ne pourra plus se connecter\n\n⚠️ ATTENTION : Cette action ne peut pas être annulée !`)) {
                 return;
             }
 
             try {
-                // Appeler la Firebase Function pour supprimer complètement le compte
-                const deleteUserFunction = functions.httpsCallable('deleteUser');
-                const result = await deleteUserFunction({ userId: userId });
-                
-                showMessage(`Compte ${userEmail} supprimé définitivement avec succès`, 'success');
+                // Essayer d'abord la Firebase Function
+                try {
+                    const deleteUserFunction = functions.httpsCallable('deleteUser');
+                    const result = await deleteUserFunction({ userId: userId });
+                    showMessage(`Compte ${userEmail} supprimé définitivement avec succès`, 'success');
+                } catch (functionError) {
+                    console.log('Firebase Function échouée, suppression Firestore seulement:', functionError);
+                    
+                    // Fallback : suppression Firestore seulement
+                    await db.collection('users').doc(userId).delete();
+                    
+                    // Supprimer toutes les commandes de cet utilisateur
+                    const ordersSnapshot = await db.collection('orders').where('userId', '==', userId).get();
+                    const batch = db.batch();
+                    
+                    ordersSnapshot.forEach((doc) => {
+                        batch.delete(doc.ref);
+                    });
+                    
+                    await batch.commit();
+                    
+                    showMessage(`Profil ${userEmail} supprimé (Firebase Auth non supprimé)`, 'success');
+                }
                 
                 // Recharger la liste
                 loadUsers();
