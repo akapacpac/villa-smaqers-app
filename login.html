@@ -524,7 +524,7 @@
                 try {
                     await sendEmailVerification(user);
                     logToRemote(`Email vérification envoyé: ${email}`, 'success');
-                    showSuccess('Compte créé ! Vérifiez votre email et cliquez sur le lien pour activer votre compte.');
+                    showSuccess('Compte créé ! Vérifiez votre email et cliquez sur le lien pour activer votre compte.<br><br><strong>⚠️ ATTENTION : Vérifiez vos spams !</strong>');
                 } catch (emailError) {
                     logToRemote(`Email vérification échoué: ${emailError.message}`, 'warning');
                     showSuccess('Compte créé avec succès ! Vous pouvez maintenant vous connecter.');
