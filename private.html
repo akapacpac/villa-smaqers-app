@@ -449,9 +449,29 @@
             }
 
             try {
-                // Appeler la Firebase Function pour supprimer complètement le compte
-                const deleteUserFunction = functions.httpsCallable('deleteUser');
-                const result = await deleteUserFunction({ userId: userId });
+                // Obtenir le token d'authentification
+                const user = auth.currentUser;
+                if (!user) {
+                    throw new Error('Utilisateur non authentifié');
+                }
+                
+                const idToken = await user.getIdToken();
+                
+                // Appeler la Firebase Function via HTTP
+                const response = await fetch('https://us-central1-villa-smaqers-brises.cloudfunctions.net/deleteUser', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${idToken}`
+                    },
+                    body: JSON.stringify({ userId: userId })
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.error || 'Erreur lors de la suppression');
+                }
                 
                 showMessage(`Compte ${userEmail} supprimé définitivement avec succès`, 'success');
                 

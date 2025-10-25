@@ -1,0 +1,31 @@
+{"users": [
+{
+  "localId": "XQKipW9CeKSPFbPLWmBmMVTfN1G3",
+  "email": "pascalmartinlalande@gmail.com",
+  "emailVerified": true,
+  "passwordHash": "AOtSWEsXB30U2b60nC+SUHbeZb146oxHXlGgWivWNZ7dwkMjr6FZMMn+9O9HnOdyHyrozZAF5DlIc5BAVeWRNw==",
+  "salt": "dsO9FJph+QktVA==",
+  "lastSignedInAt": "1761401679384",
+  "createdAt": "1760982428380",
+  "providerUserInfo": []
+},
+{
+  "localId": "ZJTXeV1dFLhZWe6IsDP0wQ1ivpE2",
+  "email": "rugbyoliver2@gmail.com",
+  "emailVerified": true,
+  "passwordHash": "8HxYJjazdLWrn//scMBk3khDU7NsmsXmGjhK/MU9dzBW+vA0/s7I9Vs1GgLrJdwz/7/8ksvyj1gb8D4gwHRF+w==",
+  "salt": "7M9d66H/0HOv8w==",
+  "lastSignedInAt": "1761401090701",
+  "createdAt": "1761400001894",
+  "providerUserInfo": []
+},
+{
+  "localId": "bOHVbU2dizSjKsoTQp2098SpV5i1",
+  "email": "pascal.martin_lalande@edu.escp.eu",
+  "emailVerified": true,
+  "passwordHash": "Fj5JMK6E9DFUBvJeP7twzUngAIjET33qrz6EQ7833y6iHd7Zma8ybHMP9s+DY+l3JAgUEPHeSdAMPlbi+LiYwg==",
+  "salt": "LLBcjcbA6DwH5A==",
+  "lastSignedInAt": "1761403551511",
+  "createdAt": "1760981727468",
+  "providerUserInfo": []
+}]}
