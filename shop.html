@@ -312,6 +312,9 @@
             <button class="nav-tab admin-only" onclick="showTab('admin')" style="display: none;">
                 ⚙️ Administration
             </button>
+            <a href="private.html" class="nav-tab admin-only" style="display: none; text-decoration: none; color: inherit;">
+                🔒 Administration Privée
+            </a>
         </div>
 
         <div class="tab-content">
@@ -319,16 +322,6 @@
             <div id="orders" class="tab-pane active">
                 <h2 style="margin-bottom: 30px; color: #333;">Choisissez votre commande</h2>
                 
-                <!-- Champ classe -->
-                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-                    <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #333;">Classe (pour la livraison) :</label>
-                    <input type="text" id="classInput" placeholder="Ex: 456" maxlength="3" pattern="[0-9]{3}" 
-                           style="width: 200px; padding: 10px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 1rem; text-align: center;"
-                           oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 3)">
-                    <div style="margin-top: 5px; font-size: 0.9rem; color: #666;">
-                        Entrez votre numéro de classe (3 chiffres) pour que nous sachions où livrer votre commande
-                    </div>
-                </div>
                 
                 <div class="product-grid">
                     <div class="product-card" onclick="selectProduct('crepes')">
@@ -336,7 +329,7 @@
                         <div class="product-name">Crêpes</div>
                         <div class="product-price">FREE</div>
                         <div class="product-description">Délicieuses crêpes maison</div>
-                        <button class="order-btn" onclick="placeOrder('crepes', 0)">Commander</button>
+                        <button class="order-btn" onclick="showClassModal('crepes', 0)">Commander</button>
                     </div>
 
                     <div class="product-card" onclick="selectProduct('cookie')">
@@ -344,7 +337,7 @@
                         <div class="product-name">Cookie</div>
                         <div class="product-price">FREE</div>
                         <div class="product-description">Cookies aux pépites de chocolat</div>
-                        <button class="order-btn" onclick="placeOrder('cookie', 0)">Commander</button>
+                        <button class="order-btn" onclick="showClassModal('cookie', 0)">Commander</button>
                     </div>
 
                     <div class="product-card" onclick="selectProduct('gaufre')">
@@ -352,7 +345,7 @@
                         <div class="product-name">Gaufre</div>
                         <div class="product-price">FREE</div>
                         <div class="product-description">Gaufres belges traditionnelles</div>
-                        <button class="order-btn" onclick="placeOrder('gaufre', 0)">Commander</button>
+                        <button class="order-btn" onclick="showClassModal('gaufre', 0)">Commander</button>
                     </div>
                 </div>
             </div>
@@ -430,8 +423,33 @@
         </div>
     </div>
 
+    <!-- Modal pour la classe -->
+    <div id="classModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 30px; border-radius: 15px; max-width: 400px; width: 90%; box-shadow: 0 20px 40px rgba(0,0,0,0.3);">
+            <h3 style="margin-bottom: 20px; color: #333; text-align: center;">Confirmer votre commande</h3>
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #333;">Classe de livraison :</label>
+                <input type="text" id="modalClassInput" placeholder="Ex: 456" maxlength="3" pattern="[0-9]{3}" 
+                       style="width: 100%; padding: 12px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 1rem; text-align: center;"
+                       oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 3)">
+                <div style="margin-top: 5px; font-size: 0.9rem; color: #666; text-align: center;">
+                    Entrez votre numéro de classe (3 chiffres)
+                </div>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button onclick="hideClassModal()" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">
+                    Annuler
+                </button>
+                <button onclick="confirmOrder()" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">
+                    Confirmer
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let currentUser = null;
+        let pendingOrder = null; // Stocke la commande en attente
 
         function showTab(tabName) {
             // Masquer tous les onglets
@@ -500,16 +518,33 @@
             event.currentTarget.classList.add('selected');
         }
 
-        async function placeOrder(productName, price) {
+        function showClassModal(product, price) {
             if (!currentUser) {
-                alert('Vous devez être connecté pour passer une commande');
+                alert('Veuillez vous connecter pour passer une commande');
                 return;
             }
 
-            // Vérifier que la classe est renseignée
-            const classNumber = document.getElementById('classInput').value.trim();
+            // Stocker la commande en attente
+            pendingOrder = { product, price };
+            
+            // Afficher la modal
+            document.getElementById('classModal').style.display = 'flex';
+            document.getElementById('modalClassInput').value = '';
+            document.getElementById('modalClassInput').focus();
+        }
+
+        function hideClassModal() {
+            document.getElementById('classModal').style.display = 'none';
+            pendingOrder = null;
+        }
+
+        async function confirmOrder() {
+            if (!pendingOrder) return;
+
+            const classNumber = document.getElementById('modalClassInput').value.trim();
+            
             if (!classNumber || classNumber.length !== 3) {
-                showMessage('Veuillez entrer votre numéro de classe (3 chiffres)', 'error');
+                showMessage('Veuillez entrer un numéro de classe valide (3 chiffres)', 'error');
                 return;
             }
 
@@ -518,8 +553,8 @@
                     userId: currentUser.uid,
                     userEmail: currentUser.email,
                     userName: `${currentUser.firstName} ${currentUser.lastName}`,
-                    product: productName,
-                    price: price,
+                    product: pendingOrder.product,
+                    price: pendingOrder.price,
                     classNumber: classNumber,
                     status: 'pending',
                     createdAt: new Date(),
@@ -532,6 +567,9 @@
                 // Afficher un message de succès
                 showMessage(`Commande passée avec succès ! Livraison prévue en classe ${classNumber}`, 'success');
                 
+                // Fermer la modal
+                hideClassModal();
+                
                 // Recharger les commandes si on est sur l'onglet
                 if (document.getElementById('my-orders').classList.contains('active')) {
                     loadMyOrders();
@@ -541,6 +579,11 @@
                 console.error('Erreur lors de la commande:', error);
                 showMessage('Erreur lors de la commande: ' + error.message, 'error');
             }
+        }
+
+        function placeOrder(productName, price) {
+            // Cette fonction est maintenant remplacée par showClassModal
+            showClassModal(productName, price);
         }
 
         async function loadMyOrders() {
@@ -794,9 +837,9 @@
         }
 
         async function loadAllOrders() {
-            if (!currentUser || currentUser.role !== 'admin') {
+            if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'member')) {
                 document.getElementById('adminOrdersTable').innerHTML = `
-                    <div class="error">Accès refusé. Seuls les administrateurs peuvent accéder à cette section.</div>
+                    <div class="error">Accès refusé. Seuls les administrateurs et membres peuvent accéder à cette section.</div>
                 `;
                 return;
             }
@@ -887,6 +930,11 @@
         }
 
         async function updateOrderStatus(orderId, newStatus) {
+            if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'member')) {
+                showMessage('Seuls les administrateurs et membres peuvent modifier les statuts', 'error');
+                return;
+            }
+            
             try {
                 await db.collection('orders').doc(orderId).update({
                     status: newStatus
@@ -1009,9 +1057,14 @@
                         
                         console.log('Utilisateur chargé:', currentUser);
                         
-                        // Afficher l'onglet admin si c'est un admin
-                        if (currentUser.role === 'admin') {
+                        // Afficher l'onglet admin si c'est un admin ou membre
+                        if (currentUser.role === 'admin' || currentUser.role === 'member') {
                             document.querySelector('.admin-only').style.display = 'block';
+                        }
+                        
+                        // Afficher le lien privé seulement pour les admins
+                        if (currentUser.role === 'admin') {
+                            document.querySelector('a[href="private.html"]').style.display = 'block';
                         }
                         
                         // Recharger les onglets si ils sont actifs
