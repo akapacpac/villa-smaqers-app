@@ -1326,13 +1326,14 @@
                     
                     console.log('Utilisateur chargé:', currentUser);
                     
-                    // Afficher l'onglet admin si c'est un admin ou membre
+                    // Afficher l'onglet Livraison si c'est un admin ou membre
                     if (currentUser.role === 'admin' || currentUser.role === 'member') {
-                        document.querySelectorAll('.admin-only').forEach(element => {
-                            if (element.tagName === 'BUTTON') {
-                                element.style.display = 'block';
-                            }
-                        });
+                        document.querySelector('button[onclick="showTab(\'admin\')"]').style.display = 'block';
+                    }
+                    
+                    // Afficher l'onglet Restock SEULEMENT pour les admins
+                    if (currentUser.role === 'admin') {
+                        document.querySelector('button[onclick="showTab(\'restock\')"]').style.display = 'block';
                     }
                     
                     // Afficher le lien privé SEULEMENT pour les admins
