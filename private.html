@@ -185,6 +185,40 @@
             margin-top: 5px;
         }
 
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .btn-update {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .btn-update:hover {
+            background: #0056b3;
+        }
+
+        .btn-delete:hover {
+            background: #c82333;
+        }
+
         @media (max-width: 768px) {
             .users-table {
                 font-size: 0.9rem;
@@ -350,9 +384,14 @@
                             </td>
                             <td>${createdAt}</td>
                             <td>
-                                <button onclick="updateUserRole('${doc.id}')" style="background: #007bff; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.9rem;">
-                                    Mettre à jour
-                                </button>
+                                <div class="action-buttons">
+                                    <button onclick="updateUserRole('${doc.id}')" class="btn-update">
+                                        Mettre à jour
+                                    </button>
+                                    <button onclick="deleteUser('${doc.id}', '${userData.email}')" class="btn-delete">
+                                        Supprimer
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     `;
@@ -396,6 +435,37 @@
             } catch (error) {
                 console.error('Erreur lors de la mise à jour du rôle:', error);
                 showMessage('Erreur lors de la mise à jour du rôle: ' + error.message, 'error');
+            }
+        }
+
+        async function deleteUser(userId, userEmail) {
+            // Confirmation avant suppression
+            if (!confirm(`Êtes-vous sûr de vouloir supprimer le compte de ${userEmail} ?\n\nCette action est irréversible et supprimera :\n- Le profil utilisateur\n- Toutes les commandes associées\n- L'authentification Firebase`)) {
+                return;
+            }
+
+            try {
+                // Supprimer le document utilisateur
+                await db.collection('users').doc(userId).delete();
+                
+                // Supprimer toutes les commandes de cet utilisateur
+                const ordersSnapshot = await db.collection('orders').where('userId', '==', userId).get();
+                const batch = db.batch();
+                
+                ordersSnapshot.forEach((doc) => {
+                    batch.delete(doc.ref);
+                });
+                
+                await batch.commit();
+                
+                showMessage(`Compte ${userEmail} supprimé avec succès`, 'success');
+                
+                // Recharger la liste
+                loadUsers();
+                
+            } catch (error) {
+                console.error('Erreur lors de la suppression:', error);
+                showMessage('Erreur lors de la suppression: ' + error.message, 'error');
             }
         }
 

@@ -1062,9 +1062,11 @@
                             document.querySelector('.admin-only').style.display = 'block';
                         }
                         
-                        // Afficher le lien privé seulement pour les admins
+                        // Afficher le lien privé SEULEMENT pour les admins
                         if (currentUser.role === 'admin') {
                             document.querySelector('a[href="private.html"]').style.display = 'block';
+                        } else {
+                            document.querySelector('a[href="private.html"]').style.display = 'none';
                         }
                         
                         // Recharger les onglets si ils sont actifs
