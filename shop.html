@@ -589,15 +589,14 @@
                         </div>
                     </div>
 
-                    <!-- Formulaire de restock simplifié -->
+                    <!-- Restock Crêpes -->
                     <div style="background: #f8f9fa; padding: 25px; border-radius: 12px; margin-bottom: 25px;">
-                        <h3 style="margin: 0 0 20px 0; color: #333; font-size: 1.2rem;">➕ Ajouter du Stock</h3>
+                        <h3 style="margin: 0 0 20px 0; color: #333; font-size: 1.2rem;">🥞 Restock Crêpes</h3>
                         
-                        <!-- Restock principal -->
-                        <div style="background: white; padding: 20px; border-radius: 10px; border: 2px solid #e1e5e9; margin-bottom: 20px;">
-                            <div style="display: flex; gap: 15px; align-items: end; flex-wrap: wrap; margin-bottom: 20px;">
+                        <div style="background: white; padding: 20px; border-radius: 10px; border: 2px solid #e1e5e9;">
+                            <div style="display: flex; gap: 15px; align-items: end; flex-wrap: wrap;">
                                 <div style="flex: 1; min-width: 200px;">
-                                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #555;">Nombre total de crêpes à ajouter :</label>
+                                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #555;">Nombre de crêpes à ajouter :</label>
                                     <input type="number" id="restockQuantity" min="1" max="1000" placeholder="Ex: 20" 
                                            style="width: 100%; padding: 12px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 1rem; transition: border-color 0.3s;" 
                                            onfocus="this.style.borderColor='#007bff'" onblur="this.style.borderColor='#e1e5e9'">
@@ -605,37 +604,108 @@
                                 <button onclick="addStock()" 
                                         style="background: linear-gradient(135deg, #28a745, #1e7e34); color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1rem; transition: transform 0.2s; box-shadow: 0 2px 8px rgba(40,167,69,0.3);" 
                                         onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
-                                    ➕ Ajouter au Stock
+                                    ➕ Ajouter Crêpes
                                 </button>
+                            </div>
+                            <div style="margin-top: 10px; font-size: 0.9rem; color: #666;">
+                                💡 Ajoute des crêpes au stock général. Les fillings sont gérés séparément.
+                            </div>
                         </div>
+                    </div>
 
-                            <!-- Options de limitation -->
-                            <div style="border-top: 1px solid #e1e5e9; padding-top: 20px;">
-                                <h4 style="margin: 0 0 15px 0; color: #333; font-size: 1.1rem;">🔒 Limiter certaines catégories (optionnel)</h4>
-                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-                                    <div style="display: flex; align-items: center; gap: 10px; padding: 10px; background: #f8f9fa; border-radius: 8px;">
-                                        <input type="checkbox" id="limitSucre" onchange="toggleLimit('sucre')">
-                                        <label for="limitSucre" style="margin: 0; font-weight: 500;">🥞 Limiter Crêpes Sucre</label>
-                                        <input type="number" id="limitSucreQty" min="1" max="100" placeholder="Max" 
-                                               style="width: 60px; padding: 5px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;" disabled>
+                    <!-- Gestion des Fillings -->
+                    <div style="background: #f8f9fa; padding: 25px; border-radius: 12px; margin-bottom: 25px;">
+                        <h3 style="margin: 0 0 20px 0; color: #333; font-size: 1.2rem;">🍯 Gestion des Fillings</h3>
+                        
+                        <div style="background: white; padding: 20px; border-radius: 10px; border: 2px solid #e1e5e9;">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                                <!-- Sucre -->
+                                <div style="padding: 15px; border: 1px solid #e1e5e9; border-radius: 8px;">
+                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                                        <span style="font-size: 1.5rem;">🥞</span>
+                                        <h4 style="margin: 0; color: #333;">Crêpes Sucre</h4>
                                     </div>
-                                    <div style="display: flex; align-items: center; gap: 10px; padding: 10px; background: #f8f9fa; border-radius: 8px;">
-                                        <input type="checkbox" id="limitNutella" onchange="toggleLimit('nutella')">
-                                        <label for="limitNutella" style="margin: 0; font-weight: 500;">🍫 Limiter Crêpes Nutella</label>
-                                        <input type="number" id="limitNutellaQty" min="1" max="100" placeholder="Max" 
-                                               style="width: 60px; padding: 5px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;" disabled>
+                                    <div style="margin-bottom: 10px;">
+                                        <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #555;">Status actuel :</label>
+                                        <div style="font-size: 1.1rem; font-weight: bold; color: #007bff;" id="fillingSucreDisplay">∞</div>
                                     </div>
-                                    <div style="display: flex; align-items: center; gap: 10px; padding: 10px; background: #f8f9fa; border-radius: 8px;">
-                                        <input type="checkbox" id="limitConfiture" onchange="toggleLimit('confiture')">
-                                        <label for="limitConfiture" style="margin: 0; font-weight: 500;">🍓 Limiter Crêpes Confiture</label>
-                                        <input type="number" id="limitConfitureQty" min="1" max="100" placeholder="Max" 
-                                               style="width: 60px; padding: 5px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;" disabled>
+                                    <div style="display: flex; gap: 10px; align-items: end;">
+                                        <div style="flex: 1;">
+                                            <input type="number" id="fillingSucreQty" min="1" max="1000" placeholder="Quantité" 
+                                                   style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem;">
                                         </div>
+                                        <button onclick="updateFilling('crepes-sucre', 'fillingSucreQty')" 
+                                                style="background: #007bff; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">
+                                            Mettre à jour
+                                        </button>
                                     </div>
-                                <div style="margin-top: 10px; font-size: 0.9rem; color: #666;">
-                                    💡 <strong>Exemple :</strong> Ajouter 20 crêpes mais limiter la confiture à 5 maximum
+                                    <div style="margin-top: 10px;">
+                                        <label style="display: flex; align-items: center; gap: 5px; font-size: 0.8rem; color: #666;">
+                                            <input type="checkbox" id="unlimitedSucre" onchange="toggleFillingUnlimited('crepes-sucre', 'unlimitedSucre')">
+                                            Illimité
+                                        </label>
                                     </div>
                                 </div>
+
+                                <!-- Nutella -->
+                                <div style="padding: 15px; border: 1px solid #e1e5e9; border-radius: 8px;">
+                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                                        <span style="font-size: 1.5rem;">🍫</span>
+                                        <h4 style="margin: 0; color: #333;">Crêpes Nutella</h4>
+                                    </div>
+                                    <div style="margin-bottom: 10px;">
+                                        <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #555;">Status actuel :</label>
+                                        <div style="font-size: 1.1rem; font-weight: bold; color: #007bff;" id="fillingNutellaDisplay">∞</div>
+                                    </div>
+                                    <div style="display: flex; gap: 10px; align-items: end;">
+                                        <div style="flex: 1;">
+                                            <input type="number" id="fillingNutellaQty" min="1" max="1000" placeholder="Quantité" 
+                                                   style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem;">
+                                        </div>
+                                        <button onclick="updateFilling('crepes-nutella', 'fillingNutellaQty')" 
+                                                style="background: #007bff; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">
+                                            Mettre à jour
+                                        </button>
+                                    </div>
+                                    <div style="margin-top: 10px;">
+                                        <label style="display: flex; align-items: center; gap: 5px; font-size: 0.8rem; color: #666;">
+                                            <input type="checkbox" id="unlimitedNutella" onchange="toggleFillingUnlimited('crepes-nutella', 'unlimitedNutella')">
+                                            Illimité
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Confiture -->
+                                <div style="padding: 15px; border: 1px solid #e1e5e9; border-radius: 8px;">
+                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                                        <span style="font-size: 1.5rem;">🍓</span>
+                                        <h4 style="margin: 0; color: #333;">Crêpes Confiture</h4>
+                                    </div>
+                                    <div style="margin-bottom: 10px;">
+                                        <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #555;">Status actuel :</label>
+                                        <div style="font-size: 1.1rem; font-weight: bold; color: #007bff;" id="fillingConfitureDisplay">∞</div>
+                                    </div>
+                                    <div style="display: flex; gap: 10px; align-items: end;">
+                                        <div style="flex: 1;">
+                                            <input type="number" id="fillingConfitureQty" min="1" max="1000" placeholder="Quantité" 
+                                                   style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem;">
+                                        </div>
+                                        <button onclick="updateFilling('crepes-confiture', 'fillingConfitureQty')" 
+                                                style="background: #007bff; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">
+                                            Mettre à jour
+                                        </button>
+                                    </div>
+                                    <div style="margin-top: 10px;">
+                                        <label style="display: flex; align-items: center; gap: 5px; font-size: 0.8rem; color: #666;">
+                                            <input type="checkbox" id="unlimitedConfiture" onchange="toggleFillingUnlimited('crepes-confiture', 'unlimitedConfiture')">
+                                            Illimité
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="margin-top: 15px; font-size: 0.9rem; color: #666;">
+                                💡 <strong>Comment ça marche :</strong> Illimité = toujours disponible. Nombre = quantité limitée qui diminue à chaque commande.
+                            </div>
                         </div>
                     </div>
 
@@ -832,26 +902,26 @@
                         throw new Error('Stock global insuffisant');
                     }
                     
-                    // Vérifier les limites spécifiques
-                    const individualStockRef = db.collection('individualStock').doc('current');
-                    const individualStockDoc = await transaction.get(individualStockRef);
+                    // Vérifier le status du filling
+                    const fillingRef = db.collection('fillingStatus').doc('current');
+                    const fillingDoc = await transaction.get(fillingRef);
                     
-                    if (individualStockDoc.exists) {
-                        const individualData = individualStockDoc.data();
-                        const productLimit = individualData[pendingOrder.product];
+                    if (fillingDoc.exists) {
+                        const fillingData = fillingDoc.data();
+                        const fillingStatus = fillingData[pendingOrder.product];
                         
-                        // Si il y a une limite spécifique, vérifier qu'on ne l'a pas atteinte
-                        if (productLimit !== null && productLimit !== undefined) {
-                            if (productLimit <= 0) {
-                                throw new Error('Limite spécifique atteinte pour ce type de crêpe');
+                        // Si limité, vérifier qu'il reste du filling
+                        if (fillingStatus !== 'unlimited' && fillingStatus !== undefined) {
+                            if (fillingStatus <= 0) {
+                                throw new Error('Filling insuffisant pour ce type de crêpe');
                             }
                             
-                            // Décrémenter la limite spécifique
-                            const newIndividualStock = { ...individualData };
-                            newIndividualStock[pendingOrder.product] = productLimit - 1;
-                            newIndividualStock.lastUpdated = new Date();
+                            // Décrémenter le filling
+                            const newFillingData = { ...fillingData };
+                            newFillingData[pendingOrder.product] = fillingStatus - 1;
+                            newFillingData.lastUpdated = new Date();
                             
-                            transaction.set(individualStockRef, newIndividualStock);
+                            transaction.set(fillingRef, newFillingData);
                         }
                     }
                     
@@ -1498,10 +1568,10 @@
 
         // Variables globales pour le stock
         let currentStock = 0;
-        let individualStocks = {
-            'crepes-sucre': 0,
-            'crepes-nutella': 0,
-            'crepes-confiture': 0
+        let fillingStatus = {
+            'crepes-sucre': 'unlimited', // 'unlimited' ou nombre
+            'crepes-nutella': 'unlimited',
+            'crepes-confiture': 'unlimited'
         };
 
         // Fonctions pour la gestion du stock
@@ -1519,22 +1589,22 @@
                     });
                 }
                 
-                // Charger les stocks individuels
-                const individualStockDoc = await db.collection('individualStock').doc('current').get();
-                if (individualStockDoc.exists) {
-                    const data = individualStockDoc.data();
-                    individualStocks = {
-                        'crepes-sucre': data['crepes-sucre'] || 0,
-                        'crepes-nutella': data['crepes-nutella'] || 0,
-                        'crepes-confiture': data['crepes-confiture'] || 0
+                // Charger les status des fillings
+                const fillingDoc = await db.collection('fillingStatus').doc('current').get();
+                if (fillingDoc.exists) {
+                    const data = fillingDoc.data();
+                    fillingStatus = {
+                        'crepes-sucre': data['crepes-sucre'] || 'unlimited',
+                        'crepes-nutella': data['crepes-nutella'] || 'unlimited',
+                        'crepes-confiture': data['crepes-confiture'] || 'unlimited'
                     };
                 } else {
-                    individualStocks = {
-                        'crepes-sucre': 0,
-                        'crepes-nutella': 0,
-                        'crepes-confiture': 0
+                    fillingStatus = {
+                        'crepes-sucre': 'unlimited',
+                        'crepes-nutella': 'unlimited',
+                        'crepes-confiture': 'unlimited'
                     };
-                    await db.collection('individualStock').doc('current').set(individualStocks);
+                    await db.collection('fillingStatus').doc('current').set(fillingStatus);
                 }
                 
                 // Mettre à jour l'affichage
@@ -1562,42 +1632,7 @@
                 return;
             }
             
-            // Récupérer les limitations pour ce restock
-            const restockLimits = {};
-            if (document.getElementById('limitSucre').checked) {
-                const limitQty = parseInt(document.getElementById('limitSucreQty').value);
-                if (limitQty && limitQty > 0) {
-                    restockLimits['crepes-sucre'] = limitQty;
-                }
-            }
-            if (document.getElementById('limitNutella').checked) {
-                const limitQty = parseInt(document.getElementById('limitNutellaQty').value);
-                if (limitQty && limitQty > 0) {
-                    restockLimits['crepes-nutella'] = limitQty;
-                }
-            }
-            if (document.getElementById('limitConfiture').checked) {
-                const limitQty = parseInt(document.getElementById('limitConfitureQty').value);
-                if (limitQty && limitQty > 0) {
-                    restockLimits['crepes-confiture'] = limitQty;
-                }
-            }
-            
             try {
-                // Calculer les nouveaux stocks individuels (limites seulement)
-                const newIndividualStocks = { ...individualStocks };
-                
-                // Appliquer les limitations (remplacer les limites existantes)
-                if (restockLimits['crepes-sucre']) {
-                    newIndividualStocks['crepes-sucre'] = restockLimits['crepes-sucre'];
-                }
-                if (restockLimits['crepes-nutella']) {
-                    newIndividualStocks['crepes-nutella'] = restockLimits['crepes-nutella'];
-                }
-                if (restockLimits['crepes-confiture']) {
-                    newIndividualStocks['crepes-confiture'] = restockLimits['crepes-confiture'];
-                }
-                
                 // Mettre à jour le stock global
                 const newStock = currentStock + quantity;
                 
@@ -1607,59 +1642,25 @@
                     lastUpdated: new Date()
                 });
                 
-                await db.collection('individualStock').doc('current').set({
-                    ...newIndividualStocks,
-                    lastUpdated: new Date()
-                });
-                
-                // Enregistrer l'historique du restock
-                await db.collection('restockHistory').add({
-                    quantity: quantity,
-                    previousStock: currentStock,
-                    newStock: newStock,
-                    individualStocks: newIndividualStocks,
-                    restockLimits: restockLimits,
-                    adminId: currentUser.uid,
-                    adminName: currentUser.firstName + ' ' + currentUser.lastName,
-                    timestamp: new Date()
-                });
-                
                 // Mettre à jour les variables locales
                 currentStock = newStock;
-                individualStocks = newIndividualStocks;
                 
                 // Mettre à jour l'affichage
                 updateStockDisplay();
                 document.getElementById('restockQuantity').value = '';
                 
-                // Réinitialiser les checkboxes
-                document.getElementById('limitSucre').checked = false;
-                document.getElementById('limitNutella').checked = false;
-                document.getElementById('limitConfiture').checked = false;
-                document.getElementById('limitSucreQty').disabled = true;
-                document.getElementById('limitNutellaQty').disabled = true;
-                document.getElementById('limitConfitureQty').disabled = true;
-                document.getElementById('limitSucreQty').value = '';
-                document.getElementById('limitNutellaQty').value = '';
-                document.getElementById('limitConfitureQty').value = '';
+                // Enregistrer l'historique du restock
+                await db.collection('restockHistory').add({
+                    type: 'crepes',
+                    quantity: quantity,
+                    previousStock: currentStock - quantity,
+                    newStock: newStock,
+                    adminId: currentUser.uid,
+                    adminName: currentUser.firstName + ' ' + currentUser.lastName,
+                    timestamp: new Date()
+                });
                 
-                let message = `${quantity} crêpes ajoutées au stock global !`;
-                if (Object.keys(restockLimits).length > 0) {
-                    message += `\n\n🔒 Limites spécifiques :`;
-                    if (restockLimits['crepes-sucre']) {
-                        message += `\n🥞 Sucre : max ${restockLimits['crepes-sucre']}`;
-                    }
-                    if (restockLimits['crepes-nutella']) {
-                        message += `\n🍫 Nutella : max ${restockLimits['crepes-nutella']}`;
-                    }
-                    if (restockLimits['crepes-confiture']) {
-                        message += `\n🍓 Confiture : max ${restockLimits['crepes-confiture']}`;
-                    }
-                    message += `\n\n💡 Les étudiants peuvent commander n'importe quel type tant que le stock global > limite spécifique`;
-                } else {
-                    message += `\n\n💡 Aucune limite spécifique - tous les types disponibles`;
-                }
-                showMessage(message, 'success');
+                showMessage(`${quantity} crêpes ajoutées au stock ! Nouveau stock: ${newStock}`, 'success');
                 
                 // Recharger l'historique
                 loadRestockHistory();
@@ -1755,16 +1756,135 @@
 
         // Fonction pour mettre à jour l'affichage du stock
         function updateStockDisplay() {
-            // Afficher les limites spécifiques (ou "∞" si pas de limite)
-            document.getElementById('stockSucreDisplay').textContent = individualStocks['crepes-sucre'] || '∞';
-            document.getElementById('stockNutellaDisplay').textContent = individualStocks['crepes-nutella'] || '∞';
-            document.getElementById('stockConfitureDisplay').textContent = individualStocks['crepes-confiture'] || '∞';
+            // Afficher les status des fillings
+            document.getElementById('stockSucreDisplay').textContent = fillingStatus['crepes-sucre'] === 'unlimited' ? '∞' : fillingStatus['crepes-sucre'];
+            document.getElementById('stockNutellaDisplay').textContent = fillingStatus['crepes-nutella'] === 'unlimited' ? '∞' : fillingStatus['crepes-nutella'];
+            document.getElementById('stockConfitureDisplay').textContent = fillingStatus['crepes-confiture'] === 'unlimited' ? '∞' : fillingStatus['crepes-confiture'];
             
             // Afficher le stock global
             document.getElementById('totalStockDisplay').textContent = currentStock;
+            
+            // Mettre à jour l'affichage des fillings
+            updateFillingDisplay();
         }
 
-        // Fonction pour vérifier si une commande est possible (système général + limites)
+        // Fonction pour mettre à jour l'affichage des fillings
+        function updateFillingDisplay() {
+            document.getElementById('fillingSucreDisplay').textContent = fillingStatus['crepes-sucre'] === 'unlimited' ? '∞' : fillingStatus['crepes-sucre'];
+            document.getElementById('fillingNutellaDisplay').textContent = fillingStatus['crepes-nutella'] === 'unlimited' ? '∞' : fillingStatus['crepes-nutella'];
+            document.getElementById('fillingConfitureDisplay').textContent = fillingStatus['crepes-confiture'] === 'unlimited' ? '∞' : fillingStatus['crepes-confiture'];
+            
+            // Mettre à jour les checkboxes
+            document.getElementById('unlimitedSucre').checked = fillingStatus['crepes-sucre'] === 'unlimited';
+            document.getElementById('unlimitedNutella').checked = fillingStatus['crepes-nutella'] === 'unlimited';
+            document.getElementById('unlimitedConfiture').checked = fillingStatus['crepes-confiture'] === 'unlimited';
+        }
+
+        // Fonction pour mettre à jour un filling
+        async function updateFilling(productType, inputId) {
+            const quantity = parseInt(document.getElementById(inputId).value);
+            
+            if (!quantity || quantity <= 0) {
+                showMessage('Veuillez entrer une quantité valide', 'error');
+                return;
+            }
+            
+            try {
+                // Mettre à jour le status du filling
+                fillingStatus[productType] = quantity;
+                
+                // Sauvegarder en base
+                await db.collection('fillingStatus').doc('current').set({
+                    ...fillingStatus,
+                    lastUpdated: new Date()
+                });
+                
+                // Enregistrer l'historique
+                await db.collection('restockHistory').add({
+                    type: 'filling',
+                    productType: productType,
+                    quantity: quantity,
+                    adminId: currentUser.uid,
+                    adminName: currentUser.firstName + ' ' + currentUser.lastName,
+                    timestamp: new Date()
+                });
+                
+                // Mettre à jour l'affichage
+                updateStockDisplay();
+                document.getElementById(inputId).value = '';
+                
+                const productName = getProductName(productType);
+                showMessage(`${productName} : ${quantity} disponibles`, 'success');
+                
+                // Recharger l'historique
+                loadRestockHistory();
+                
+                // Recharger l'état des boutons de commande
+                setTimeout(checkStockOnLoad, 500);
+                
+            } catch (error) {
+                console.error('Erreur lors de la mise à jour du filling:', error);
+                showMessage('Erreur lors de la mise à jour du filling: ' + error.message, 'error');
+            }
+        }
+
+        // Fonction pour basculer le filling en illimité
+        async function toggleFillingUnlimited(productType, checkboxId) {
+            const checkbox = document.getElementById(checkboxId);
+            const isUnlimited = checkbox.checked;
+            
+            try {
+                if (isUnlimited) {
+                    fillingStatus[productType] = 'unlimited';
+                } else {
+                    // Demander une quantité
+                    const quantity = prompt(`Entrez la quantité pour ${getProductName(productType)} :`);
+                    if (!quantity || quantity <= 0) {
+                        checkbox.checked = false;
+                        return;
+                    }
+                    fillingStatus[productType] = parseInt(quantity);
+                }
+                
+                // Sauvegarder en base
+                await db.collection('fillingStatus').doc('current').set({
+                    ...fillingStatus,
+                    lastUpdated: new Date()
+                });
+                
+                // Enregistrer l'historique
+                await db.collection('restockHistory').add({
+                    type: 'filling',
+                    productType: productType,
+                    quantity: isUnlimited ? 'unlimited' : fillingStatus[productType],
+                    adminId: currentUser.uid,
+                    adminName: currentUser.firstName + ' ' + currentUser.lastName,
+                    timestamp: new Date()
+                });
+                
+                // Mettre à jour l'affichage
+                updateStockDisplay();
+                
+                const productName = getProductName(productType);
+                const message = isUnlimited ? 
+                    `${productName} : Illimité` : 
+                    `${productName} : ${fillingStatus[productType]} disponibles`;
+                showMessage(message, 'success');
+                
+                // Recharger l'historique
+                loadRestockHistory();
+                
+                // Recharger l'état des boutons de commande
+                setTimeout(checkStockOnLoad, 500);
+                
+            } catch (error) {
+                console.error('Erreur lors de la modification du filling:', error);
+                showMessage('Erreur lors de la modification du filling: ' + error.message, 'error');
+                checkbox.checked = !isUnlimited; // Annuler le changement
+            }
+        }
+
+        // Fonction pour vérifier si une commande est possible (stock + filling)
         async function canOrderProduct(productType) {
             try {
                 // Vérifier le stock global
@@ -1774,18 +1894,18 @@
                 const globalStock = stockDoc.data().quantity || 0;
                 if (globalStock <= 0) return false;
                 
-                // Vérifier les limites spécifiques
-                const individualStockDoc = await db.collection('individualStock').doc('current').get();
-                if (!individualStockDoc.exists) return true; // Pas de limites = OK
+                // Vérifier le status du filling
+                const fillingDoc = await db.collection('fillingStatus').doc('current').get();
+                if (!fillingDoc.exists) return true; // Pas de status = OK
                 
-                const data = individualStockDoc.data();
-                const productLimit = data[productType];
+                const data = fillingDoc.data();
+                const fillingStatus = data[productType];
                 
-                // Si pas de limite spécifique (undefined ou null), OK tant qu'il y a du stock global
-                if (productLimit === undefined || productLimit === null) return true;
+                // Si illimité, OK tant qu'il y a du stock global
+                if (fillingStatus === 'unlimited') return true;
                 
-                // Si limite spécifique, vérifier qu'on n'a pas atteint la limite
-                return productLimit > 0;
+                // Si limité, vérifier qu'il reste du filling
+                return fillingStatus > 0;
                 
             } catch (error) {
                 console.error('Erreur lors de la vérification du stock:', error);
