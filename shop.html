@@ -1071,33 +1071,52 @@
                             lastName: userData.lastName,
                             role: userData.role
                         };
-                        
-                        console.log('Utilisateur chargé:', currentUser);
-                        
-                        // Afficher l'onglet admin si c'est un admin ou membre
-                        if (currentUser.role === 'admin' || currentUser.role === 'member') {
-                            document.querySelector('.admin-only').style.display = 'block';
-                        }
-                        
-                        // Afficher le lien privé SEULEMENT pour les admins
-                        if (currentUser.role === 'admin') {
-                            document.querySelector('a[href="private.html"]').style.display = 'block';
-                        } else {
-                            document.querySelector('a[href="private.html"]').style.display = 'none';
-                        }
-                        
-                        // Recharger les onglets si ils sont actifs
-                        if (document.getElementById('my-orders').classList.contains('active')) {
-                            loadMyOrders();
-                        }
-                        if (document.getElementById('my-account').classList.contains('active')) {
-                            loadMyAccount();
-                        }
-                        if (document.getElementById('admin').classList.contains('active')) {
-                            loadAllOrders();
-                        }
                     } else {
-                        showMessage('Profil utilisateur non trouvé', 'error');
+                        // Si le profil n'existe pas, le créer avec des valeurs par défaut
+                        console.log('Profil non trouvé, création automatique...');
+                        await db.collection('users').doc(user.uid).set({
+                            firstName: 'Utilisateur',
+                            lastName: 'Nouveau',
+                            email: user.email,
+                            role: 'student',
+                            createdAt: new Date(),
+                            emailVerified: user.emailVerified
+                        });
+                        
+                        currentUser = {
+                            uid: user.uid,
+                            email: user.email,
+                            firstName: 'Utilisateur',
+                            lastName: 'Nouveau',
+                            role: 'student'
+                        };
+                        
+                        showMessage('Profil créé automatiquement. Vous pouvez le modifier dans "Mon Compte".', 'success');
+                    }
+                    
+                    console.log('Utilisateur chargé:', currentUser);
+                    
+                    // Afficher l'onglet admin si c'est un admin ou membre
+                    if (currentUser.role === 'admin' || currentUser.role === 'member') {
+                        document.querySelector('.admin-only').style.display = 'block';
+                    }
+                    
+                    // Afficher le lien privé SEULEMENT pour les admins
+                    if (currentUser.role === 'admin') {
+                        document.querySelector('a[href="private.html"]').style.display = 'block';
+                    } else {
+                        document.querySelector('a[href="private.html"]').style.display = 'none';
+                    }
+                    
+                    // Recharger les onglets si ils sont actifs
+                    if (document.getElementById('my-orders').classList.contains('active')) {
+                        loadMyOrders();
+                    }
+                    if (document.getElementById('my-account').classList.contains('active')) {
+                        loadMyAccount();
+                    }
+                    if (document.getElementById('admin').classList.contains('active')) {
+                        loadAllOrders();
                     }
                 } catch (error) {
                     console.error('Erreur lors du chargement du profil:', error);
