@@ -264,6 +264,21 @@
                     }));
                 }
                 
+                // Vérifier si le compte n'est pas supprimé
+                try {
+                    const userDoc = await db.collection('users').doc(user.uid).get();
+                    if (userDoc.exists) {
+                        const userData = userDoc.data();
+                        if (userData.deleted) {
+                            showError('Ce compte a été supprimé. Contactez un administrateur.');
+                            await auth.signOut();
+                            return;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Erreur lors de la vérification du compte:', error);
+                }
+
                 showSuccess('Connexion réussie ! Redirection...');
                 setTimeout(() => {
                     window.location.href = 'shop.html';
