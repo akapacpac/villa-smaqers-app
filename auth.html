@@ -328,7 +328,24 @@
                 if (error.code === 'auth/email-already-in-use') {
                     try {
                         // Essayer de se connecter avec ce compte
-                        await auth.signInWithEmailAndPassword(email, password);
+                        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                        const user = userCredential.user;
+                        
+                        // Vérifier si le profil existe dans Firestore
+                        const userDoc = await db.collection('users').doc(user.uid).get();
+                        if (!userDoc.exists) {
+                            // Créer le profil s'il n'existe pas
+                            await db.collection('users').doc(user.uid).set({
+                                firstName: firstName,
+                                lastName: lastName,
+                                email: email,
+                                role: role,
+                                createdAt: new Date(),
+                                emailVerified: user.emailVerified
+                            });
+                            console.log('Profil créé pour le compte existant');
+                        }
+                        
                         showSuccess('Compte existant trouvé ! Connexion réussie.');
                         setTimeout(() => {
                             window.location.href = 'shop.html';
