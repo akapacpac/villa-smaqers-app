@@ -319,6 +319,17 @@
             <div id="orders" class="tab-pane active">
                 <h2 style="margin-bottom: 30px; color: #333;">Choisissez votre commande</h2>
                 
+                <!-- Champ classe -->
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #333;">Classe (pour la livraison) :</label>
+                    <input type="text" id="classInput" placeholder="Ex: 456" maxlength="3" pattern="[0-9]{3}" 
+                           style="width: 200px; padding: 10px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 1rem; text-align: center;"
+                           oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 3)">
+                    <div style="margin-top: 5px; font-size: 0.9rem; color: #666;">
+                        Entrez votre numéro de classe (3 chiffres) pour que nous sachions où livrer votre commande
+                    </div>
+                </div>
+                
                 <div class="product-grid">
                     <div class="product-card" onclick="selectProduct('crepes')">
                         <div class="product-icon">🥞</div>
@@ -368,40 +379,45 @@
                 
                 <!-- Filtres -->
                 <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-                    <h3 style="margin-bottom: 15px; color: #333;">Filtres</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-                        <div>
-                            <label style="display: block; margin-bottom: 5px; font-weight: 600;">Statut :</label>
-                            <select id="statusFilter" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                                <option value="">Tous les statuts</option>
-                                <option value="pending">En attente</option>
-                                <option value="confirmed">Confirmée</option>
-                                <option value="delivered">Livrée</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label style="display: block; margin-bottom: 5px; font-weight: 600;">Type de produit :</label>
-                            <select id="productFilter" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                                <option value="">Tous les produits</option>
-                                <option value="crepes">Crêpes</option>
-                                <option value="cookie">Cookie</option>
-                                <option value="gaufre">Gaufre</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label style="display: block; margin-bottom: 5px; font-weight: 600;">Tri par :</label>
-                            <select id="sortFilter" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                                <option value="date-desc">Date (plus récent)</option>
-                                <option value="date-asc">Date (plus ancien)</option>
-                                <option value="user">Utilisateur</option>
-                                <option value="product">Produit</option>
-                                <option value="status">Statut</option>
-                            </select>
-                        </div>
-                        <div style="display: flex; align-items: end;">
-                            <button onclick="applyFilters()" style="background: #007bff; color: white; border: none; padding: 8px 20px; border-radius: 4px; cursor: pointer; width: 100%;">
-                                Appliquer les filtres
-                            </button>
+                    <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="toggleFilters()">
+                        <h3 style="margin: 0; color: #333;">Filtres</h3>
+                        <span id="filterArrow" style="font-size: 1.2rem; transition: transform 0.3s;">▼</span>
+                    </div>
+                    <div id="filtersContent" style="display: none; margin-top: 15px;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                            <div>
+                                <label style="display: block; margin-bottom: 5px; font-weight: 600;">Statut :</label>
+                                <select id="statusFilter" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                                    <option value="">Tous les statuts</option>
+                                    <option value="pending">En attente</option>
+                                    <option value="confirmed">Confirmée</option>
+                                    <option value="delivered">Livrée</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 5px; font-weight: 600;">Type de produit :</label>
+                                <select id="productFilter" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                                    <option value="">Tous les produits</option>
+                                    <option value="crepes">Crêpes</option>
+                                    <option value="cookie">Cookie</option>
+                                    <option value="gaufre">Gaufre</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 5px; font-weight: 600;">Tri par :</label>
+                                <select id="sortFilter" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                                    <option value="date-desc">Date (plus récent)</option>
+                                    <option value="date-asc">Date (plus ancien)</option>
+                                    <option value="user">Utilisateur</option>
+                                    <option value="product">Produit</option>
+                                    <option value="status">Statut</option>
+                                </select>
+                            </div>
+                            <div style="display: flex; align-items: end;">
+                                <button onclick="applyFilters()" style="background: #007bff; color: white; border: none; padding: 8px 20px; border-radius: 4px; cursor: pointer; width: 100%;">
+                                    Appliquer les filtres
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -490,6 +506,13 @@
                 return;
             }
 
+            // Vérifier que la classe est renseignée
+            const classNumber = document.getElementById('classInput').value.trim();
+            if (!classNumber || classNumber.length !== 3) {
+                showMessage('Veuillez entrer votre numéro de classe (3 chiffres)', 'error');
+                return;
+            }
+
             try {
                 const orderData = {
                     userId: currentUser.uid,
@@ -497,6 +520,7 @@
                     userName: `${currentUser.firstName} ${currentUser.lastName}`,
                     product: productName,
                     price: price,
+                    classNumber: classNumber,
                     status: 'pending',
                     createdAt: new Date(),
                     orderDate: new Date().toLocaleDateString('fr-FR'),
@@ -506,7 +530,7 @@
                 await db.collection('orders').add(orderData);
                 
                 // Afficher un message de succès
-                showMessage('Commande passée avec succès !', 'success');
+                showMessage(`Commande passée avec succès ! Livraison prévue en classe ${classNumber}`, 'success');
                 
                 // Recharger les commandes si on est sur l'onglet
                 if (document.getElementById('my-orders').classList.contains('active')) {
@@ -820,6 +844,7 @@
                             <th>Date</th>
                             <th>Utilisateur</th>
                             <th>Email</th>
+                            <th>Classe</th>
                             <th>Produit</th>
                             <th>Prix</th>
                             <th>Statut</th>
@@ -838,6 +863,7 @@
                         <td>${order.orderDate} ${order.orderTime}</td>
                         <td>${order.userName || 'N/A'}</td>
                         <td>${order.userEmail || 'N/A'}</td>
+                        <td><strong style="color: #007bff; font-size: 1.1rem;">${order.classNumber || 'N/A'}</strong></td>
                         <td>${getProductName(order.product)}</td>
                         <td>${order.price === 0 ? 'FREE' : order.price + '€'}</td>
                         <td><span class="status-badge ${statusClass}">${statusText}</span></td>
@@ -874,6 +900,19 @@
             } catch (error) {
                 console.error('Erreur lors de la mise à jour du statut:', error);
                 showMessage('Erreur lors de la mise à jour du statut: ' + error.message, 'error');
+            }
+        }
+
+        function toggleFilters() {
+            const filtersContent = document.getElementById('filtersContent');
+            const filterArrow = document.getElementById('filterArrow');
+            
+            if (filtersContent.style.display === 'none') {
+                filtersContent.style.display = 'block';
+                filterArrow.textContent = '▲';
+            } else {
+                filtersContent.style.display = 'none';
+                filterArrow.textContent = '▼';
             }
         }
 
