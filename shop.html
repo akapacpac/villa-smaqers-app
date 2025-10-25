@@ -559,14 +559,32 @@
 
                     <!-- Statut du stock actuel -->
                     <div id="stockDisplay" style="background: linear-gradient(135deg, #e3f2fd, #bbdefb); padding: 25px; border-radius: 12px; margin-bottom: 30px; border: 2px solid #2196f3;">
-                        <h3 style="margin: 0 0 15px 0; color: #1976d2; font-size: 1.3rem;">📊 Stock Actuel</h3>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="margin: 0; color: #1976d2; font-size: 1.3rem;">📊 Stock Actuel</h3>
+                            <button onclick="resetAllStock()" style="background: linear-gradient(135deg, #dc3545, #c82333); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">
+                                🔄 Reset Stock
+                            </button>
+                        </div>
                         <div id="stockContent">
-                            <div style="display: flex; align-items: center; gap: 20px;">
-                                <div style="font-size: 2.5rem; font-weight: bold; color: #1976d2;" id="currentStock">0</div>
-                                <div>
-                                    <div style="font-size: 1.1rem; color: #424242; font-weight: 600;">Crêpes disponibles</div>
-                                    <div style="font-size: 0.9rem; color: #666;">Stock global (tous types confondus)</div>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                                <div style="background: white; padding: 15px; border-radius: 8px; text-align: center; border: 2px solid #e1e5e9;">
+                                    <div style="font-size: 1.5rem; margin-bottom: 5px;">🥞</div>
+                                    <div style="font-size: 1.2rem; font-weight: bold; color: #007bff;" id="stockSucreDisplay">0</div>
+                                    <div style="font-size: 0.9rem; color: #666;">Crêpes Sucre</div>
                                 </div>
+                                <div style="background: white; padding: 15px; border-radius: 8px; text-align: center; border: 2px solid #e1e5e9;">
+                                    <div style="font-size: 1.5rem; margin-bottom: 5px;">🍫</div>
+                                    <div style="font-size: 1.2rem; font-weight: bold; color: #007bff;" id="stockNutellaDisplay">0</div>
+                                    <div style="font-size: 0.9rem; color: #666;">Crêpes Nutella</div>
+                                </div>
+                                <div style="background: white; padding: 15px; border-radius: 8px; text-align: center; border: 2px solid #e1e5e9;">
+                                    <div style="font-size: 1.5rem; margin-bottom: 5px;">🍓</div>
+                                    <div style="font-size: 1.2rem; font-weight: bold; color: #007bff;" id="stockConfitureDisplay">0</div>
+                                    <div style="font-size: 0.9rem; color: #666;">Crêpes Confiture</div>
+                                </div>
+                            </div>
+                            <div style="margin-top: 15px; text-align: center; font-size: 0.9rem; color: #666;">
+                                Total global : <strong id="totalStockDisplay">0</strong> crêpes
                             </div>
                         </div>
                     </div>
@@ -801,22 +819,33 @@
 
                 // Utiliser une transaction pour s'assurer que le stock est décrémenté atomiquement
                 await db.runTransaction(async (transaction) => {
-                    // Vérifier le stock à nouveau dans la transaction
+                    // Vérifier le stock individuel
+                    const individualStockRef = db.collection('individualStock').doc('current');
+                    const individualStockDoc = await transaction.get(individualStockRef);
+                    
+                    if (!individualStockDoc.exists) {
+                        throw new Error('Stock individuel non trouvé');
+                    }
+                    
+                    const currentIndividualStock = individualStockDoc.data()[pendingOrder.product] || 0;
+                    if (currentIndividualStock <= 0) {
+                        throw new Error('Stock insuffisant pour ce type de crêpe');
+                    }
+                    
+                    // Décrémenter le stock individuel
+                    const newIndividualStock = { ...individualStockDoc.data() };
+                    newIndividualStock[pendingOrder.product] = currentIndividualStock - 1;
+                    newIndividualStock.lastUpdated = new Date();
+                    
+                    transaction.set(individualStockRef, newIndividualStock);
+                    
+                    // Décrémenter aussi le stock global
                     const stockRef = db.collection('stock').doc('current');
                     const stockDoc = await transaction.get(stockRef);
+                    const currentGlobalStock = stockDoc.data().quantity || 0;
                     
-                    if (!stockDoc.exists) {
-                        throw new Error('Stock non trouvé');
-                    }
-                    
-                    const currentStock = stockDoc.data().quantity || 0;
-                    if (currentStock <= 0) {
-                        throw new Error('Stock insuffisant');
-                    }
-                    
-                    // Décrémenter le stock
                     transaction.update(stockRef, {
-                        quantity: currentStock - 1,
+                        quantity: currentGlobalStock - 1,
                         lastUpdated: new Date()
                     });
                     
@@ -1458,42 +1487,47 @@
 
         // Variables globales pour le stock
         let currentStock = 0;
-        let stockLimits = {
-            'crepes-sucre': null, // null = pas de limite
-            'crepes-nutella': null,
-            'crepes-confiture': null
+        let individualStocks = {
+            'crepes-sucre': 0,
+            'crepes-nutella': 0,
+            'crepes-confiture': 0
         };
 
         // Fonctions pour la gestion du stock
         async function loadStockData() {
             try {
-                // Charger le stock actuel
+                // Charger le stock global
                 const stockDoc = await db.collection('stock').doc('current').get();
                 if (stockDoc.exists) {
-                    const data = stockDoc.data();
-                    currentStock = data.quantity || 0;
-                    stockLimits = data.limits || {
-                        'crepes-sucre': null,
-                        'crepes-nutella': null,
-                        'crepes-confiture': null
-                    };
+                    currentStock = stockDoc.data().quantity || 0;
                 } else {
-                    // Initialiser le stock à 0 si pas de document
                     currentStock = 0;
-                    stockLimits = {
-                        'crepes-sucre': null,
-                        'crepes-nutella': null,
-                        'crepes-confiture': null
-                    };
                     await db.collection('stock').doc('current').set({
                         quantity: 0,
-                        limits: stockLimits,
                         lastUpdated: new Date()
                     });
                 }
                 
+                // Charger les stocks individuels
+                const individualStockDoc = await db.collection('individualStock').doc('current').get();
+                if (individualStockDoc.exists) {
+                    const data = individualStockDoc.data();
+                    individualStocks = {
+                        'crepes-sucre': data['crepes-sucre'] || 0,
+                        'crepes-nutella': data['crepes-nutella'] || 0,
+                        'crepes-confiture': data['crepes-confiture'] || 0
+                    };
+                } else {
+                    individualStocks = {
+                        'crepes-sucre': 0,
+                        'crepes-nutella': 0,
+                        'crepes-confiture': 0
+                    };
+                    await db.collection('individualStock').doc('current').set(individualStocks);
+                }
+                
                 // Mettre à jour l'affichage
-                document.getElementById('currentStock').textContent = currentStock;
+                updateStockDisplay();
                 
                 // Charger l'historique des restocks
                 loadRestockHistory();
@@ -1517,35 +1551,54 @@
                 return;
             }
             
-            // Récupérer les limitations
-            const limits = {};
+            // Récupérer les limitations pour ce restock
+            const restockLimits = {};
             if (document.getElementById('limitSucre').checked) {
                 const limitQty = parseInt(document.getElementById('limitSucreQty').value);
                 if (limitQty && limitQty > 0) {
-                    limits['crepes-sucre'] = limitQty;
+                    restockLimits['crepes-sucre'] = limitQty;
                 }
             }
             if (document.getElementById('limitNutella').checked) {
                 const limitQty = parseInt(document.getElementById('limitNutellaQty').value);
                 if (limitQty && limitQty > 0) {
-                    limits['crepes-nutella'] = limitQty;
+                    restockLimits['crepes-nutella'] = limitQty;
                 }
             }
             if (document.getElementById('limitConfiture').checked) {
                 const limitQty = parseInt(document.getElementById('limitConfitureQty').value);
                 if (limitQty && limitQty > 0) {
-                    limits['crepes-confiture'] = limitQty;
+                    restockLimits['crepes-confiture'] = limitQty;
                 }
             }
             
             try {
-                // Mettre à jour le stock
-                const newStock = currentStock + quantity;
-                const newLimits = { ...stockLimits, ...limits };
+                // Calculer les nouveaux stocks individuels
+                const newIndividualStocks = { ...individualStocks };
                 
+                // Appliquer les limitations : si une limite est définie, le stock de ce type = limite
+                // Sinon, le stock reste inchangé
+                if (restockLimits['crepes-sucre']) {
+                    newIndividualStocks['crepes-sucre'] = restockLimits['crepes-sucre'];
+                }
+                if (restockLimits['crepes-nutella']) {
+                    newIndividualStocks['crepes-nutella'] = restockLimits['crepes-nutella'];
+                }
+                if (restockLimits['crepes-confiture']) {
+                    newIndividualStocks['crepes-confiture'] = restockLimits['crepes-confiture'];
+                }
+                
+                // Mettre à jour le stock global
+                const newStock = currentStock + quantity;
+                
+                // Sauvegarder en base
                 await db.collection('stock').doc('current').set({
                     quantity: newStock,
-                    limits: newLimits,
+                    lastUpdated: new Date()
+                });
+                
+                await db.collection('individualStock').doc('current').set({
+                    ...newIndividualStocks,
                     lastUpdated: new Date()
                 });
                 
@@ -1554,16 +1607,19 @@
                     quantity: quantity,
                     previousStock: currentStock,
                     newStock: newStock,
-                    limits: limits,
+                    individualStocks: newIndividualStocks,
+                    restockLimits: restockLimits,
                     adminId: currentUser.uid,
                     adminName: currentUser.firstName + ' ' + currentUser.lastName,
                     timestamp: new Date()
                 });
                 
-                // Mettre à jour l'affichage
+                // Mettre à jour les variables locales
                 currentStock = newStock;
-                stockLimits = newLimits;
-                document.getElementById('currentStock').textContent = currentStock;
+                individualStocks = newIndividualStocks;
+                
+                // Mettre à jour l'affichage
+                updateStockDisplay();
                 document.getElementById('restockQuantity').value = '';
                 
                 // Réinitialiser les checkboxes
@@ -1577,9 +1633,9 @@
                 document.getElementById('limitNutellaQty').value = '';
                 document.getElementById('limitConfitureQty').value = '';
                 
-                let message = `${quantity} crêpes ajoutées au stock ! Nouveau stock: ${newStock}`;
-                if (Object.keys(limits).length > 0) {
-                    message += `\nLimitations appliquées: ${JSON.stringify(limits)}`;
+                let message = `${quantity} crêpes ajoutées au stock !`;
+                if (Object.keys(restockLimits).length > 0) {
+                    message += `\nStocks par type mis à jour selon les limitations.`;
                 }
                 showMessage(message, 'success');
                 
@@ -1675,45 +1731,83 @@
             }
         }
 
-        // Fonction pour vérifier si une commande est possible avec les limitations
+        // Fonction pour mettre à jour l'affichage du stock
+        function updateStockDisplay() {
+            document.getElementById('stockSucreDisplay').textContent = individualStocks['crepes-sucre'];
+            document.getElementById('stockNutellaDisplay').textContent = individualStocks['crepes-nutella'];
+            document.getElementById('stockConfitureDisplay').textContent = individualStocks['crepes-confiture'];
+            
+            const total = individualStocks['crepes-sucre'] + individualStocks['crepes-nutella'] + individualStocks['crepes-confiture'];
+            document.getElementById('totalStockDisplay').textContent = total;
+        }
+
+        // Fonction pour vérifier si une commande est possible (stock individuel)
         async function canOrderProduct(productType) {
             try {
-                const stockDoc = await db.collection('stock').doc('current').get();
-                if (!stockDoc.exists) return false;
+                const individualStockDoc = await db.collection('individualStock').doc('current').get();
+                if (!individualStockDoc.exists) return false;
                 
-                const data = stockDoc.data();
-                const totalStock = data.quantity || 0;
-                const limits = data.limits || {};
+                const data = individualStockDoc.data();
+                const productStock = data[productType] || 0;
                 
-                // Vérifier le stock total
-                if (totalStock <= 0) return false;
-                
-                // Vérifier les limitations par type
-                if (limits[productType]) {
-                    // Compter les commandes de ce type aujourd'hui
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    const tomorrow = new Date(today);
-                    tomorrow.setDate(tomorrow.getDate() + 1);
-                    
-                    const ordersSnapshot = await db.collection('orders')
-                        .where('product', '==', productType)
-                        .where('createdAt', '>=', today)
-                        .where('createdAt', '<', tomorrow)
-                        .get();
-                    
-                    const todayOrders = ordersSnapshot.size;
-                    const limit = limits[productType];
-                    
-                    if (todayOrders >= limit) {
-                        return false;
-                    }
-                }
-                
-                return true;
+                return productStock > 0;
             } catch (error) {
-                console.error('Erreur lors de la vérification des limitations:', error);
+                console.error('Erreur lors de la vérification du stock:', error);
                 return false;
+            }
+        }
+
+        // Fonction pour reset tout le stock
+        async function resetAllStock() {
+            if (!confirm('⚠️ Êtes-vous sûr de vouloir remettre à zéro TOUT le stock ?\n\nCette action est irréversible et effacera tous les stocks actuels.')) {
+                return;
+            }
+
+            try {
+                // Reset stock global
+                await db.collection('stock').doc('current').set({
+                    quantity: 0,
+                    lastUpdated: new Date()
+                });
+
+                // Reset stocks individuels
+                await db.collection('individualStock').doc('current').set({
+                    'crepes-sucre': 0,
+                    'crepes-nutella': 0,
+                    'crepes-confiture': 0,
+                    lastUpdated: new Date()
+                });
+
+                // Enregistrer l'historique du reset
+                await db.collection('restockHistory').add({
+                    type: 'reset',
+                    adminId: currentUser.uid,
+                    adminName: currentUser.firstName + ' ' + currentUser.lastName,
+                    timestamp: new Date()
+                });
+
+                // Mettre à jour les variables locales
+                currentStock = 0;
+                individualStocks = {
+                    'crepes-sucre': 0,
+                    'crepes-nutella': 0,
+                    'crepes-confiture': 0
+                };
+
+                // Mettre à jour l'affichage
+                updateStockDisplay();
+
+                showMessage('🔄 Stock remis à zéro avec succès !', 'success');
+
+                // Recharger l'historique
+                loadRestockHistory();
+
+                // Recharger l'état des boutons de commande
+                setTimeout(checkStockOnLoad, 500);
+
+            } catch (error) {
+                console.error('Erreur lors du reset du stock:', error);
+                showMessage('Erreur lors du reset du stock: ' + error.message, 'error');
             }
         }
 
