@@ -1576,8 +1576,15 @@
                 // Calculer les nouveaux stocks individuels
                 const newIndividualStocks = { ...individualStocks };
                 
-                // Appliquer les limitations : si une limite est définie, le stock de ce type = limite
-                // Sinon, le stock reste inchangé
+                // Calculer le total des limitations
+                const totalLimited = (restockLimits['crepes-sucre'] || 0) + 
+                                   (restockLimits['crepes-nutella'] || 0) + 
+                                   (restockLimits['crepes-confiture'] || 0);
+                
+                // Calculer les crêpes non limitées à répartir
+                const remainingCrepes = quantity - totalLimited;
+                
+                // Appliquer les limitations
                 if (restockLimits['crepes-sucre']) {
                     newIndividualStocks['crepes-sucre'] = restockLimits['crepes-sucre'];
                 }
@@ -1586,6 +1593,25 @@
                 }
                 if (restockLimits['crepes-confiture']) {
                     newIndividualStocks['crepes-confiture'] = restockLimits['crepes-confiture'];
+                }
+                
+                // Répartir les crêpes restantes sur les types non limités
+                if (remainingCrepes > 0) {
+                    const unlimitedTypes = [];
+                    if (!restockLimits['crepes-sucre']) unlimitedTypes.push('crepes-sucre');
+                    if (!restockLimits['crepes-nutella']) unlimitedTypes.push('crepes-nutella');
+                    if (!restockLimits['crepes-confiture']) unlimitedTypes.push('crepes-confiture');
+                    
+                    // Répartir équitablement les crêpes restantes
+                    const crepesPerType = Math.floor(remainingCrepes / unlimitedTypes.length);
+                    const extraCrepes = remainingCrepes % unlimitedTypes.length;
+                    
+                    unlimitedTypes.forEach((type, index) => {
+                        newIndividualStocks[type] = (newIndividualStocks[type] || 0) + crepesPerType;
+                        if (index < extraCrepes) {
+                            newIndividualStocks[type] += 1;
+                        }
+                    });
                 }
                 
                 // Mettre à jour le stock global
@@ -1635,7 +1661,21 @@
                 
                 let message = `${quantity} crêpes ajoutées au stock !`;
                 if (Object.keys(restockLimits).length > 0) {
-                    message += `\nStocks par type mis à jour selon les limitations.`;
+                    message += `\n\n📊 Répartition :`;
+                    if (restockLimits['crepes-sucre']) {
+                        message += `\n🥞 Sucre : ${restockLimits['crepes-sucre']} (limité)`;
+                    }
+                    if (restockLimits['crepes-nutella']) {
+                        message += `\n🍫 Nutella : ${restockLimits['crepes-nutella']} (limité)`;
+                    }
+                    if (restockLimits['crepes-confiture']) {
+                        message += `\n🍓 Confiture : ${restockLimits['crepes-confiture']} (limité)`;
+                    }
+                    if (remainingCrepes > 0) {
+                        message += `\n➕ ${remainingCrepes} crêpes réparties sur les types non limités`;
+                    }
+                } else {
+                    message += `\n\n📊 Répartition équitable sur tous les types`;
                 }
                 showMessage(message, 'success');
                 
