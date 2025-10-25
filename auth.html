@@ -212,7 +212,7 @@
         function showSuccess(message) {
             const errorEl = document.getElementById('errorMessage');
             const successEl = document.getElementById('successMessage');
-            successEl.textContent = message;
+            successEl.innerHTML = message;
             successEl.style.display = 'block';
             errorEl.style.display = 'none';
         }

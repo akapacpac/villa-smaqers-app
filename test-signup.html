@@ -170,7 +170,7 @@
         }
 
         function showSuccess(message) {
-            successDiv.textContent = message;
+            successDiv.innerHTML = message;
             successDiv.style.display = 'block';
             errorDiv.style.display = 'none';
             addLog(`SUCCÈS: ${message}`, 'success');
