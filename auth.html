@@ -6,11 +6,11 @@
     <title>Authentification - Villa des Smaqers Brisés</title>
     
     <!-- Firebase SDK -->
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-        import { getFirestore, doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-        
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <script>
         // Configuration Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyDqCYiGvSYitgoPnGdxMzkautcYl511E3I",
@@ -23,21 +23,13 @@
         };
         
         // Initialiser Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
         
         // Rendre Firebase disponible globalement
         window.auth = auth;
         window.db = db;
-        window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
-        window.signInWithEmailAndPassword = signInWithEmailAndPassword;
-        window.signOut = signOut;
-        window.sendEmailVerification = sendEmailVerification;
-        window.onAuthStateChanged = onAuthStateChanged;
-        window.setDoc = setDoc;
-        window.getDoc = getDoc;
-        window.doc = doc;
     </script>
     <style>
         * {
@@ -250,7 +242,7 @@
             const password = document.getElementById('loginPassword').value;
             
             try {
-                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
                 const user = userCredential.user;
                 
                 // Vérifier si l'email est vérifié
@@ -260,8 +252,8 @@
                 }
                 
                 // Récupérer le profil utilisateur depuis Firestore
-                const userDoc = await getDoc(doc(db, 'users', user.uid));
-                if (userDoc.exists()) {
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (userDoc.exists) {
                     const userData = userDoc.data();
                     localStorage.setItem('user', JSON.stringify({
                         uid: user.uid,
@@ -295,14 +287,14 @@
             
             try {
                 // Créer le compte Firebase
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                 const user = userCredential.user;
                 
                 // Envoyer l'email de vérification
-                await sendEmailVerification(user);
+                await user.sendEmailVerification();
                 
                 // Sauvegarder le profil dans Firestore
-                await setDoc(doc(db, 'users', user.uid), {
+                await db.collection('users').doc(user.uid).set({
                     firstName: firstName,
                     lastName: lastName,
                     email: email,
