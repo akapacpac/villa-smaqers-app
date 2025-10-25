@@ -738,9 +738,17 @@
             event.currentTarget.classList.add('selected');
         }
 
-        function showClassModal(product, price) {
+        async function showClassModal(product, price) {
             if (!currentUser) {
                 alert('Veuillez vous connecter pour passer une commande');
+                return;
+            }
+
+            // Vérifier le stock avant d'afficher la modal
+            const canOrder = await canOrderProduct(product);
+            if (!canOrder) {
+                const productName = getProductName(product);
+                showMessage(`❌ Désolé, plus de ${productName} disponibles ! Soit le stock est épuisé, soit la limite quotidienne est atteinte.`, 'error');
                 return;
             }
 
@@ -1409,6 +1417,45 @@
         // Charger l'utilisateur au démarrage
         loadUser();
 
+        // Vérifier le stock au chargement de la page
+        async function checkStockOnLoad() {
+            try {
+                const stockDoc = await db.collection('stock').doc('current').get();
+                if (stockDoc.exists) {
+                    const data = stockDoc.data();
+                    const totalStock = data.quantity || 0;
+                    const limits = data.limits || {};
+                    
+                    // Vérifier chaque produit
+                    const products = ['crepes-sucre', 'crepes-nutella', 'crepes-confiture'];
+                    
+                    for (const product of products) {
+                        const canOrder = await canOrderProduct(product);
+                        const button = document.querySelector(`button[onclick*="${product}"]`);
+                        
+                        if (button) {
+                            if (!canOrder) {
+                                button.disabled = true;
+                                button.textContent = 'Rupture de stock';
+                                button.style.background = '#ccc';
+                                button.style.cursor = 'not-allowed';
+                            } else {
+                                button.disabled = false;
+                                button.textContent = 'Commander';
+                                button.style.background = '#667eea';
+                                button.style.cursor = 'pointer';
+                            }
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Erreur lors de la vérification du stock:', error);
+            }
+        }
+
+        // Vérifier le stock après le chargement de l'utilisateur
+        setTimeout(checkStockOnLoad, 1000);
+
         // Variables globales pour le stock
         let currentStock = 0;
         let stockLimits = {
@@ -1538,6 +1585,9 @@
                 
                 // Recharger l'historique
                 loadRestockHistory();
+                
+                // Recharger l'état des boutons de commande
+                setTimeout(checkStockOnLoad, 500);
                 
             } catch (error) {
                 console.error('Erreur lors de l\'ajout du stock:', error);
