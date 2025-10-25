@@ -405,6 +405,10 @@
                                 </select>
                             </div>
                             <div>
+                                <label style="display: block; margin-bottom: 5px; font-weight: 600;">Classe :</label>
+                                <input type="text" id="classFilter" placeholder="Ex: 650" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                            </div>
+                            <div>
                                 <label style="display: block; margin-bottom: 5px; font-weight: 600;">Tri par :</label>
                                 <select id="sortFilter" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                                     <option value="date-desc">Date (plus récent)</option>
@@ -414,11 +418,37 @@
                                     <option value="status">Statut</option>
                                 </select>
                             </div>
-                            <div style="display: flex; align-items: end;">
-                                <button onclick="applyFilters()" style="background: #007bff; color: white; border: none; padding: 8px 20px; border-radius: 4px; cursor: pointer; width: 100%;">
-                                    Appliquer les filtres
+                        </div>
+                        <div style="margin-top: 15px; text-align: center;">
+                            <button onclick="applyFilters()" style="background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin-right: 10px;">
+                                Appliquer les filtres
+                            </button>
+                            <button onclick="selectAllVisible()" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin-right: 10px;">
+                                Tout sélectionner
+                            </button>
+                            <button onclick="deselectAll()" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">
+                                Tout désélectionner
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Actions en lot -->
+                    <div id="bulkActions" style="display: none; background: #fff3cd; padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid #ffeaa7;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span id="selectedCount" style="font-weight: 600; color: #856404;">0 commande(s) sélectionnée(s)</span>
+                            <div>
+                                <button onclick="markSelectedAsDelivered()" style="background: #17a2b8; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-right: 10px;">
+                                    Marquer comme livrées
+                                </button>
+                                <button onclick="deleteSelected()" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-right: 10px;">
+                                    Supprimer sélectionnées
+                                </button>
+                                <button onclick="deleteAllFiltered()" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                                    Supprimer tout (filtré)
                                 </button>
                             </div>
+                        </div>
+                    </div>
                         </div>
                     </div>
                 </div>
@@ -892,6 +922,7 @@
                 <table class="orders-table">
                     <thead>
                         <tr>
+                            <th><input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()"></th>
                             <th>Date</th>
                             <th>Utilisateur</th>
                             <th>Email</th>
@@ -911,6 +942,7 @@
                 
                 tableHTML += `
                     <tr>
+                        <td><input type="checkbox" class="order-checkbox" data-order-id="${order.id}" onchange="updateBulkActions()"></td>
                         <td>${order.orderDate} ${order.orderTime}</td>
                         <td>${order.userName || 'N/A'}</td>
                         <td>${order.userEmail || 'N/A'}</td>
@@ -975,13 +1007,14 @@
         function applyFilters() {
             const statusFilter = document.getElementById('statusFilter').value;
             const productFilter = document.getElementById('productFilter').value;
+            const classFilter = document.getElementById('classFilter').value;
             const sortFilter = document.getElementById('sortFilter').value;
             
             // Recharger toutes les commandes avec les filtres
-            loadAllOrdersWithFilters(statusFilter, productFilter, sortFilter);
+            loadAllOrdersWithFilters(statusFilter, productFilter, classFilter, sortFilter);
         }
 
-        async function loadAllOrdersWithFilters(statusFilter, productFilter, sortFilter) {
+        async function loadAllOrdersWithFilters(statusFilter, productFilter, classFilter, sortFilter) {
             if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'member')) return;
 
             try {
@@ -1010,6 +1043,10 @@
                 
                 if (productFilter) {
                     orders = orders.filter(order => order.product === productFilter);
+                }
+                
+                if (classFilter) {
+                    orders = orders.filter(order => order.classNumber && order.classNumber.toString().includes(classFilter));
                 }
 
                 // Appliquer le tri
@@ -1127,6 +1164,181 @@
 
         // Charger l'utilisateur au démarrage
         loadUser();
+
+        // Variables globales pour la sélection multiple
+        let selectedOrders = new Set();
+        let currentFilteredOrders = [];
+
+        // Fonctions pour la sélection multiple
+        function toggleSelectAll() {
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            const checkboxes = document.querySelectorAll('.order-checkbox');
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAllCheckbox.checked;
+                if (selectAllCheckbox.checked) {
+                    selectedOrders.add(checkbox.dataset.orderId);
+                } else {
+                    selectedOrders.delete(checkbox.dataset.orderId);
+                }
+            });
+            
+            updateBulkActions();
+        }
+
+        function selectAllVisible() {
+            const checkboxes = document.querySelectorAll('.order-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = true;
+                selectedOrders.add(checkbox.dataset.orderId);
+            });
+            document.getElementById('selectAllCheckbox').checked = true;
+            updateBulkActions();
+        }
+
+        function deselectAll() {
+            const checkboxes = document.querySelectorAll('.order-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            document.getElementById('selectAllCheckbox').checked = false;
+            selectedOrders.clear();
+            updateBulkActions();
+        }
+
+        function updateBulkActions() {
+            const checkboxes = document.querySelectorAll('.order-checkbox');
+            selectedOrders.clear();
+            
+            checkboxes.forEach(checkbox => {
+                if (checkbox.checked) {
+                    selectedOrders.add(checkbox.dataset.orderId);
+                }
+            });
+            
+            const selectedCount = selectedOrders.size;
+            const bulkActions = document.getElementById('bulkActions');
+            const selectedCountSpan = document.getElementById('selectedCount');
+            
+            if (selectedCount > 0) {
+                bulkActions.style.display = 'block';
+                selectedCountSpan.textContent = `${selectedCount} commande(s) sélectionnée(s)`;
+            } else {
+                bulkActions.style.display = 'none';
+            }
+        }
+
+        // Actions en lot
+        async function markSelectedAsDelivered() {
+            if (selectedOrders.size === 0) {
+                showMessage('Aucune commande sélectionnée', 'error');
+                return;
+            }
+
+            if (!confirm(`Marquer ${selectedOrders.size} commande(s) comme livrées ?`)) {
+                return;
+            }
+
+            try {
+                const batch = db.batch();
+                selectedOrders.forEach(orderId => {
+                    const orderRef = db.collection('orders').doc(orderId);
+                    batch.update(orderRef, { status: 'delivered' });
+                });
+                
+                await batch.commit();
+                
+                showMessage(`${selectedOrders.size} commande(s) marquée(s) comme livrées`, 'success');
+                selectedOrders.clear();
+                deselectAll();
+                
+                // Recharger les commandes
+                const statusFilter = document.getElementById('statusFilter').value;
+                const productFilter = document.getElementById('productFilter').value;
+                const classFilter = document.getElementById('classFilter').value;
+                const sortFilter = document.getElementById('sortFilter').value;
+                loadAllOrdersWithFilters(statusFilter, productFilter, classFilter, sortFilter);
+                
+            } catch (error) {
+                console.error('Erreur lors de la mise à jour:', error);
+                showMessage('Erreur lors de la mise à jour: ' + error.message, 'error');
+            }
+        }
+
+        async function deleteSelected() {
+            if (selectedOrders.size === 0) {
+                showMessage('Aucune commande sélectionnée', 'error');
+                return;
+            }
+
+            if (!confirm(`Supprimer DÉFINITIVEMENT ${selectedOrders.size} commande(s) ?\n\nCette action est irréversible !`)) {
+                return;
+            }
+
+            try {
+                const batch = db.batch();
+                selectedOrders.forEach(orderId => {
+                    const orderRef = db.collection('orders').doc(orderId);
+                    batch.delete(orderRef);
+                });
+                
+                await batch.commit();
+                
+                showMessage(`${selectedOrders.size} commande(s) supprimée(s)`, 'success');
+                selectedOrders.clear();
+                deselectAll();
+                
+                // Recharger les commandes
+                const statusFilter = document.getElementById('statusFilter').value;
+                const productFilter = document.getElementById('productFilter').value;
+                const classFilter = document.getElementById('classFilter').value;
+                const sortFilter = document.getElementById('sortFilter').value;
+                loadAllOrdersWithFilters(statusFilter, productFilter, classFilter, sortFilter);
+                
+            } catch (error) {
+                console.error('Erreur lors de la suppression:', error);
+                showMessage('Erreur lors de la suppression: ' + error.message, 'error');
+            }
+        }
+
+        async function deleteAllFiltered() {
+            const checkboxes = document.querySelectorAll('.order-checkbox');
+            const totalVisible = checkboxes.length;
+            
+            if (totalVisible === 0) {
+                showMessage('Aucune commande visible à supprimer', 'error');
+                return;
+            }
+
+            if (!confirm(`Supprimer DÉFINITIVEMENT TOUTES les ${totalVisible} commande(s) visibles (filtrées) ?\n\nCette action est irréversible !`)) {
+                return;
+            }
+
+            try {
+                const batch = db.batch();
+                checkboxes.forEach(checkbox => {
+                    const orderRef = db.collection('orders').doc(checkbox.dataset.orderId);
+                    batch.delete(orderRef);
+                });
+                
+                await batch.commit();
+                
+                showMessage(`${totalVisible} commande(s) supprimée(s)`, 'success');
+                selectedOrders.clear();
+                deselectAll();
+                
+                // Recharger les commandes
+                const statusFilter = document.getElementById('statusFilter').value;
+                const productFilter = document.getElementById('productFilter').value;
+                const classFilter = document.getElementById('classFilter').value;
+                const sortFilter = document.getElementById('sortFilter').value;
+                loadAllOrdersWithFilters(statusFilter, productFilter, classFilter, sortFilter);
+                
+            } catch (error) {
+                console.error('Erreur lors de la suppression:', error);
+                showMessage('Erreur lors de la suppression: ' + error.message, 'error');
+            }
+        }
     </script>
 </body>
 </html>
