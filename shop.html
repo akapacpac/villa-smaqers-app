@@ -842,14 +842,13 @@
                         
                         // Si il y a une limite spécifique, vérifier qu'on ne l'a pas atteinte
                         if (productLimit !== null && productLimit !== undefined) {
-                            const currentProductStock = productLimit;
-                            if (currentProductStock <= 0) {
+                            if (productLimit <= 0) {
                                 throw new Error('Limite spécifique atteinte pour ce type de crêpe');
                             }
                             
                             // Décrémenter la limite spécifique
                             const newIndividualStock = { ...individualData };
-                            newIndividualStock[pendingOrder.product] = currentProductStock - 1;
+                            newIndividualStock[pendingOrder.product] = productLimit - 1;
                             newIndividualStock.lastUpdated = new Date();
                             
                             transaction.set(individualStockRef, newIndividualStock);
@@ -871,6 +870,12 @@
                 
                 // Fermer la modal
                 hideClassModal();
+                
+                // Recharger les données de stock
+                setTimeout(async () => {
+                    await loadStockData();
+                    checkStockOnLoad();
+                }, 500);
                 
                 // Recharger les commandes si on est sur l'onglet
                 if (document.getElementById('my-orders').classList.contains('active')) {
@@ -1462,31 +1467,24 @@
         // Vérifier le stock au chargement de la page
         async function checkStockOnLoad() {
             try {
-                const stockDoc = await db.collection('stock').doc('current').get();
-                if (stockDoc.exists) {
-                    const data = stockDoc.data();
-                    const totalStock = data.quantity || 0;
-                    const limits = data.limits || {};
+                // Vérifier chaque produit
+                const products = ['crepes-sucre', 'crepes-nutella', 'crepes-confiture'];
+                
+                for (const product of products) {
+                    const canOrder = await canOrderProduct(product);
+                    const button = document.querySelector(`button[onclick*="${product}"]`);
                     
-                    // Vérifier chaque produit
-                    const products = ['crepes-sucre', 'crepes-nutella', 'crepes-confiture'];
-                    
-                    for (const product of products) {
-                        const canOrder = await canOrderProduct(product);
-                        const button = document.querySelector(`button[onclick*="${product}"]`);
-                        
-                        if (button) {
-                            if (!canOrder) {
-                                button.disabled = true;
-                                button.textContent = 'Rupture de stock';
-                                button.style.background = '#ccc';
-                                button.style.cursor = 'not-allowed';
-                            } else {
-                                button.disabled = false;
-                                button.textContent = 'Commander';
-                                button.style.background = '#667eea';
-                                button.style.cursor = 'pointer';
-                            }
+                    if (button) {
+                        if (!canOrder) {
+                            button.disabled = true;
+                            button.textContent = 'Rupture de stock';
+                            button.style.background = '#ccc';
+                            button.style.cursor = 'not-allowed';
+                        } else {
+                            button.disabled = false;
+                            button.textContent = 'Commander';
+                            button.style.background = '#667eea';
+                            button.style.cursor = 'pointer';
                         }
                     }
                 }
@@ -1781,14 +1779,13 @@
                 if (!individualStockDoc.exists) return true; // Pas de limites = OK
                 
                 const data = individualStockDoc.data();
-                const productLimit = data[productType] || null;
+                const productLimit = data[productType];
                 
-                // Si pas de limite spécifique, OK tant qu'il y a du stock global
-                if (productLimit === null) return true;
+                // Si pas de limite spécifique (undefined ou null), OK tant qu'il y a du stock global
+                if (productLimit === undefined || productLimit === null) return true;
                 
                 // Si limite spécifique, vérifier qu'on n'a pas atteint la limite
-                const productStock = data[productType] || 0;
-                return productStock > 0;
+                return productLimit > 0;
                 
             } catch (error) {
                 console.error('Erreur lors de la vérification du stock:', error);
