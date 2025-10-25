@@ -5,14 +5,29 @@ admin.initializeApp();
 
 // Fonction pour supprimer complètement un utilisateur
 exports.deleteUser = functions.https.onCall(async (data, context) => {
-    // Vérifier que l'utilisateur est admin
-    if (!context.auth || !context.auth.token.admin) {
-        throw new functions.https.HttpsError('permission-denied', 'Seuls les administrateurs peuvent supprimer des comptes');
+    // Vérifier que l'utilisateur est authentifié
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'Utilisateur non authentifié');
     }
 
     const { userId } = data;
     
     try {
+        // Vérifier que l'utilisateur est admin en vérifiant son profil
+        const adminDoc = await admin.firestore()
+            .collection('users')
+            .doc(context.auth.uid)
+            .get();
+            
+        if (!adminDoc.exists) {
+            throw new functions.https.HttpsError('not-found', 'Profil administrateur non trouvé');
+        }
+        
+        const adminData = adminDoc.data();
+        if (adminData.role !== 'admin') {
+            throw new functions.https.HttpsError('permission-denied', 'Seuls les administrateurs peuvent supprimer des comptes');
+        }
+        
         // Supprimer le compte d'authentification
         await admin.auth().deleteUser(userId);
         
