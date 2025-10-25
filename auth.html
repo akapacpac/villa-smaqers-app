@@ -323,7 +323,24 @@
                 
             } catch (error) {
                 console.error('Erreur d\'inscription:', error);
-                showError('Erreur d\'inscription: ' + error.message);
+                
+                // Si l'email est déjà utilisé, essayer de se connecter d'abord
+                if (error.code === 'auth/email-already-in-use') {
+                    try {
+                        // Essayer de se connecter avec ce compte
+                        await auth.signInWithEmailAndPassword(email, password);
+                        showSuccess('Compte existant trouvé ! Connexion réussie.');
+                        setTimeout(() => {
+                            window.location.href = 'shop.html';
+                        }, 1000);
+                        return;
+                    } catch (loginError) {
+                        // Si la connexion échoue, l'email est vraiment bloqué
+                        showError('Cet email est temporairement bloqué. Veuillez attendre quelques minutes ou utiliser un autre email.');
+                    }
+                } else {
+                    showError('Erreur d\'inscription: ' + error.message);
+                }
             }
         });
     </script>
