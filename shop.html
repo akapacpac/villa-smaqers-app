@@ -185,6 +185,14 @@
             transform: translateY(-2px);
         }
 
+        #classModal {
+            display: none !important;
+        }
+
+        #classModal.show {
+            display: flex !important;
+        }
+
         .order-btn:disabled {
             background: #ccc;
             cursor: not-allowed;
@@ -310,7 +318,7 @@
                 👤 Mon Compte
             </button>
             <button class="nav-tab admin-only" onclick="showTab('admin')" style="display: none;">
-                ⚙️ Administration
+                🚚 Livraison
             </button>
             <a href="private.html" class="nav-tab admin-only" style="display: none; text-decoration: none; color: inherit;">
                 🔒 Administration Privée
@@ -368,7 +376,7 @@
 
             <!-- Onglet Administration -->
             <div id="admin" class="tab-pane">
-                <h2 style="margin-bottom: 30px; color: #333;">Administration - Toutes les commandes</h2>
+                <h2 style="margin-bottom: 30px; color: #333;">Livraison - Toutes les commandes</h2>
                 
                 <!-- Filtres -->
                 <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
@@ -424,7 +432,7 @@
     </div>
 
     <!-- Modal pour la classe -->
-    <div id="classModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center;">
+    <div id="classModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
         <div style="background: white; padding: 30px; border-radius: 15px; max-width: 400px; width: 90%; box-shadow: 0 20px 40px rgba(0,0,0,0.3);">
             <h3 style="margin-bottom: 20px; color: #333; text-align: center;">Confirmer votre commande</h3>
             <div style="margin-bottom: 20px;">
@@ -498,11 +506,11 @@
                     }, 100);
                 }
             } else if (tabName === 'admin') {
-                if (currentUser && currentUser.role === 'admin') {
+                if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'member')) {
                     loadAllOrders();
                 } else {
                     document.getElementById('adminOrdersTable').innerHTML = `
-                        <div class="error">Accès refusé. Seuls les administrateurs peuvent accéder à cette section.</div>
+                        <div class="error">Accès refusé. Seuls les administrateurs et membres peuvent accéder à cette section.</div>
                     `;
                 }
             }
@@ -528,13 +536,13 @@
             pendingOrder = { product, price };
             
             // Afficher la modal
-            document.getElementById('classModal').style.display = 'flex';
+            document.getElementById('classModal').classList.add('show');
             document.getElementById('modalClassInput').value = '';
             document.getElementById('modalClassInput').focus();
         }
 
         function hideClassModal() {
-            document.getElementById('classModal').style.display = 'none';
+            document.getElementById('classModal').classList.remove('show');
             pendingOrder = null;
         }
 
@@ -974,7 +982,7 @@
         }
 
         async function loadAllOrdersWithFilters(statusFilter, productFilter, sortFilter) {
-            if (!currentUser || currentUser.role !== 'admin') return;
+            if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'member')) return;
 
             try {
                 const querySnapshot = await db.collection('orders').get();
