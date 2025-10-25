@@ -392,6 +392,9 @@
             <button class="nav-tab admin-only" onclick="showTab('admin')" style="display: none;">
                 🚚 Livraison
             </button>
+            <button class="nav-tab admin-only" onclick="showTab('restock')" style="display: none;">
+                📦 Restock
+            </button>
             <a href="private.html" class="nav-tab admin-only" style="display: none; text-decoration: none; color: inherit;">
                 🔒 Administration Privée
             </a>
@@ -404,28 +407,28 @@
                 
                 
                 <div class="product-grid">
-                    <div class="product-card" onclick="selectProduct('crepes')">
+                    <div class="product-card" onclick="selectProduct('crepes-sucre')">
                         <div class="product-icon">🥞</div>
-                        <div class="product-name">Crêpes</div>
+                        <div class="product-name">Crêpes Sucre</div>
                         <div class="product-price">FREE</div>
-                        <div class="product-description">Délicieuses crêpes maison</div>
-                        <button class="order-btn" onclick="showClassModal('crepes', 0)">Commander</button>
+                        <div class="product-description">Crêpes avec sucre et beurre</div>
+                        <button class="order-btn" onclick="showClassModal('crepes-sucre', 0)">Commander</button>
                     </div>
 
-                    <div class="product-card" onclick="selectProduct('cookie')">
-                        <div class="product-icon">🍪</div>
-                        <div class="product-name">Cookie</div>
+                    <div class="product-card" onclick="selectProduct('crepes-nutella')">
+                        <div class="product-icon">🍫</div>
+                        <div class="product-name">Crêpes Nutella</div>
                         <div class="product-price">FREE</div>
-                        <div class="product-description">Cookies aux pépites de chocolat</div>
-                        <button class="order-btn" onclick="showClassModal('cookie', 0)">Commander</button>
+                        <div class="product-description">Crêpes avec Nutella</div>
+                        <button class="order-btn" onclick="showClassModal('crepes-nutella', 0)">Commander</button>
                     </div>
 
-                    <div class="product-card" onclick="selectProduct('gaufre')">
-                        <div class="product-icon">🧇</div>
-                        <div class="product-name">Gaufre</div>
+                    <div class="product-card" onclick="selectProduct('crepes-confiture')">
+                        <div class="product-icon">🍓</div>
+                        <div class="product-name">Crêpes Confiture</div>
                         <div class="product-price">FREE</div>
-                        <div class="product-description">Gaufres belges traditionnelles</div>
-                        <button class="order-btn" onclick="showClassModal('gaufre', 0)">Commander</button>
+                        <div class="product-description">Crêpes avec confiture</div>
+                        <button class="order-btn" onclick="showClassModal('crepes-confiture', 0)">Commander</button>
                     </div>
                 </div>
             </div>
@@ -471,12 +474,15 @@
                                 </div>
                                 <div>
                                     <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #555;">Type de produit :</label>
-                                    <select id="productFilter" style="width: 100%; padding: 10px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 0.95rem; transition: border-color 0.3s;" onfocus="this.style.borderColor='#007bff'" onblur="this.style.borderColor='#e1e5e9'">
-                                        <option value="">Tous les produits</option>
-                                        <option value="crepes">Crêpes</option>
-                                        <option value="cookie">Cookie</option>
-                                        <option value="gaufre">Gaufre</option>
-                                    </select>
+                                <select id="productFilter" style="width: 100%; padding: 10px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 0.95rem; transition: border-color 0.3s;" onfocus="this.style.borderColor='#007bff'" onblur="this.style.borderColor='#e1e5e9'">
+                                    <option value="">Tous les produits</option>
+                                    <option value="crepes-sucre">Crêpes Sucre</option>
+                                    <option value="crepes-nutella">Crêpes Nutella</option>
+                                    <option value="crepes-confiture">Crêpes Confiture</option>
+                                    <option value="crepes">Crêpes (ancien)</option>
+                                    <option value="cookie">Cookie</option>
+                                    <option value="gaufre">Gaufre</option>
+                                </select>
                                 </div>
                                 <div>
                                     <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #555;">Classe :</label>
@@ -528,6 +534,56 @@
                     <!-- Tableau des commandes -->
                     <div id="adminOrdersTable">
                         <div class="loading">Chargement de toutes les commandes...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Onglet Restock -->
+            <div id="restock" class="tab-pane">
+                <h2 style="margin-bottom: 30px; color: #333;">📦 Gestion du Stock</h2>
+                
+                <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+                    <!-- Statut du stock actuel -->
+                    <div style="background: linear-gradient(135deg, #e3f2fd, #bbdefb); padding: 25px; border-radius: 12px; margin-bottom: 30px; border: 2px solid #2196f3;">
+                        <h3 style="margin: 0 0 15px 0; color: #1976d2; font-size: 1.3rem;">📊 Stock Actuel</h3>
+                        <div style="display: flex; align-items: center; gap: 20px;">
+                            <div style="font-size: 2.5rem; font-weight: bold; color: #1976d2;" id="currentStock">0</div>
+                            <div>
+                                <div style="font-size: 1.1rem; color: #424242; font-weight: 600;">Crêpes disponibles</div>
+                                <div style="font-size: 0.9rem; color: #666;">Stock global (tous types confondus)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Formulaire de restock -->
+                    <div style="background: #f8f9fa; padding: 25px; border-radius: 12px; margin-bottom: 25px;">
+                        <h3 style="margin: 0 0 20px 0; color: #333; font-size: 1.2rem;">➕ Ajouter du Stock</h3>
+                        <div style="display: flex; gap: 15px; align-items: end; flex-wrap: wrap;">
+                            <div style="flex: 1; min-width: 200px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #555;">Nombre de crêpes à ajouter :</label>
+                                <input type="number" id="restockQuantity" min="1" max="1000" placeholder="Ex: 20" 
+                                       style="width: 100%; padding: 12px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 1rem; transition: border-color 0.3s;" 
+                                       onfocus="this.style.borderColor='#007bff'" onblur="this.style.borderColor='#e1e5e9'">
+                            </div>
+                            <button onclick="addStock()" 
+                                    style="background: linear-gradient(135deg, #28a745, #1e7e34); color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1rem; transition: transform 0.2s; box-shadow: 0 2px 8px rgba(40,167,69,0.3);" 
+                                    onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                                ➕ Ajouter au Stock
+                            </button>
+                        </div>
+                        <div style="margin-top: 15px; font-size: 0.9rem; color: #666;">
+                            💡 <strong>Note :</strong> Le stock est global pour tous les types de crêpes (sucre, Nutella, confiture)
+                        </div>
+                    </div>
+
+                    <!-- Historique des restocks -->
+                    <div style="background: #f8f9fa; padding: 25px; border-radius: 12px;">
+                        <h3 style="margin: 0 0 20px 0; color: #333; font-size: 1.2rem;">📈 Historique des Restocks</h3>
+                        <div id="restockHistory">
+                            <div style="text-align: center; padding: 20px; color: #666;">
+                                Chargement de l'historique...
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -616,6 +672,14 @@
                         <div class="error">Accès refusé. Seuls les administrateurs et membres peuvent accéder à cette section.</div>
                     `;
                 }
+            } else if (tabName === 'restock') {
+                if (currentUser && currentUser.role === 'admin') {
+                    loadStockData();
+                } else {
+                    document.getElementById('restockHistory').innerHTML = `
+                        <div class="error">Accès refusé. Seuls les administrateurs peuvent accéder à cette section.</div>
+                    `;
+                }
             }
         }
 
@@ -660,6 +724,14 @@
             }
 
             try {
+                // Vérifier le stock avant de passer la commande
+                const availableStock = await checkStock();
+                if (availableStock <= 0) {
+                    showMessage('❌ Désolé, nous sommes en rupture de stock ! Plus de crêpes disponibles pour le moment.', 'error');
+                    hideClassModal();
+                    return;
+                }
+
                 const orderData = {
                     userId: currentUser.uid,
                     userEmail: currentUser.email,
@@ -673,7 +745,30 @@
                     orderTime: new Date().toLocaleTimeString('fr-FR')
                 };
 
-                await db.collection('orders').add(orderData);
+                // Utiliser une transaction pour s'assurer que le stock est décrémenté atomiquement
+                await db.runTransaction(async (transaction) => {
+                    // Vérifier le stock à nouveau dans la transaction
+                    const stockRef = db.collection('stock').doc('current');
+                    const stockDoc = await transaction.get(stockRef);
+                    
+                    if (!stockDoc.exists) {
+                        throw new Error('Stock non trouvé');
+                    }
+                    
+                    const currentStock = stockDoc.data().quantity || 0;
+                    if (currentStock <= 0) {
+                        throw new Error('Stock insuffisant');
+                    }
+                    
+                    // Décrémenter le stock
+                    transaction.update(stockRef, {
+                        quantity: currentStock - 1,
+                        lastUpdated: new Date()
+                    });
+                    
+                    // Ajouter la commande
+                    transaction.set(db.collection('orders').doc(), orderData);
+                });
                 
                 // Afficher un message de succès
                 showMessage(`Commande passée avec succès ! Livraison prévue en classe ${classNumber}`, 'success');
@@ -688,7 +783,12 @@
                 
             } catch (error) {
                 console.error('Erreur lors de la commande:', error);
-                showMessage('Erreur lors de la commande: ' + error.message, 'error');
+                if (error.message === 'Stock insuffisant') {
+                    showMessage('❌ Désolé, nous sommes en rupture de stock ! Plus de crêpes disponibles pour le moment.', 'error');
+                } else {
+                    showMessage('Erreur lors de la commande: ' + error.message, 'error');
+                }
+                hideClassModal();
             }
         }
 
@@ -832,7 +932,10 @@
 
         function getProductName(product) {
             const names = {
-                'crepes': 'Crêpes',
+                'crepes-sucre': 'Crêpes Sucre',
+                'crepes-nutella': 'Crêpes Nutella',
+                'crepes-confiture': 'Crêpes Confiture',
+                'crepes': 'Crêpes', // Ancien format pour compatibilité
                 'cookie': 'Cookie',
                 'gaufre': 'Gaufre'
             };
@@ -1254,6 +1357,150 @@
 
         // Charger l'utilisateur au démarrage
         loadUser();
+
+        // Variables globales pour le stock
+        let currentStock = 0;
+
+        // Fonctions pour la gestion du stock
+        async function loadStockData() {
+            try {
+                // Charger le stock actuel
+                const stockDoc = await db.collection('stock').doc('current').get();
+                if (stockDoc.exists) {
+                    currentStock = stockDoc.data().quantity || 0;
+                } else {
+                    // Initialiser le stock à 0 si pas de document
+                    currentStock = 0;
+                    await db.collection('stock').doc('current').set({
+                        quantity: 0,
+                        lastUpdated: new Date()
+                    });
+                }
+                
+                // Mettre à jour l'affichage
+                document.getElementById('currentStock').textContent = currentStock;
+                
+                // Charger l'historique des restocks
+                loadRestockHistory();
+                
+            } catch (error) {
+                console.error('Erreur lors du chargement du stock:', error);
+                showMessage('Erreur lors du chargement du stock: ' + error.message, 'error');
+            }
+        }
+
+        async function addStock() {
+            const quantity = parseInt(document.getElementById('restockQuantity').value);
+            
+            if (!quantity || quantity <= 0) {
+                showMessage('Veuillez entrer une quantité valide', 'error');
+                return;
+            }
+            
+            if (quantity > 1000) {
+                showMessage('Quantité maximale: 1000 crêpes', 'error');
+                return;
+            }
+            
+            try {
+                // Mettre à jour le stock
+                const newStock = currentStock + quantity;
+                await db.collection('stock').doc('current').set({
+                    quantity: newStock,
+                    lastUpdated: new Date()
+                });
+                
+                // Enregistrer l'historique du restock
+                await db.collection('restockHistory').add({
+                    quantity: quantity,
+                    previousStock: currentStock,
+                    newStock: newStock,
+                    adminId: currentUser.uid,
+                    adminName: currentUser.firstName + ' ' + currentUser.lastName,
+                    timestamp: new Date()
+                });
+                
+                // Mettre à jour l'affichage
+                currentStock = newStock;
+                document.getElementById('currentStock').textContent = currentStock;
+                document.getElementById('restockQuantity').value = '';
+                
+                showMessage(`${quantity} crêpes ajoutées au stock ! Nouveau stock: ${newStock}`, 'success');
+                
+                // Recharger l'historique
+                loadRestockHistory();
+                
+            } catch (error) {
+                console.error('Erreur lors de l\'ajout du stock:', error);
+                showMessage('Erreur lors de l\'ajout du stock: ' + error.message, 'error');
+            }
+        }
+
+        async function loadRestockHistory() {
+            try {
+                const historySnapshot = await db.collection('restockHistory')
+                    .orderBy('timestamp', 'desc')
+                    .limit(10)
+                    .get();
+                
+                if (historySnapshot.empty) {
+                    document.getElementById('restockHistory').innerHTML = `
+                        <div style="text-align: center; padding: 20px; color: #666;">
+                            Aucun restock effectué pour le moment
+                        </div>
+                    `;
+                    return;
+                }
+                
+                let historyHTML = `
+                    <div style="display: grid; gap: 10px;">
+                `;
+                
+                historySnapshot.forEach(doc => {
+                    const data = doc.data();
+                    const date = data.timestamp.toDate ? data.timestamp.toDate() : new Date(data.timestamp);
+                    const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+                    
+                    historyHTML += `
+                        <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #28a745; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                                <div>
+                                    <strong style="color: #28a745; font-size: 1.1rem;">+${data.quantity} crêpes</strong>
+                                    <div style="font-size: 0.9rem; color: #666;">par ${data.adminName}</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 0.9rem; color: #666;">${dateStr}</div>
+                                    <div style="font-size: 0.8rem; color: #999;">Stock: ${data.previousStock} → ${data.newStock}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                historyHTML += `</div>`;
+                document.getElementById('restockHistory').innerHTML = historyHTML;
+                
+            } catch (error) {
+                console.error('Erreur lors du chargement de l\'historique:', error);
+                document.getElementById('restockHistory').innerHTML = `
+                    <div class="error">Erreur lors du chargement de l'historique</div>
+                `;
+            }
+        }
+
+        // Fonction pour vérifier le stock avant commande
+        async function checkStock() {
+            try {
+                const stockDoc = await db.collection('stock').doc('current').get();
+                if (stockDoc.exists) {
+                    return stockDoc.data().quantity || 0;
+                }
+                return 0;
+            } catch (error) {
+                console.error('Erreur lors de la vérification du stock:', error);
+                return 0;
+            }
+        }
 
         // Variables globales pour la sélection multiple
         let selectedOrders = new Set();
