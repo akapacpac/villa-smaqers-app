@@ -9,6 +9,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-functions-compat.js"></script>
     
     <script>
         // Configuration Firebase
@@ -26,6 +27,7 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
+        const functions = firebase.functions();
     </script>
     
     <style>
@@ -251,13 +253,6 @@
             <div id="adminContent" style="display: none;">
                 <h2>Gestion des utilisateurs</h2>
                 
-                <!-- Filtres -->
-                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                    <label style="margin-right: 15px;">
-                        <input type="checkbox" id="showDeleted" onchange="loadUsers()" style="margin-right: 5px;">
-                        Afficher les comptes supprimés
-                    </label>
-                </div>
                 
                 <!-- Statistiques -->
                 <div class="stats">
@@ -361,15 +356,8 @@
                         <tbody>
                 `;
 
-                const showDeleted = document.getElementById('showDeleted').checked;
-                
                 querySnapshot.forEach((doc) => {
                     const userData = doc.data();
-                    
-                    // Gérer l'affichage des comptes supprimés
-                    if (userData.deleted && !showDeleted) {
-                        return;
-                    }
                     
                     totalUsers++;
                     
@@ -386,39 +374,27 @@
                             new Date(userData.createdAt).toLocaleDateString('fr-FR')) : 
                         'N/A';
 
-                    const isDeleted = userData.deleted;
-                    const deletedStyle = isDeleted ? 'style="opacity: 0.6; background-color: #f8f9fa;"' : '';
-                    const deletedText = isDeleted ? ' (SUPPRIMÉ)' : '';
-                    
                     tableHTML += `
-                        <tr ${deletedStyle}>
-                            <td>${fullName}${deletedText}</td>
+                        <tr>
+                            <td>${fullName}</td>
                             <td>${userData.email}</td>
                             <td><span class="role-badge ${getRoleClass(userData.role)}">${getRoleText(userData.role)}</span></td>
                             <td>
-                                ${isDeleted ? 
-                                    '<span style="color: #dc3545; font-weight: bold;">COMPTE SUPPRIMÉ</span>' :
-                                    `<select id="roleSelect_${doc.id}" class="role-select">
-                                        <option value="student" ${userData.role === 'student' ? 'selected' : ''}>Étudiant</option>
-                                        <option value="member" ${userData.role === 'member' ? 'selected' : ''}>Membre</option>
-                                        <option value="admin" ${userData.role === 'admin' ? 'selected' : ''}>Administrateur</option>
-                                    </select>`
-                                }
+                                <select id="roleSelect_${doc.id}" class="role-select">
+                                    <option value="student" ${userData.role === 'student' ? 'selected' : ''}>Étudiant</option>
+                                    <option value="member" ${userData.role === 'member' ? 'selected' : ''}>Membre</option>
+                                    <option value="admin" ${userData.role === 'admin' ? 'selected' : ''}>Administrateur</option>
+                                </select>
                             </td>
                             <td>${createdAt}</td>
                             <td>
                                 <div class="action-buttons">
-                                    ${isDeleted ? 
-                                        `<button onclick="restoreUser('${doc.id}', '${userData.email}')" class="btn-update" style="background: #28a745;">
-                                            Restaurer
-                                        </button>` :
-                                        `<button onclick="updateUserRole('${doc.id}')" class="btn-update">
-                                            Mettre à jour
-                                        </button>
-                                        <button onclick="deleteUser('${doc.id}', '${userData.email}')" class="btn-delete">
-                                            Supprimer
-                                        </button>`
-                                    }
+                                    <button onclick="updateUserRole('${doc.id}')" class="btn-update">
+                                        Mettre à jour
+                                    </button>
+                                    <button onclick="deleteUser('${doc.id}', '${userData.email}')" class="btn-delete">
+                                        Supprimer
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -468,29 +444,16 @@
 
         async function deleteUser(userId, userEmail) {
             // Confirmation avant suppression
-            if (!confirm(`Êtes-vous sûr de vouloir supprimer le compte de ${userEmail} ?\n\nCette action est irréversible et supprimera :\n- Le profil utilisateur\n- Toutes les commandes associées\n- Marquera le compte comme supprimé`)) {
+            if (!confirm(`Êtes-vous sûr de vouloir supprimer DÉFINITIVEMENT le compte de ${userEmail} ?\n\nCette action est irréversible et supprimera :\n- Le compte Firebase Authentication\n- Le profil utilisateur\n- Toutes les commandes associées\n- L'utilisateur ne pourra plus se connecter\n\n⚠️ ATTENTION : Cette action ne peut pas être annulée !`)) {
                 return;
             }
 
             try {
-                // Marquer le compte comme supprimé au lieu de le supprimer complètement
-                await db.collection('users').doc(userId).update({
-                    deleted: true,
-                    deletedAt: new Date(),
-                    deletedBy: currentUser.email
-                });
+                // Appeler la Firebase Function pour supprimer complètement le compte
+                const deleteUserFunction = functions.httpsCallable('deleteUser');
+                const result = await deleteUserFunction({ userId: userId });
                 
-                // Supprimer toutes les commandes de cet utilisateur
-                const ordersSnapshot = await db.collection('orders').where('userId', '==', userId).get();
-                const batch = db.batch();
-                
-                ordersSnapshot.forEach((doc) => {
-                    batch.delete(doc.ref);
-                });
-                
-                await batch.commit();
-                
-                showMessage(`Compte ${userEmail} marqué comme supprimé avec succès`, 'success');
+                showMessage(`Compte ${userEmail} supprimé définitivement avec succès`, 'success');
                 
                 // Recharger la liste
                 loadUsers();
@@ -501,30 +464,6 @@
             }
         }
 
-        async function restoreUser(userId, userEmail) {
-            // Confirmation avant restauration
-            if (!confirm(`Êtes-vous sûr de vouloir restaurer le compte de ${userEmail} ?`)) {
-                return;
-            }
-
-            try {
-                // Restaurer le compte
-                await db.collection('users').doc(userId).update({
-                    deleted: false,
-                    restoredAt: new Date(),
-                    restoredBy: currentUser.email
-                });
-                
-                showMessage(`Compte ${userEmail} restauré avec succès`, 'success');
-                
-                // Recharger la liste
-                loadUsers();
-                
-            } catch (error) {
-                console.error('Erreur lors de la restauration:', error);
-                showMessage('Erreur lors de la restauration: ' + error.message, 'error');
-            }
-        }
 
         async function loadUser() {
             auth.onAuthStateChanged(async (user) => {

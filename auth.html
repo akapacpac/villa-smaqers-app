@@ -264,16 +264,20 @@
                     }));
                 }
                 
-                // Vérifier si le compte n'est pas supprimé
+                // Vérifier si le compte n'est pas dans la blacklist
                 try {
+                    const blacklistDoc = await db.collection('blacklist').doc(user.uid).get();
+                    if (blacklistDoc.exists) {
+                        showError('Ce compte a été supprimé définitivement. Contactez un administrateur.');
+                        await auth.signOut();
+                        return;
+                    }
+                    
                     const userDoc = await db.collection('users').doc(user.uid).get();
-                    if (userDoc.exists) {
-                        const userData = userDoc.data();
-                        if (userData.deleted) {
-                            showError('Ce compte a été supprimé. Contactez un administrateur.');
-                            await auth.signOut();
-                            return;
-                        }
+                    if (!userDoc.exists) {
+                        showError('Ce compte n\'existe plus. Contactez un administrateur.');
+                        await auth.signOut();
+                        return;
                     }
                 } catch (error) {
                     console.error('Erreur lors de la vérification du compte:', error);
