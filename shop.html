@@ -469,10 +469,20 @@
             try {
                 const querySnapshot = await db.collection('orders')
                     .where('userId', '==', currentUser.uid)
-                    .orderBy('createdAt', 'desc')
                     .get();
                 
-                if (querySnapshot.empty) {
+                // Trier manuellement par date
+                const orders = [];
+                querySnapshot.forEach((doc) => {
+                    orders.push({ id: doc.id, ...doc.data() });
+                });
+                orders.sort((a, b) => {
+                    const dateA = a.createdAt ? (a.createdAt.toDate ? a.createdAt.toDate() : new Date(a.createdAt)) : new Date(0);
+                    const dateB = b.createdAt ? (b.createdAt.toDate ? b.createdAt.toDate() : new Date(b.createdAt)) : new Date(0);
+                    return dateB - dateA;
+                });
+                
+                if (orders.length === 0) {
                     document.getElementById('ordersTable').innerHTML = `
                         <div style="text-align: center; padding: 40px; color: #666;">
                             <h3>Aucune commande</h3>
@@ -495,8 +505,7 @@
                         <tbody>
                 `;
 
-                querySnapshot.forEach((doc) => {
-                    const order = doc.data();
+                orders.forEach((order) => {
                     const statusClass = getStatusClass(order.status);
                     const statusText = getStatusText(order.status);
                     
@@ -554,7 +563,7 @@
                             </div>
                             <div class="info-card">
                                 <div class="info-label">Membre depuis</div>
-                                <div class="info-value">${userData.createdAt ? userData.createdAt.toLocaleDateString('fr-FR') : 'N/A'}</div>
+                                <div class="info-value">${userData.createdAt ? (userData.createdAt.toDate ? userData.createdAt.toDate().toLocaleDateString('fr-FR') : new Date(userData.createdAt).toLocaleDateString('fr-FR')) : 'N/A'}</div>
                             </div>
                         </div>
                     `;
