@@ -387,6 +387,13 @@
                     document.getElementById('ordersTable').innerHTML = `
                         <div class="loading">Chargement de vos commandes...</div>
                     `;
+                    // Attendre que currentUser soit chargé
+                    const checkUser = setInterval(() => {
+                        if (currentUser) {
+                            clearInterval(checkUser);
+                            loadMyOrders();
+                        }
+                    }, 100);
                 }
             } else if (tabName === 'my-account') {
                 if (currentUser) {
@@ -395,6 +402,13 @@
                     document.getElementById('userAccount').innerHTML = `
                         <div class="loading">Chargement de vos informations...</div>
                     `;
+                    // Attendre que currentUser soit chargé
+                    const checkUser = setInterval(() => {
+                        if (currentUser) {
+                            clearInterval(checkUser);
+                            loadMyAccount();
+                        }
+                    }, 100);
                 }
             }
         }
@@ -607,9 +621,6 @@
         }
 
         async function loadUser() {
-            // Attendre que Firebase soit chargé
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
             auth.onAuthStateChanged(async (user) => {
                 if (!user) {
                     window.location.href = 'auth.html';
@@ -627,6 +638,8 @@
                             lastName: userData.lastName,
                             role: userData.role
                         };
+                        
+                        console.log('Utilisateur chargé:', currentUser);
                         
                         // Recharger les onglets si ils sont actifs
                         if (document.getElementById('my-orders').classList.contains('active')) {
