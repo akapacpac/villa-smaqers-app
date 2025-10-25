@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Magasin - Villa des Smaqers Brisés</title>
+    <title>Magasin - Villa des SMAQeurs Brisés</title>
     
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -375,7 +375,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🏪 Magasin Villa des Smaqers</h1>
+            <h1>🏪 Magasin Villa des SMAQeurs</h1>
             <p>Commandez vos snacks préférés !</p>
         </div>
 
@@ -405,7 +405,6 @@
             <div id="orders" class="tab-pane active">
                 <h2 style="margin-bottom: 30px; color: #333;">Choisissez votre commande</h2>
                 
-                
                 <div class="product-grid">
                     <div class="product-card" onclick="selectProduct('crepes-sucre')">
                         <div class="product-icon">🥞</div>
@@ -430,6 +429,13 @@
                         <div class="product-description">Crêpes avec confiture</div>
                         <button class="order-btn" onclick="showClassModal('crepes-confiture', 0)">Commander</button>
                     </div>
+                </div>
+                
+                <!-- Message quand plus de stock -->
+                <div id="noStockMessage" style="display: none; text-align: center; margin-top: 30px; padding: 30px; background: linear-gradient(135deg, #fff3cd, #ffeaa7); border-radius: 15px; border: 2px solid #ffc107; box-shadow: 0 4px 15px rgba(255,193,7,0.2);">
+                    <div style="font-size: 3rem; margin-bottom: 15px;">😔</div>
+                    <h3 style="color: #856404; margin-bottom: 10px; font-size: 1.5rem;">Désolé, restez attentif au prochain drop de crêpes !</h3>
+                    <p style="color: #856404; font-size: 1.1rem; margin: 0;">Le stock est temporairement épuisé. Revenez bientôt !</p>
                 </div>
             </div>
 
@@ -1539,6 +1545,7 @@
             try {
                 // Vérifier chaque produit
                 const products = ['crepes-sucre', 'crepes-nutella', 'crepes-confiture'];
+                let hasAnyStock = false;
                 
                 for (const product of products) {
                     const canOrder = await canOrderProduct(product);
@@ -1555,7 +1562,18 @@
                             button.textContent = 'Commander';
                             button.style.background = '#667eea';
                             button.style.cursor = 'pointer';
+                            hasAnyStock = true;
                         }
+                    }
+                }
+                
+                // Afficher/masquer le message de stock épuisé
+                const noStockMessage = document.getElementById('noStockMessage');
+                if (noStockMessage) {
+                    if (hasAnyStock) {
+                        noStockMessage.style.display = 'none';
+                    } else {
+                        noStockMessage.style.display = 'block';
                     }
                 }
             } catch (error) {
