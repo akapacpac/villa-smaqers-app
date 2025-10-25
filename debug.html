@@ -3,345 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Villa des Smaqers - Debug</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f5f5f5;
-            height: 100vh;
-            display: flex;
-        }
-
-        .auth-panel {
-            width: 400px;
-            background: white;
-            border-right: 2px solid #ddd;
-            overflow-y: auto;
-        }
-
-        .logs-panel {
-            flex: 1;
-            background: #1a1a1a;
-            color: #00ff00;
-            font-family: 'Courier New', monospace;
-            overflow-y: auto;
-        }
-
-        .auth-container {
-            padding: 20px;
-        }
-
-        .logo {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .logo h1 {
-            color: #333;
-            font-size: 1.5rem;
-            margin-bottom: 5px;
-        }
-
-        .logo p {
-            color: #666;
-            font-size: 0.9rem;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            color: #333;
-            font-weight: 500;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 10px;
-            border: 2px solid #e1e5e9;
-            border-radius: 5px;
-            font-size: 1rem;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .btn {
-            width: 100%;
-            padding: 10px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 1rem;
-            font-weight: 500;
-            cursor: pointer;
-            margin-bottom: 10px;
-        }
-
-        .btn:hover {
-            background: #5a6fd8;
-        }
-
-        .btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-        }
-
-        .btn-secondary:hover {
-            background: #5a6268;
-        }
-
-        .error {
-            background: #f8d7da;
-            color: #721c24;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 15px;
-            display: none;
-        }
-
-        .success {
-            background: #d4edda;
-            color: #155724;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 15px;
-            display: none;
-        }
-
-        .form-toggle {
-            text-align: center;
-            margin-top: 15px;
-        }
-
-        .form-toggle a {
-            color: #667eea;
-            text-decoration: none;
-            cursor: pointer;
-        }
-
-        .form-toggle a:hover {
-            text-decoration: underline;
-        }
-
-        .logs-header {
-            background: #333;
-            padding: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logs-header h2 {
-            color: #00ff00;
-            font-size: 1.2rem;
-        }
-
-        .logs-controls {
-            display: flex;
-            gap: 10px;
-        }
-
-        .logs-controls button {
-            background: #00ff00;
-            color: #000;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 3px;
-            cursor: pointer;
-            font-size: 0.8rem;
-        }
-
-        .logs-controls button:hover {
-            background: #00cc00;
-        }
-
-        .logs-container {
-            padding: 15px;
-            height: calc(100vh - 80px);
-            overflow-y: auto;
-        }
-
-        .log-entry {
-            margin-bottom: 8px;
-            padding: 5px;
-            border-left: 3px solid transparent;
-            word-wrap: break-word;
-        }
-
-        .log-error {
-            border-left-color: #ff0000;
-            background: rgba(255, 0, 0, 0.1);
-            color: #ff6666;
-        }
-
-        .log-success {
-            border-left-color: #00ff00;
-            background: rgba(0, 255, 0, 0.1);
-            color: #66ff66;
-        }
-
-        .log-warning {
-            border-left-color: #ffff00;
-            background: rgba(255, 255, 0, 0.1);
-            color: #ffff66;
-        }
-
-        .log-info {
-            border-left-color: #00ffff;
-            background: rgba(0, 255, 255, 0.1);
-            color: #66ffff;
-        }
-
-        .timestamp {
-            color: #666;
-            font-size: 0.8rem;
-        }
-
-        .stats {
-            background: #333;
-            padding: 10px;
-            margin-bottom: 15px;
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-        }
-
-        .stat-item {
-            text-align: center;
-        }
-
-        .stat-number {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #00ff00;
-        }
-
-        .stat-label {
-            font-size: 0.8rem;
-            color: #ccc;
-        }
-    </style>
-</head>
-<body>
-    <div class="auth-panel">
-        <div class="auth-container">
-            <div class="logo">
-                <h1>🍰 Villa des Smaqers Brisés</h1>
-                <p>Debug - Auth + Logs</p>
-            </div>
-
-            <div id="error" class="error"></div>
-            <div id="success" class="success"></div>
-
-            <!-- Formulaire de connexion -->
-            <div id="loginForm">
-                <h2 style="text-align: center; margin-bottom: 20px; color: #333;">Connexion</h2>
-                
-                <div class="form-group">
-                    <label for="loginEmail">Email</label>
-                    <input type="email" id="loginEmail" placeholder="votre@email.com" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="loginPassword">Mot de passe</label>
-                    <input type="password" id="loginPassword" placeholder="Votre mot de passe" required>
-                </div>
-                
-                <button id="loginBtn" class="btn">Se connecter</button>
-                
-                <div class="form-toggle">
-                    <a id="showSignup">Pas de compte ? S'inscrire</a>
-                </div>
-            </div>
-
-            <!-- Formulaire d'inscription -->
-            <div id="signupForm" style="display: none;">
-                <h2 style="text-align: center; margin-bottom: 20px; color: #333;">Inscription</h2>
-                
-                <div class="form-group">
-                    <label for="signupEmail">Email</label>
-                    <input type="email" id="signupEmail" placeholder="votre@email.com" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="signupPassword">Mot de passe</label>
-                    <input type="password" id="signupPassword" placeholder="Choisissez un mot de passe" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="signupPasswordConfirm">Confirmer le mot de passe</label>
-                    <input type="password" id="signupPasswordConfirm" placeholder="Confirmez votre mot de passe" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="accessCode">Code d'accès (optionnel)</label>
-                    <input type="text" id="accessCode" placeholder="Laissez vide pour être étudiant">
-                    <small style="color: #666; font-size: 0.8rem;">Code "paco" pour admin, autres codes pour membre</small>
-                </div>
-                
-                <button id="signupBtn" class="btn">S'inscrire</button>
-                
-                <div class="form-toggle">
-                    <a id="showLogin">Déjà un compte ? Se connecter</a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="logs-panel">
-        <div class="logs-header">
-            <h2>📊 Logs en temps réel</h2>
-            <div class="logs-controls">
-                <button onclick="clearLogs()">Effacer</button>
-                <button onclick="toggleAutoScroll()" id="autoScrollBtn">Auto-scroll: ON</button>
-            </div>
-        </div>
-
-        <div class="stats">
-            <div class="stat-item">
-                <div class="stat-number" id="totalLogs">0</div>
-                <div class="stat-label">Total logs</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-number" id="errorCount">0</div>
-                <div class="stat-label">Erreurs</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-number" id="successCount">0</div>
-                <div class="stat-label">Succès</div>
-            </div>
-        </div>
-
-        <div class="logs-container" id="logsContainer">
-            <div class="log-entry log-info">
-                <span class="timestamp">[00:00:00]</span> Système de debug initialisé
-            </div>
-        </div>
-    </div>
-
+    <title>Debug - Villa des Smaqers Brisés</title>
+    
     <!-- Firebase SDK -->
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, sendEmailVerification } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-        import { getFirestore, doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <script>
         // Configuration Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyDqCYiGvSYitgoPnGdxMzkautcYl511E3I",
@@ -352,303 +21,182 @@
             appId: "1:387262093007:web:76173a1e3cd49d80a249ba",
             measurementId: "G-TBNFR17E82"
         };
-
+        
         // Initialiser Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        // Variables globales
-        let logs = [];
-        let autoScroll = true;
-        let logCount = 0;
-        let errorCount = 0;
-        let successCount = 0;
-
-        // Éléments DOM
-        const loginForm = document.getElementById('loginForm');
-        const signupForm = document.getElementById('signupForm');
-        const loginBtn = document.getElementById('loginBtn');
-        const signupBtn = document.getElementById('signupBtn');
-        const showLogin = document.getElementById('showLogin');
-        const showSignup = document.getElementById('showSignup');
-        const errorDiv = document.getElementById('error');
-        const successDiv = document.getElementById('success');
-
-        // Codes d'accès
-        const ACCESS_CODES = {
-            'paco': { role: 'admin', permanent: true },
-            'membre1': { role: 'member', permanent: false },
-            'membre2': { role: 'member', permanent: false },
-            'membre3': { role: 'member', permanent: false },
-            'membre4': { role: 'member', permanent: false },
-            'membre5': { role: 'member', permanent: false }
-        };
-
-        // Système de logging
-        function addLog(message, type = 'info') {
-            const timestamp = new Date().toLocaleTimeString();
-            const logEntry = {
-                id: logCount++,
-                timestamp,
-                message,
-                type
-            };
-
-            logs.push(logEntry);
-
-            if (type === 'error') errorCount++;
-            if (type === 'success') successCount++;
-
-            updateStats();
-            renderLogs();
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+    </script>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
         }
-
-        function updateStats() {
-            document.getElementById('totalLogs').textContent = logs.length;
-            document.getElementById('errorCount').textContent = errorCount;
-            document.getElementById('successCount').textContent = successCount;
+        .debug-section {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Debug - Villa des Smaqers Brisés</h1>
+    
+    <div class="debug-section">
+        <h2>État de l'authentification</h2>
+        <div id="authStatus" class="status info">Vérification en cours...</div>
+        <button onclick="checkAuth()">Vérifier l'auth</button>
+        <button onclick="logout()">Se déconnecter</button>
+    </div>
+    
+    <div class="debug-section">
+        <h2>Informations utilisateur</h2>
+        <div id="userInfo" class="status info">Chargement...</div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>Test de commande</h2>
+        <button onclick="testOrder()">Tester une commande</button>
+        <div id="orderResult" class="status info">Aucune commande testée</div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>Test des commandes</h2>
+        <button onclick="testLoadOrders()">Charger les commandes</button>
+        <div id="ordersResult" class="status info">Aucun test effectué</div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>Actions</h2>
+        <button onclick="window.location.href='auth.html'">Aller à l'auth</button>
+        <button onclick="window.location.href='shop.html'">Aller au magasin</button>
+    </div>
 
-        function renderLogs() {
-            const container = document.getElementById('logsContainer');
-            container.innerHTML = logs.map(log => `
-                <div class="log-entry log-${log.type}">
-                    <span class="timestamp">[${log.timestamp}]</span> ${log.message}
-                </div>
-            `).join('');
-
-            if (autoScroll) {
-                container.scrollTop = container.scrollHeight;
+    <script>
+        let currentUser = null;
+        
+        function updateStatus(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `status ${type}`;
+        }
+        
+        function checkAuth() {
+            const user = auth.currentUser;
+            if (user) {
+                updateStatus('authStatus', `Connecté: ${user.email}`, 'success');
+            } else {
+                updateStatus('authStatus', 'Non connecté', 'error');
             }
         }
-
-        function clearLogs() {
-            logs = [];
-            logCount = 0;
-            errorCount = 0;
-            successCount = 0;
-            updateStats();
-            renderLogs();
-            addLog('Logs effacés', 'info');
+        
+        function logout() {
+            auth.signOut().then(() => {
+                updateStatus('authStatus', 'Déconnecté', 'info');
+                updateStatus('userInfo', 'Non connecté', 'error');
+                currentUser = null;
+            });
         }
+        
+        async function testOrder() {
+            if (!currentUser) {
+                updateStatus('orderResult', 'Erreur: Utilisateur non connecté', 'error');
+                return;
+            }
+            
+            try {
+                const orderData = {
+                    userId: currentUser.uid,
+                    userEmail: currentUser.email,
+                    userName: `${currentUser.firstName} ${currentUser.lastName}`,
+                    product: 'test-debug',
+                    price: 0,
+                    status: 'pending',
+                    createdAt: new Date(),
+                    orderDate: new Date().toLocaleDateString('fr-FR'),
+                    orderTime: new Date().toLocaleTimeString('fr-FR')
+                };
 
-        function toggleAutoScroll() {
-            autoScroll = !autoScroll;
-            document.getElementById('autoScrollBtn').textContent = `Auto-scroll: ${autoScroll ? 'ON' : 'OFF'}`;
+                await db.collection('orders').add(orderData);
+                updateStatus('orderResult', 'Commande test créée avec succès!', 'success');
+            } catch (error) {
+                updateStatus('orderResult', `Erreur: ${error.message}`, 'error');
+            }
         }
-
-        // Fonctions utilitaires
-        function showError(message) {
-            errorDiv.textContent = message;
-            errorDiv.style.display = 'block';
-            successDiv.style.display = 'none';
-            addLog(`Erreur: ${message}`, 'error');
+        
+        async function testLoadOrders() {
+            if (!currentUser) {
+                updateStatus('ordersResult', 'Erreur: Utilisateur non connecté', 'error');
+                return;
+            }
+            
+            try {
+                const querySnapshot = await db.collection('orders')
+                    .where('userId', '==', currentUser.uid)
+                    .orderBy('createdAt', 'desc')
+                    .get();
+                
+                const count = querySnapshot.size;
+                updateStatus('ordersResult', `Trouvé ${count} commande(s)`, 'success');
+            } catch (error) {
+                updateStatus('ordersResult', `Erreur: ${error.message}`, 'error');
+            }
         }
-
-        function showSuccess(message) {
-            successDiv.textContent = message;
-            successDiv.style.display = 'block';
-            errorDiv.style.display = 'none';
-            addLog(`Succès: ${message}`, 'success');
-        }
-
-        function hideMessages() {
-            errorDiv.style.display = 'none';
-            successDiv.style.display = 'none';
-        }
-
-        // Basculer entre les formulaires
-        showSignup.addEventListener('click', () => {
-            loginForm.style.display = 'none';
-            signupForm.style.display = 'block';
-            hideMessages();
-            addLog('Basculement vers le formulaire d\'inscription', 'info');
-        });
-
-        showLogin.addEventListener('click', () => {
-            signupForm.style.display = 'none';
-            loginForm.style.display = 'block';
-            hideMessages();
-            addLog('Basculement vers le formulaire de connexion', 'info');
-        });
-
-        // Connexion
-        loginBtn.addEventListener('click', async () => {
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-
-            addLog(`Tentative de connexion pour: ${email}`, 'info');
-
-            if (!email || !password) {
-                showError('Veuillez remplir tous les champs');
+        
+        // Charger l'utilisateur
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) {
+                updateStatus('authStatus', 'Non connecté', 'error');
+                updateStatus('userInfo', 'Non connecté', 'error');
+                currentUser = null;
                 return;
             }
 
             try {
-                loginBtn.disabled = true;
-                hideMessages();
-                addLog(`Début de la connexion Firebase pour: ${email}`, 'info');
-
-                const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
-
-                addLog(`Connexion Firebase réussie pour: ${email}`, 'success');
-
-                if (!user.emailVerified) {
-                    addLog(`Email non vérifié pour: ${email}`, 'warning');
-                    showError('Veuillez vérifier votre email avant de vous connecter');
-                    await auth.signOut();
-                    return;
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (userDoc.exists) {
+                    const userData = userDoc.data();
+                    currentUser = {
+                        uid: user.uid,
+                        email: user.email,
+                        firstName: userData.firstName,
+                        lastName: userData.lastName,
+                        role: userData.role
+                    };
+                    
+                    updateStatus('authStatus', `Connecté: ${user.email}`, 'success');
+                    updateStatus('userInfo', `Nom: ${userData.firstName} ${userData.lastName}, Rôle: ${userData.role}`, 'success');
+                } else {
+                    updateStatus('userInfo', 'Profil utilisateur non trouvé', 'error');
                 }
-
-                addLog(`Email vérifié, connexion complète pour: ${email}`, 'success');
-                showSuccess('Connexion réussie ! Redirection...');
-                
-                setTimeout(() => {
-                    window.location.href = 'home.html';
-                }, 1500);
-
             } catch (error) {
-                console.error('Erreur de connexion:', error);
-                addLog(`Erreur de connexion pour ${email}: ${error.code} - ${error.message}`, 'error');
-                
-                if (error.code === 'auth/user-not-found') {
-                    showError('Aucun compte trouvé avec cet email');
-                } else if (error.code === 'auth/wrong-password') {
-                    showError('Mot de passe incorrect');
-                } else if (error.code === 'auth/invalid-email') {
-                    showError('Format d\'email invalide');
-                } else if (error.code === 'auth/too-many-requests') {
-                    showError('Trop de tentatives. Réessayez plus tard');
-                } else {
-                    showError('Erreur de connexion: ' + error.message);
-                }
-            } finally {
-                loginBtn.disabled = false;
+                updateStatus('userInfo', `Erreur: ${error.message}`, 'error');
             }
         });
-
-        // Inscription
-        signupBtn.addEventListener('click', async () => {
-            const email = document.getElementById('signupEmail').value;
-            const password = document.getElementById('signupPassword').value;
-            const passwordConfirm = document.getElementById('signupPasswordConfirm').value;
-            const accessCode = document.getElementById('accessCode').value;
-
-            addLog(`Tentative d'inscription pour: ${email}`, 'info');
-
-            if (!email || !password || !passwordConfirm) {
-                showError('Veuillez remplir tous les champs obligatoires');
-                return;
-            }
-
-            if (password !== passwordConfirm) {
-                showError('Les mots de passe ne correspondent pas');
-                return;
-            }
-
-            if (password.length < 6) {
-                showError('Le mot de passe doit contenir au moins 6 caractères');
-                return;
-            }
-
-            // Déterminer le rôle
-            let role = 'student';
-            if (accessCode) {
-                if (ACCESS_CODES[accessCode]) {
-                    role = ACCESS_CODES[accessCode].role;
-                    addLog(`Code d'accès valide: ${accessCode} -> rôle: ${role}`, 'info');
-                } else {
-                    showError('Code d\'accès invalide');
-                    return;
-                }
-            } else {
-                addLog(`Pas de code d'accès -> rôle: ${role}`, 'info');
-            }
-
-            try {
-                signupBtn.disabled = true;
-                hideMessages();
-                addLog(`Début de la création du compte Firebase pour: ${email}`, 'info');
-
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
-
-                addLog(`Compte Firebase créé avec succès pour: ${email}`, 'success');
-
-                // Créer le profil utilisateur dans Firestore
-                addLog(`Création du profil Firestore pour: ${email}`, 'info');
-                await setDoc(doc(db, 'users', user.uid), {
-                    email: email,
-                    role: role,
-                    firstName: '',
-                    lastName: '',
-                    createdAt: new Date().toISOString()
-                });
-
-                addLog(`Profil Firestore créé avec succès pour: ${email}`, 'success');
-
-                // Envoyer l'email de vérification
-                addLog(`Envoi de l'email de vérification pour: ${email}`, 'info');
-                await user.sendEmailVerification();
-
-                addLog(`Email de vérification envoyé pour: ${email}`, 'success');
-                showSuccess('Compte créé ! Vérifiez votre email et cliquez sur le lien pour activer votre compte.');
-
-                // Vider le formulaire
-                document.getElementById('signupEmail').value = '';
-                document.getElementById('signupPassword').value = '';
-                document.getElementById('signupPasswordConfirm').value = '';
-                document.getElementById('accessCode').value = '';
-
-                // Basculer vers le formulaire de connexion
-                setTimeout(() => {
-                    signupForm.style.display = 'none';
-                    loginForm.style.display = 'block';
-                    hideMessages();
-                }, 2000);
-
-            } catch (error) {
-                console.error('Erreur d\'inscription:', error);
-                addLog(`Erreur d'inscription pour ${email}: ${error.code} - ${error.message}`, 'error');
-                
-                if (error.code === 'auth/email-already-in-use') {
-                    showError('Cet email est déjà utilisé');
-                } else if (error.code === 'auth/weak-password') {
-                    showError('Le mot de passe est trop faible');
-                } else if (error.code === 'auth/invalid-email') {
-                    showError('Format d\'email invalide');
-                } else if (error.code === 'auth/operation-not-allowed') {
-                    showError('L\'inscription par email/mot de passe est désactivée');
-                } else if (error.code === 'auth/network-request-failed') {
-                    showError('Erreur de connexion réseau');
-                } else if (error.code === 'auth/too-many-requests') {
-                    showError('Trop de tentatives. Réessayez plus tard');
-                } else {
-                    showError('Erreur lors de la création du compte: ' + error.message);
-                }
-            } finally {
-                signupBtn.disabled = false;
-            }
-        });
-
-        // Vérifier l'état de connexion
-        onAuthStateChanged(auth, (user) => {
-            if (user && user.emailVerified) {
-                addLog(`Utilisateur déjà connecté: ${user.email}`, 'info');
-                // Ne pas rediriger automatiquement en mode debug
-            } else if (user && !user.emailVerified) {
-                addLog(`Utilisateur connecté mais email non vérifié: ${user.email}`, 'warning');
-            } else {
-                addLog('Aucun utilisateur connecté', 'info');
-            }
-        });
-
-        // Log initial
-        addLog('Page de debug chargée', 'info');
-        addLog('Firebase initialisé', 'success');
     </script>
 </body>
 </html>
-
