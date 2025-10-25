@@ -546,12 +546,15 @@
                 const userDoc = await db.collection('users').doc(currentUser.uid).get();
                 if (userDoc.exists) {
                     const userData = userDoc.data();
+                    console.log('Données utilisateur:', userData);
+                    console.log('Prénom:', userData.firstName);
+                    console.log('Nom:', userData.lastName);
                     
                     document.getElementById('userAccount').innerHTML = `
                         <div class="user-info">
                             <div class="info-card">
                                 <div class="info-label">Nom complet</div>
-                                <div class="info-value">${userData.firstName} ${userData.lastName}</div>
+                                <div class="info-value">${userData.firstName || 'Non défini'} ${userData.lastName || 'Non défini'}</div>
                             </div>
                             <div class="info-card">
                                 <div class="info-label">Email</div>
