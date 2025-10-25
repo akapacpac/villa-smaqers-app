@@ -543,14 +543,36 @@
                 <h2 style="margin-bottom: 30px; color: #333;">📦 Gestion du Stock</h2>
                 
                 <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+                    <!-- Mode de gestion du stock -->
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; margin-bottom: 25px;">
+                        <h3 style="margin: 0 0 15px 0; color: #333; font-size: 1.2rem;">⚙️ Mode de Gestion du Stock</h3>
+                        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                            <button id="globalModeBtn" onclick="switchStockMode('global')" 
+                                    style="background: linear-gradient(135deg, #007bff, #0056b3); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: transform 0.2s;"
+                                    onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                                🌐 Stock Global
+                            </button>
+                            <button id="individualModeBtn" onclick="switchStockMode('individual')" 
+                                    style="background: #6c757d; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: transform 0.2s;"
+                                    onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                                🎯 Stock par Type
+                            </button>
+                        </div>
+                        <div style="margin-top: 10px; font-size: 0.9rem; color: #666;">
+                            <span id="modeDescription">Mode global : Toutes les crêpes partagent le même stock</span>
+                        </div>
+                    </div>
+
                     <!-- Statut du stock actuel -->
-                    <div style="background: linear-gradient(135deg, #e3f2fd, #bbdefb); padding: 25px; border-radius: 12px; margin-bottom: 30px; border: 2px solid #2196f3;">
+                    <div id="stockDisplay" style="background: linear-gradient(135deg, #e3f2fd, #bbdefb); padding: 25px; border-radius: 12px; margin-bottom: 30px; border: 2px solid #2196f3;">
                         <h3 style="margin: 0 0 15px 0; color: #1976d2; font-size: 1.3rem;">📊 Stock Actuel</h3>
-                        <div style="display: flex; align-items: center; gap: 20px;">
-                            <div style="font-size: 2.5rem; font-weight: bold; color: #1976d2;" id="currentStock">0</div>
-                            <div>
-                                <div style="font-size: 1.1rem; color: #424242; font-weight: 600;">Crêpes disponibles</div>
-                                <div style="font-size: 0.9rem; color: #666;">Stock global (tous types confondus)</div>
+                        <div id="stockContent">
+                            <div style="display: flex; align-items: center; gap: 20px;">
+                                <div style="font-size: 2.5rem; font-weight: bold; color: #1976d2;" id="currentStock">0</div>
+                                <div>
+                                    <div style="font-size: 1.1rem; color: #424242; font-weight: 600;">Crêpes disponibles</div>
+                                    <div style="font-size: 0.9rem; color: #666;">Stock global (tous types confondus)</div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -558,21 +580,117 @@
                     <!-- Formulaire de restock -->
                     <div style="background: #f8f9fa; padding: 25px; border-radius: 12px; margin-bottom: 25px;">
                         <h3 style="margin: 0 0 20px 0; color: #333; font-size: 1.2rem;">➕ Ajouter du Stock</h3>
-                        <div style="display: flex; gap: 15px; align-items: end; flex-wrap: wrap;">
-                            <div style="flex: 1; min-width: 200px;">
-                                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #555;">Nombre de crêpes à ajouter :</label>
-                                <input type="number" id="restockQuantity" min="1" max="1000" placeholder="Ex: 20" 
-                                       style="width: 100%; padding: 12px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 1rem; transition: border-color 0.3s;" 
-                                       onfocus="this.style.borderColor='#007bff'" onblur="this.style.borderColor='#e1e5e9'">
+                        
+                        <!-- Mode Global -->
+                        <div id="globalRestockForm">
+                            <div style="display: flex; gap: 15px; align-items: end; flex-wrap: wrap;">
+                                <div style="flex: 1; min-width: 200px;">
+                                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #555;">Nombre de crêpes à ajouter (tous types) :</label>
+                                    <input type="number" id="restockQuantity" min="1" max="1000" placeholder="Ex: 20" 
+                                           style="width: 100%; padding: 12px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 1rem; transition: border-color 0.3s;" 
+                                           onfocus="this.style.borderColor='#007bff'" onblur="this.style.borderColor='#e1e5e9'">
+                                </div>
+                                <button onclick="addGlobalStock()" 
+                                        style="background: linear-gradient(135deg, #28a745, #1e7e34); color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1rem; transition: transform 0.2s; box-shadow: 0 2px 8px rgba(40,167,69,0.3);" 
+                                        onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                                    ➕ Ajouter au Stock Global
+                                </button>
                             </div>
-                            <button onclick="addStock()" 
-                                    style="background: linear-gradient(135deg, #28a745, #1e7e34); color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1rem; transition: transform 0.2s; box-shadow: 0 2px 8px rgba(40,167,69,0.3);" 
-                                    onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
-                                ➕ Ajouter au Stock
-                            </button>
+                            <div style="margin-top: 15px; font-size: 0.9rem; color: #666;">
+                                💡 <strong>Note :</strong> Le stock est global pour tous les types de crêpes (sucre, Nutella, confiture)
+                            </div>
                         </div>
-                        <div style="margin-top: 15px; font-size: 0.9rem; color: #666;">
-                            💡 <strong>Note :</strong> Le stock est global pour tous les types de crêpes (sucre, Nutella, confiture)
+
+                        <!-- Mode Individuel -->
+                        <div id="individualRestockForm" style="display: none;">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px;">
+                                <!-- Crêpes Sucre -->
+                                <div style="background: white; padding: 20px; border-radius: 10px; border: 2px solid #e1e5e9;">
+                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                                        <span style="font-size: 1.5rem;">🥞</span>
+                                        <h4 style="margin: 0; color: #333;">Crêpes Sucre</h4>
+                                    </div>
+                                    <div style="margin-bottom: 10px;">
+                                        <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #555; font-size: 0.9rem;">Stock actuel :</label>
+                                        <div style="font-size: 1.2rem; font-weight: bold; color: #007bff;" id="stockSucre">0</div>
+                                    </div>
+                                    <div style="display: flex; gap: 10px; align-items: end;">
+                                        <div style="flex: 1;">
+                                            <input type="number" id="restockSucre" min="0" max="1000" placeholder="Quantité" 
+                                                   style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem;">
+                                        </div>
+                                        <button onclick="addIndividualStock('crepes-sucre', 'restockSucre')" 
+                                                style="background: #007bff; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">
+                                            +
+                                        </button>
+                                    </div>
+                                    <div style="margin-top: 10px;">
+                                        <label style="display: flex; align-items: center; gap: 5px; font-size: 0.8rem; color: #666;">
+                                            <input type="checkbox" id="unlimitedSucre" onchange="toggleUnlimited('crepes-sucre', 'unlimitedSucre')">
+                                            Stock illimité
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Crêpes Nutella -->
+                                <div style="background: white; padding: 20px; border-radius: 10px; border: 2px solid #e1e5e9;">
+                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                                        <span style="font-size: 1.5rem;">🍫</span>
+                                        <h4 style="margin: 0; color: #333;">Crêpes Nutella</h4>
+                                    </div>
+                                    <div style="margin-bottom: 10px;">
+                                        <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #555; font-size: 0.9rem;">Stock actuel :</label>
+                                        <div style="font-size: 1.2rem; font-weight: bold; color: #007bff;" id="stockNutella">0</div>
+                                    </div>
+                                    <div style="display: flex; gap: 10px; align-items: end;">
+                                        <div style="flex: 1;">
+                                            <input type="number" id="restockNutella" min="0" max="1000" placeholder="Quantité" 
+                                                   style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem;">
+                                        </div>
+                                        <button onclick="addIndividualStock('crepes-nutella', 'restockNutella')" 
+                                                style="background: #007bff; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">
+                                            +
+                                        </button>
+                                    </div>
+                                    <div style="margin-top: 10px;">
+                                        <label style="display: flex; align-items: center; gap: 5px; font-size: 0.8rem; color: #666;">
+                                            <input type="checkbox" id="unlimitedNutella" onchange="toggleUnlimited('crepes-nutella', 'unlimitedNutella')">
+                                            Stock illimité
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Crêpes Confiture -->
+                                <div style="background: white; padding: 20px; border-radius: 10px; border: 2px solid #e1e5e9;">
+                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                                        <span style="font-size: 1.5rem;">🍓</span>
+                                        <h4 style="margin: 0; color: #333;">Crêpes Confiture</h4>
+                                    </div>
+                                    <div style="margin-bottom: 10px;">
+                                        <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #555; font-size: 0.9rem;">Stock actuel :</label>
+                                        <div style="font-size: 1.2rem; font-weight: bold; color: #007bff;" id="stockConfiture">0</div>
+                                    </div>
+                                    <div style="display: flex; gap: 10px; align-items: end;">
+                                        <div style="flex: 1;">
+                                            <input type="number" id="restockConfiture" min="0" max="1000" placeholder="Quantité" 
+                                                   style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem;">
+                                        </div>
+                                        <button onclick="addIndividualStock('crepes-confiture', 'restockConfiture')" 
+                                                style="background: #007bff; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">
+                                            +
+                                        </button>
+                                    </div>
+                                    <div style="margin-top: 10px;">
+                                        <label style="display: flex; align-items: center; gap: 5px; font-size: 0.8rem; color: #666;">
+                                            <input type="checkbox" id="unlimitedConfiture" onchange="toggleUnlimited('crepes-confiture', 'unlimitedConfiture')">
+                                            Stock illimité
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="margin-top: 15px; font-size: 0.9rem; color: #666;">
+                                💡 <strong>Note :</strong> Gérez le stock individuellement pour chaque type de crêpe. Cochez "Stock illimité" pour les types sans limite.
+                            </div>
                         </div>
                     </div>
 
@@ -1365,6 +1483,17 @@
 
         // Variables globales pour le stock
         let currentStock = 0;
+        let individualStocks = {
+            'crepes-sucre': 0,
+            'crepes-nutella': 0,
+            'crepes-confiture': 0
+        };
+        let unlimitedStocks = {
+            'crepes-sucre': false,
+            'crepes-nutella': false,
+            'crepes-confiture': false
+        };
+        let stockMode = 'global'; // 'global' ou 'individual'
 
         // Fonctions pour la gestion du stock
         async function loadStockData() {
@@ -1505,6 +1634,237 @@
                 console.error('Erreur lors de la vérification du stock:', error);
                 return 0;
             }
+        }
+
+        // Fonction pour vérifier le stock individuel
+        async function checkIndividualStock(productType) {
+            try {
+                const stockDoc = await db.collection('individualStock').doc(productType).get();
+                if (stockDoc.exists) {
+                    const data = stockDoc.data();
+                    return {
+                        quantity: data.quantity || 0,
+                        unlimited: data.unlimited || false
+                    };
+                }
+                return { quantity: 0, unlimited: false };
+            } catch (error) {
+                console.error('Erreur lors de la vérification du stock individuel:', error);
+                return { quantity: 0, unlimited: false };
+            }
+        }
+
+        // Fonction pour basculer entre les modes de stock
+        function switchStockMode(mode) {
+            stockMode = mode;
+            
+            // Mettre à jour les boutons
+            const globalBtn = document.getElementById('globalModeBtn');
+            const individualBtn = document.getElementById('individualModeBtn');
+            const description = document.getElementById('modeDescription');
+            
+            if (mode === 'global') {
+                globalBtn.style.background = 'linear-gradient(135deg, #007bff, #0056b3)';
+                individualBtn.style.background = '#6c757d';
+                document.getElementById('globalRestockForm').style.display = 'block';
+                document.getElementById('individualRestockForm').style.display = 'none';
+                description.textContent = 'Mode global : Toutes les crêpes partagent le même stock';
+                updateGlobalStockDisplay();
+            } else {
+                globalBtn.style.background = '#6c757d';
+                individualBtn.style.background = 'linear-gradient(135deg, #007bff, #0056b3)';
+                document.getElementById('globalRestockForm').style.display = 'none';
+                document.getElementById('individualRestockForm').style.display = 'block';
+                description.textContent = 'Mode individuel : Gérez le stock pour chaque type de crêpe';
+                loadIndividualStocks();
+            }
+        }
+
+        // Fonction pour charger les stocks individuels
+        async function loadIndividualStocks() {
+            try {
+                for (const productType of Object.keys(individualStocks)) {
+                    const stockData = await checkIndividualStock(productType);
+                    individualStocks[productType] = stockData.quantity;
+                    unlimitedStocks[productType] = stockData.unlimited;
+                    
+                    // Mettre à jour l'affichage
+                    const displayId = productType.replace('crepes-', 'stock');
+                    const displayElement = document.getElementById(displayId.charAt(0).toUpperCase() + displayId.slice(1));
+                    if (displayElement) {
+                        if (stockData.unlimited) {
+                            displayElement.textContent = '∞';
+                            displayElement.style.color = '#28a745';
+                        } else {
+                            displayElement.textContent = stockData.quantity;
+                            displayElement.style.color = '#007bff';
+                        }
+                    }
+                    
+                    // Mettre à jour la checkbox
+                    const checkboxId = 'unlimited' + productType.replace('crepes-', '').charAt(0).toUpperCase() + productType.replace('crepes-', '').slice(1);
+                    const checkbox = document.getElementById(checkboxId);
+                    if (checkbox) {
+                        checkbox.checked = stockData.unlimited;
+                    }
+                }
+            } catch (error) {
+                console.error('Erreur lors du chargement des stocks individuels:', error);
+                showMessage('Erreur lors du chargement des stocks individuels: ' + error.message, 'error');
+            }
+        }
+
+        // Fonction pour ajouter du stock global
+        async function addGlobalStock() {
+            const quantity = parseInt(document.getElementById('restockQuantity').value);
+            
+            if (!quantity || quantity <= 0) {
+                showMessage('Veuillez entrer une quantité valide', 'error');
+                return;
+            }
+            
+            if (quantity > 1000) {
+                showMessage('Quantité maximale: 1000 crêpes', 'error');
+                return;
+            }
+            
+            try {
+                // Mettre à jour le stock global
+                const newStock = currentStock + quantity;
+                await db.collection('stock').doc('current').set({
+                    quantity: newStock,
+                    lastUpdated: new Date()
+                });
+                
+                // Enregistrer l'historique du restock
+                await db.collection('restockHistory').add({
+                    type: 'global',
+                    quantity: quantity,
+                    previousStock: currentStock,
+                    newStock: newStock,
+                    adminId: currentUser.uid,
+                    adminName: currentUser.firstName + ' ' + currentUser.lastName,
+                    timestamp: new Date()
+                });
+                
+                // Mettre à jour l'affichage
+                currentStock = newStock;
+                document.getElementById('currentStock').textContent = currentStock;
+                document.getElementById('restockQuantity').value = '';
+                
+                showMessage(`${quantity} crêpes ajoutées au stock global ! Nouveau stock: ${newStock}`, 'success');
+                
+                // Recharger l'historique
+                loadRestockHistory();
+                
+            } catch (error) {
+                console.error('Erreur lors de l\'ajout du stock global:', error);
+                showMessage('Erreur lors de l\'ajout du stock global: ' + error.message, 'error');
+            }
+        }
+
+        // Fonction pour ajouter du stock individuel
+        async function addIndividualStock(productType, inputId) {
+            const quantity = parseInt(document.getElementById(inputId).value);
+            
+            if (!quantity || quantity <= 0) {
+                showMessage('Veuillez entrer une quantité valide', 'error');
+                return;
+            }
+            
+            if (quantity > 1000) {
+                showMessage('Quantité maximale: 1000 crêpes', 'error');
+                return;
+            }
+            
+            try {
+                const currentQuantity = individualStocks[productType] || 0;
+                const newQuantity = currentQuantity + quantity;
+                
+                // Mettre à jour le stock individuel
+                await db.collection('individualStock').doc(productType).set({
+                    quantity: newQuantity,
+                    unlimited: unlimitedStocks[productType],
+                    lastUpdated: new Date()
+                });
+                
+                // Enregistrer l'historique du restock
+                await db.collection('restockHistory').add({
+                    type: 'individual',
+                    productType: productType,
+                    quantity: quantity,
+                    previousStock: currentQuantity,
+                    newStock: newQuantity,
+                    adminId: currentUser.uid,
+                    adminName: currentUser.firstName + ' ' + currentUser.lastName,
+                    timestamp: new Date()
+                });
+                
+                // Mettre à jour l'affichage
+                individualStocks[productType] = newQuantity;
+                const displayId = productType.replace('crepes-', 'stock');
+                const displayElement = document.getElementById(displayId.charAt(0).toUpperCase() + displayId.slice(1));
+                if (displayElement) {
+                    displayElement.textContent = newQuantity;
+                }
+                
+                document.getElementById(inputId).value = '';
+                
+                const productName = getProductName(productType);
+                showMessage(`${quantity} ${productName} ajoutées au stock ! Nouveau stock: ${newQuantity}`, 'success');
+                
+                // Recharger l'historique
+                loadRestockHistory();
+                
+            } catch (error) {
+                console.error('Erreur lors de l\'ajout du stock individuel:', error);
+                showMessage('Erreur lors de l\'ajout du stock individuel: ' + error.message, 'error');
+            }
+        }
+
+        // Fonction pour basculer le stock illimité
+        async function toggleUnlimited(productType, checkboxId) {
+            const checkbox = document.getElementById(checkboxId);
+            const isUnlimited = checkbox.checked;
+            
+            try {
+                // Mettre à jour le stock individuel
+                await db.collection('individualStock').doc(productType).set({
+                    quantity: individualStocks[productType] || 0,
+                    unlimited: isUnlimited,
+                    lastUpdated: new Date()
+                });
+                
+                // Mettre à jour l'affichage
+                unlimitedStocks[productType] = isUnlimited;
+                const displayId = productType.replace('crepes-', 'stock');
+                const displayElement = document.getElementById(displayId.charAt(0).toUpperCase() + displayId.slice(1));
+                if (displayElement) {
+                    if (isUnlimited) {
+                        displayElement.textContent = '∞';
+                        displayElement.style.color = '#28a745';
+                    } else {
+                        displayElement.textContent = individualStocks[productType] || 0;
+                        displayElement.style.color = '#007bff';
+                    }
+                }
+                
+                const productName = getProductName(productType);
+                const message = isUnlimited ? 
+                    `${productName} : Stock illimité activé` : 
+                    `${productName} : Stock limité (${individualStocks[productType] || 0})`;
+                showMessage(message, 'success');
+                
+            } catch (error) {
+                console.error('Erreur lors de la modification du stock illimité:', error);
+                showMessage('Erreur lors de la modification du stock illimité: ' + error.message, 'error');
+                checkbox.checked = !isUnlimited; // Annuler le changement
+            }
+        }
+
+        // Fonction pour mettre à jour l'affichage du stock global
+        function updateGlobalStockDisplay() {
+            document.getElementById('currentStock').textContent = currentStock;
         }
 
         // Variables globales pour la sélection multiple
