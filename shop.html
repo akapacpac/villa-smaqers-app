@@ -819,31 +819,44 @@
 
                 // Utiliser une transaction pour s'assurer que le stock est décrémenté atomiquement
                 await db.runTransaction(async (transaction) => {
-                    // Vérifier le stock individuel
+                    // Vérifier le stock global
+                    const stockRef = db.collection('stock').doc('current');
+                    const stockDoc = await transaction.get(stockRef);
+                    
+                    if (!stockDoc.exists) {
+                        throw new Error('Stock global non trouvé');
+                    }
+                    
+                    const currentGlobalStock = stockDoc.data().quantity || 0;
+                    if (currentGlobalStock <= 0) {
+                        throw new Error('Stock global insuffisant');
+                    }
+                    
+                    // Vérifier les limites spécifiques
                     const individualStockRef = db.collection('individualStock').doc('current');
                     const individualStockDoc = await transaction.get(individualStockRef);
                     
-                    if (!individualStockDoc.exists) {
-                        throw new Error('Stock individuel non trouvé');
+                    if (individualStockDoc.exists) {
+                        const individualData = individualStockDoc.data();
+                        const productLimit = individualData[pendingOrder.product];
+                        
+                        // Si il y a une limite spécifique, vérifier qu'on ne l'a pas atteinte
+                        if (productLimit !== null && productLimit !== undefined) {
+                            const currentProductStock = productLimit;
+                            if (currentProductStock <= 0) {
+                                throw new Error('Limite spécifique atteinte pour ce type de crêpe');
+                            }
+                            
+                            // Décrémenter la limite spécifique
+                            const newIndividualStock = { ...individualData };
+                            newIndividualStock[pendingOrder.product] = currentProductStock - 1;
+                            newIndividualStock.lastUpdated = new Date();
+                            
+                            transaction.set(individualStockRef, newIndividualStock);
+                        }
                     }
                     
-                    const currentIndividualStock = individualStockDoc.data()[pendingOrder.product] || 0;
-                    if (currentIndividualStock <= 0) {
-                        throw new Error('Stock insuffisant pour ce type de crêpe');
-                    }
-                    
-                    // Décrémenter le stock individuel
-                    const newIndividualStock = { ...individualStockDoc.data() };
-                    newIndividualStock[pendingOrder.product] = currentIndividualStock - 1;
-                    newIndividualStock.lastUpdated = new Date();
-                    
-                    transaction.set(individualStockRef, newIndividualStock);
-                    
-                    // Décrémenter aussi le stock global
-                    const stockRef = db.collection('stock').doc('current');
-                    const stockDoc = await transaction.get(stockRef);
-                    const currentGlobalStock = stockDoc.data().quantity || 0;
-                    
+                    // Décrémenter le stock global
                     transaction.update(stockRef, {
                         quantity: currentGlobalStock - 1,
                         lastUpdated: new Date()
@@ -1573,18 +1586,10 @@
             }
             
             try {
-                // Calculer les nouveaux stocks individuels
+                // Calculer les nouveaux stocks individuels (limites seulement)
                 const newIndividualStocks = { ...individualStocks };
                 
-                // Calculer le total des limitations
-                const totalLimited = (restockLimits['crepes-sucre'] || 0) + 
-                                   (restockLimits['crepes-nutella'] || 0) + 
-                                   (restockLimits['crepes-confiture'] || 0);
-                
-                // Calculer les crêpes non limitées à répartir
-                const remainingCrepes = quantity - totalLimited;
-                
-                // Appliquer les limitations
+                // Appliquer les limitations (remplacer les limites existantes)
                 if (restockLimits['crepes-sucre']) {
                     newIndividualStocks['crepes-sucre'] = restockLimits['crepes-sucre'];
                 }
@@ -1593,25 +1598,6 @@
                 }
                 if (restockLimits['crepes-confiture']) {
                     newIndividualStocks['crepes-confiture'] = restockLimits['crepes-confiture'];
-                }
-                
-                // Répartir les crêpes restantes sur les types non limités
-                if (remainingCrepes > 0) {
-                    const unlimitedTypes = [];
-                    if (!restockLimits['crepes-sucre']) unlimitedTypes.push('crepes-sucre');
-                    if (!restockLimits['crepes-nutella']) unlimitedTypes.push('crepes-nutella');
-                    if (!restockLimits['crepes-confiture']) unlimitedTypes.push('crepes-confiture');
-                    
-                    // Répartir équitablement les crêpes restantes
-                    const crepesPerType = Math.floor(remainingCrepes / unlimitedTypes.length);
-                    const extraCrepes = remainingCrepes % unlimitedTypes.length;
-                    
-                    unlimitedTypes.forEach((type, index) => {
-                        newIndividualStocks[type] = (newIndividualStocks[type] || 0) + crepesPerType;
-                        if (index < extraCrepes) {
-                            newIndividualStocks[type] += 1;
-                        }
-                    });
                 }
                 
                 // Mettre à jour le stock global
@@ -1659,23 +1645,21 @@
                 document.getElementById('limitNutellaQty').value = '';
                 document.getElementById('limitConfitureQty').value = '';
                 
-                let message = `${quantity} crêpes ajoutées au stock !`;
+                let message = `${quantity} crêpes ajoutées au stock global !`;
                 if (Object.keys(restockLimits).length > 0) {
-                    message += `\n\n📊 Répartition :`;
+                    message += `\n\n🔒 Limites spécifiques :`;
                     if (restockLimits['crepes-sucre']) {
-                        message += `\n🥞 Sucre : ${restockLimits['crepes-sucre']} (limité)`;
+                        message += `\n🥞 Sucre : max ${restockLimits['crepes-sucre']}`;
                     }
                     if (restockLimits['crepes-nutella']) {
-                        message += `\n🍫 Nutella : ${restockLimits['crepes-nutella']} (limité)`;
+                        message += `\n🍫 Nutella : max ${restockLimits['crepes-nutella']}`;
                     }
                     if (restockLimits['crepes-confiture']) {
-                        message += `\n🍓 Confiture : ${restockLimits['crepes-confiture']} (limité)`;
+                        message += `\n🍓 Confiture : max ${restockLimits['crepes-confiture']}`;
                     }
-                    if (remainingCrepes > 0) {
-                        message += `\n➕ ${remainingCrepes} crêpes réparties sur les types non limités`;
-                    }
+                    message += `\n\n💡 Les étudiants peuvent commander n'importe quel type tant que le stock global > limite spécifique`;
                 } else {
-                    message += `\n\n📊 Répartition équitable sur tous les types`;
+                    message += `\n\n💡 Aucune limite spécifique - tous les types disponibles`;
                 }
                 showMessage(message, 'success');
                 
@@ -1773,24 +1757,39 @@
 
         // Fonction pour mettre à jour l'affichage du stock
         function updateStockDisplay() {
-            document.getElementById('stockSucreDisplay').textContent = individualStocks['crepes-sucre'];
-            document.getElementById('stockNutellaDisplay').textContent = individualStocks['crepes-nutella'];
-            document.getElementById('stockConfitureDisplay').textContent = individualStocks['crepes-confiture'];
+            // Afficher les limites spécifiques (ou "∞" si pas de limite)
+            document.getElementById('stockSucreDisplay').textContent = individualStocks['crepes-sucre'] || '∞';
+            document.getElementById('stockNutellaDisplay').textContent = individualStocks['crepes-nutella'] || '∞';
+            document.getElementById('stockConfitureDisplay').textContent = individualStocks['crepes-confiture'] || '∞';
             
-            const total = individualStocks['crepes-sucre'] + individualStocks['crepes-nutella'] + individualStocks['crepes-confiture'];
-            document.getElementById('totalStockDisplay').textContent = total;
+            // Afficher le stock global
+            document.getElementById('totalStockDisplay').textContent = currentStock;
         }
 
-        // Fonction pour vérifier si une commande est possible (stock individuel)
+        // Fonction pour vérifier si une commande est possible (système général + limites)
         async function canOrderProduct(productType) {
             try {
+                // Vérifier le stock global
+                const stockDoc = await db.collection('stock').doc('current').get();
+                if (!stockDoc.exists) return false;
+                
+                const globalStock = stockDoc.data().quantity || 0;
+                if (globalStock <= 0) return false;
+                
+                // Vérifier les limites spécifiques
                 const individualStockDoc = await db.collection('individualStock').doc('current').get();
-                if (!individualStockDoc.exists) return false;
+                if (!individualStockDoc.exists) return true; // Pas de limites = OK
                 
                 const data = individualStockDoc.data();
-                const productStock = data[productType] || 0;
+                const productLimit = data[productType] || null;
                 
+                // Si pas de limite spécifique, OK tant qu'il y a du stock global
+                if (productLimit === null) return true;
+                
+                // Si limite spécifique, vérifier qu'on n'a pas atteint la limite
+                const productStock = data[productType] || 0;
                 return productStock > 0;
+                
             } catch (error) {
                 console.error('Erreur lors de la vérification du stock:', error);
                 return false;
