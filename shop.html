@@ -1328,7 +1328,11 @@
                     
                     // Afficher l'onglet admin si c'est un admin ou membre
                     if (currentUser.role === 'admin' || currentUser.role === 'member') {
-                        document.querySelector('.admin-only').style.display = 'block';
+                        document.querySelectorAll('.admin-only').forEach(element => {
+                            if (element.tagName === 'BUTTON') {
+                                element.style.display = 'block';
+                            }
+                        });
                     }
                     
                     // Afficher le lien privé SEULEMENT pour les admins
