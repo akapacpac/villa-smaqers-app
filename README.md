@@ -95,3 +95,4 @@ L'app est configurée avec :
 ## Support
 
 Pour toute question concernant l'application, contactez l'équipe de la Villa des Smaqers Brisés.
+

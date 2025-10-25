@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Magasin - Villa des Smaqers Brisés</title>
+    
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, collection, addDoc, query, where, orderBy, getDocs, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        
+        // Configuration Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDqCYiGvSYitgoPnGdxMzkautcYl511E3I",
+            authDomain: "villa-smaqers-brises.firebaseapp.com",
+            projectId: "villa-smaqers-brises",
+            storageBucket: "villa-smaqers-brises.firebasestorage.app",
+            messagingSenderId: "387262093007",
+            appId: "1:387262093007:web:76173a1e3cd49d80a249ba",
+            measurementId: "G-TBNFR17E82"
+        };
+        
+        // Initialiser Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        
+        // Rendre Firebase disponible globalement
+        window.auth = auth;
+        window.db = db;
+        window.onAuthStateChanged = onAuthStateChanged;
+        window.collection = collection;
+        window.addDoc = addDoc;
+        window.query = query;
+        window.where = where;
+        window.orderBy = orderBy;
+        window.getDocs = getDocs;
+        window.doc = doc;
+        window.getDoc = getDoc;
+    </script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            background: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .nav-tab:hover {
+            background: #f8f9fa;
+        }
+
+        .nav-tab.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .tab-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            min-height: 500px;
+        }
+
+        .tab-pane {
+            display: none;
+        }
+
+        .tab-pane.active {
+            display: block;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .product-card {
+            border: 2px solid #e1e5e9;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .product-card:hover {
+            border-color: #667eea;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .product-card.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .product-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .product-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .product-price {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .product-description {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+
+        .order-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .order-btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+
+        .order-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .orders-table th,
+        .orders-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e1e5e9;
+        }
+
+        .orders-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-confirmed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-delivered {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .user-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .info-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 1.1rem;
+            color: #333;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 768px) {
+            .nav-tabs {
+                flex-direction: column;
+            }
+            
+            .nav-tab {
+                border-bottom: 1px solid #e1e5e9;
+            }
+            
+            .product-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏪 Magasin Villa des Smaqers</h1>
+            <p>Commandez vos snacks préférés !</p>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('orders')">
+                📝 Commander
+            </button>
+            <button class="nav-tab" onclick="showTab('my-orders')">
+                📋 Mes Commandes
+            </button>
+            <button class="nav-tab" onclick="showTab('my-account')">
+                👤 Mon Compte
+            </button>
+        </div>
+
+        <div class="tab-content">
+            <!-- Onglet Commander -->
+            <div id="orders" class="tab-pane active">
+                <h2 style="margin-bottom: 30px; color: #333;">Choisissez votre commande</h2>
+                
+                <div class="product-grid">
+                    <div class="product-card" onclick="selectProduct('gratuit')">
+                        <div class="product-icon">🆓</div>
+                        <div class="product-name">Gratuit</div>
+                        <div class="product-price">0€</div>
+                        <div class="product-description">Snack gratuit pour tous les membres</div>
+                        <button class="order-btn" onclick="placeOrder('gratuit', 0)">Commander</button>
+                    </div>
+
+                    <div class="product-card" onclick="selectProduct('crepes')">
+                        <div class="product-icon">🥞</div>
+                        <div class="product-name">Crêpes</div>
+                        <div class="product-price">2€</div>
+                        <div class="product-description">Délicieuses crêpes maison</div>
+                        <button class="order-btn" onclick="placeOrder('crepes', 2)">Commander</button>
+                    </div>
+
+                    <div class="product-card" onclick="selectProduct('cookie')">
+                        <div class="product-icon">🍪</div>
+                        <div class="product-name">Cookie</div>
+                        <div class="product-price">1.50€</div>
+                        <div class="product-description">Cookies aux pépites de chocolat</div>
+                        <button class="order-btn" onclick="placeOrder('cookie', 1.5)">Commander</button>
+                    </div>
+
+                    <div class="product-card" onclick="selectProduct('gaufre')">
+                        <div class="product-icon">🧇</div>
+                        <div class="product-name">Gaufre</div>
+                        <div class="product-price">2.50€</div>
+                        <div class="product-description">Gaufres belges traditionnelles</div>
+                        <button class="order-btn" onclick="placeOrder('gaufre', 2.5)">Commander</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Onglet Mes Commandes -->
+            <div id="my-orders" class="tab-pane">
+                <h2 style="margin-bottom: 30px; color: #333;">Historique de mes commandes</h2>
+                <div id="ordersTable">
+                    <div class="loading">Chargement de vos commandes...</div>
+                </div>
+            </div>
+
+            <!-- Onglet Mon Compte -->
+            <div id="my-account" class="tab-pane">
+                <h2 style="margin-bottom: 30px; color: #333;">Mes informations</h2>
+                <div id="userAccount">
+                    <div class="loading">Chargement de vos informations...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+
+        function showTab(tabName) {
+            // Masquer tous les onglets
+            document.querySelectorAll('.tab-pane').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Désactiver tous les boutons
+            document.querySelectorAll('.nav-tab').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Afficher l'onglet sélectionné
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            // Charger le contenu de l'onglet
+            if (tabName === 'my-orders') {
+                loadMyOrders();
+            } else if (tabName === 'my-account') {
+                loadMyAccount();
+            }
+        }
+
+        function selectProduct(productName) {
+            // Retirer la sélection de tous les produits
+            document.querySelectorAll('.product-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Sélectionner le produit cliqué
+            event.currentTarget.classList.add('selected');
+        }
+
+        async function placeOrder(productName, price) {
+            if (!currentUser) {
+                alert('Vous devez être connecté pour passer une commande');
+                return;
+            }
+
+            try {
+                const orderData = {
+                    userId: currentUser.uid,
+                    userEmail: currentUser.email,
+                    userName: `${currentUser.firstName} ${currentUser.lastName}`,
+                    product: productName,
+                    price: price,
+                    status: 'pending',
+                    createdAt: new Date(),
+                    orderDate: new Date().toLocaleDateString('fr-FR'),
+                    orderTime: new Date().toLocaleTimeString('fr-FR')
+                };
+
+                await addDoc(collection(db, 'orders'), orderData);
+                
+                // Afficher un message de succès
+                showMessage('Commande passée avec succès !', 'success');
+                
+                // Recharger les commandes si on est sur l'onglet
+                if (document.getElementById('my-orders').classList.contains('active')) {
+                    loadMyOrders();
+                }
+                
+            } catch (error) {
+                console.error('Erreur lors de la commande:', error);
+                showMessage('Erreur lors de la commande: ' + error.message, 'error');
+            }
+        }
+
+        async function loadMyOrders() {
+            if (!currentUser) return;
+
+            try {
+                const ordersQuery = query(
+                    collection(db, 'orders'),
+                    where('userId', '==', currentUser.uid),
+                    orderBy('createdAt', 'desc')
+                );
+                
+                const querySnapshot = await getDocs(ordersQuery);
+                
+                if (querySnapshot.empty) {
+                    document.getElementById('ordersTable').innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: #666;">
+                            <h3>Aucune commande</h3>
+                            <p>Vous n'avez pas encore passé de commande.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                let tableHTML = `
+                    <table class="orders-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Produit</th>
+                                <th>Prix</th>
+                                <th>Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                querySnapshot.forEach((doc) => {
+                    const order = doc.data();
+                    const statusClass = getStatusClass(order.status);
+                    const statusText = getStatusText(order.status);
+                    
+                    tableHTML += `
+                        <tr>
+                            <td>${order.orderDate} ${order.orderTime}</td>
+                            <td>${getProductName(order.product)}</td>
+                            <td>${order.price}€</td>
+                            <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                        </tr>
+                    `;
+                });
+
+                tableHTML += `
+                        </tbody>
+                    </table>
+                `;
+
+                document.getElementById('ordersTable').innerHTML = tableHTML;
+                
+            } catch (error) {
+                console.error('Erreur lors du chargement des commandes:', error);
+                document.getElementById('ordersTable').innerHTML = `
+                    <div class="error">Erreur lors du chargement de vos commandes</div>
+                `;
+            }
+        }
+
+        async function loadMyAccount() {
+            if (!currentUser) return;
+
+            try {
+                const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    
+                    document.getElementById('userAccount').innerHTML = `
+                        <div class="user-info">
+                            <div class="info-card">
+                                <div class="info-label">Nom complet</div>
+                                <div class="info-value">${userData.firstName} ${userData.lastName}</div>
+                            </div>
+                            <div class="info-card">
+                                <div class="info-label">Email</div>
+                                <div class="info-value">${currentUser.email}</div>
+                            </div>
+                            <div class="info-card">
+                                <div class="info-label">Rôle</div>
+                                <div class="info-value">${getRoleText(userData.role)}</div>
+                            </div>
+                            <div class="info-card">
+                                <div class="info-label">Membre depuis</div>
+                                <div class="info-value">${userData.createdAt ? userData.createdAt.toLocaleDateString('fr-FR') : 'N/A'}</div>
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Erreur lors du chargement du compte:', error);
+                document.getElementById('userAccount').innerHTML = `
+                    <div class="error">Erreur lors du chargement de vos informations</div>
+                `;
+            }
+        }
+
+        function getProductName(product) {
+            const names = {
+                'gratuit': 'Snack Gratuit',
+                'crepes': 'Crêpes',
+                'cookie': 'Cookie',
+                'gaufre': 'Gaufre'
+            };
+            return names[product] || product;
+        }
+
+        function getStatusClass(status) {
+            const classes = {
+                'pending': 'status-pending',
+                'confirmed': 'status-confirmed',
+                'delivered': 'status-delivered'
+            };
+            return classes[status] || 'status-pending';
+        }
+
+        function getStatusText(status) {
+            const texts = {
+                'pending': 'En attente',
+                'confirmed': 'Confirmée',
+                'delivered': 'Livrée'
+            };
+            return texts[status] || 'En attente';
+        }
+
+        function getRoleText(role) {
+            const texts = {
+                'admin': 'Administrateur',
+                'student': 'Étudiant',
+                'member': 'Membre'
+            };
+            return texts[role] || 'Utilisateur';
+        }
+
+        function showMessage(message, type) {
+            const messageEl = document.createElement('div');
+            messageEl.className = type === 'success' ? 'success' : 'error';
+            messageEl.textContent = message;
+            
+            const container = document.querySelector('.tab-content');
+            container.insertBefore(messageEl, container.firstChild);
+            
+            setTimeout(() => {
+                messageEl.remove();
+            }, 5000);
+        }
+
+        async function loadUser() {
+            // Attendre que Firebase soit chargé
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            onAuthStateChanged(auth, async (user) => {
+                if (!user) {
+                    window.location.href = 'auth.html';
+                    return;
+                }
+
+                try {
+                    const userDoc = await getDoc(doc(db, 'users', user.uid));
+                    if (userDoc.exists()) {
+                        const userData = userDoc.data();
+                        currentUser = {
+                            uid: user.uid,
+                            email: user.email,
+                            firstName: userData.firstName,
+                            lastName: userData.lastName,
+                            role: userData.role
+                        };
+                    } else {
+                        showMessage('Profil utilisateur non trouvé', 'error');
+                    }
+                } catch (error) {
+                    console.error('Erreur lors du chargement du profil:', error);
+                    showMessage('Erreur lors du chargement du profil', 'error');
+                }
+            });
+        }
+
+        // Charger l'utilisateur au démarrage
+        loadUser();
+    </script>
+</body>
+</html>

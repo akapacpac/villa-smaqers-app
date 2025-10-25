@@ -209,9 +209,17 @@
                     <span class="info-label">Statut :</span>
                     <span class="info-value">Connecté</span>
                 </div>
-                <div style="text-align: center; margin-top: 20px;">
-                    <span class="role-badge ${roleClass}">${roleText}</span>
-                </div>
+            <div style="text-align: center; margin-top: 20px;">
+                <span class="role-badge ${roleClass}">${roleText}</span>
+            </div>
+            <div style="text-align: center; margin-top: 20px;">
+                <button onclick="window.location.href='shop.html'" class="btn" style="background: #28a745; margin-right: 10px;">
+                    🏪 Accéder au Magasin
+                </button>
+                <button onclick="logout()" class="btn" style="background: #dc3545;">
+                    🚪 Se déconnecter
+                </button>
+            </div>
             `;
         }
 
