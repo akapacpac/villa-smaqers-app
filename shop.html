@@ -317,36 +317,28 @@
                 <h2 style="margin-bottom: 30px; color: #333;">Choisissez votre commande</h2>
                 
                 <div class="product-grid">
-                    <div class="product-card" onclick="selectProduct('gratuit')">
-                        <div class="product-icon">🆓</div>
-                        <div class="product-name">Gratuit</div>
-                        <div class="product-price">0€</div>
-                        <div class="product-description">Snack gratuit pour tous les membres</div>
-                        <button class="order-btn" onclick="placeOrder('gratuit', 0)">Commander</button>
-                    </div>
-
                     <div class="product-card" onclick="selectProduct('crepes')">
                         <div class="product-icon">🥞</div>
                         <div class="product-name">Crêpes</div>
-                        <div class="product-price">2€</div>
+                        <div class="product-price">FREE</div>
                         <div class="product-description">Délicieuses crêpes maison</div>
-                        <button class="order-btn" onclick="placeOrder('crepes', 2)">Commander</button>
+                        <button class="order-btn" onclick="placeOrder('crepes', 0)">Commander</button>
                     </div>
 
                     <div class="product-card" onclick="selectProduct('cookie')">
                         <div class="product-icon">🍪</div>
                         <div class="product-name">Cookie</div>
-                        <div class="product-price">1.50€</div>
+                        <div class="product-price">FREE</div>
                         <div class="product-description">Cookies aux pépites de chocolat</div>
-                        <button class="order-btn" onclick="placeOrder('cookie', 1.5)">Commander</button>
+                        <button class="order-btn" onclick="placeOrder('cookie', 0)">Commander</button>
                     </div>
 
                     <div class="product-card" onclick="selectProduct('gaufre')">
                         <div class="product-icon">🧇</div>
                         <div class="product-name">Gaufre</div>
-                        <div class="product-price">2.50€</div>
+                        <div class="product-price">FREE</div>
                         <div class="product-description">Gaufres belges traditionnelles</div>
-                        <button class="order-btn" onclick="placeOrder('gaufre', 2.5)">Commander</button>
+                        <button class="order-btn" onclick="placeOrder('gaufre', 0)">Commander</button>
                     </div>
                 </div>
             </div>
@@ -441,7 +433,12 @@
         }
 
         async function loadMyOrders() {
-            if (!currentUser) return;
+            if (!currentUser) {
+                document.getElementById('ordersTable').innerHTML = `
+                    <div class="loading">Chargement de vos commandes...</div>
+                `;
+                return;
+            }
 
             try {
                 const querySnapshot = await db.collection('orders')
@@ -481,7 +478,7 @@
                         <tr>
                             <td>${order.orderDate} ${order.orderTime}</td>
                             <td>${getProductName(order.product)}</td>
-                            <td>${order.price}€</td>
+                            <td>${order.price === 0 ? 'FREE' : order.price + '€'}</td>
                             <td><span class="status-badge ${statusClass}">${statusText}</span></td>
                         </tr>
                     `;
@@ -503,7 +500,12 @@
         }
 
         async function loadMyAccount() {
-            if (!currentUser) return;
+            if (!currentUser) {
+                document.getElementById('userAccount').innerHTML = `
+                    <div class="loading">Chargement de vos informations...</div>
+                `;
+                return;
+            }
 
             try {
                 const userDoc = await db.collection('users').doc(currentUser.uid).get();
@@ -530,6 +532,10 @@
                             </div>
                         </div>
                     `;
+                } else {
+                    document.getElementById('userAccount').innerHTML = `
+                        <div class="error">Profil utilisateur non trouvé</div>
+                    `;
                 }
             } catch (error) {
                 console.error('Erreur lors du chargement du compte:', error);
@@ -541,7 +547,6 @@
 
         function getProductName(product) {
             const names = {
-                'gratuit': 'Snack Gratuit',
                 'crepes': 'Crêpes',
                 'cookie': 'Cookie',
                 'gaufre': 'Gaufre'
