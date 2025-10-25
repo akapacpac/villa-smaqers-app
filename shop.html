@@ -211,6 +211,23 @@
             border-bottom: 1px solid #e1e5e9;
         }
 
+        .orders-table th:first-child,
+        .orders-table td:first-child {
+            width: 40px;
+            text-align: center;
+            padding: 8px;
+        }
+
+        .order-checkbox {
+            transform: scale(1.2);
+            cursor: pointer;
+        }
+
+        #selectAllCheckbox {
+            transform: scale(1.2);
+            cursor: pointer;
+        }
+
         .orders-table th {
             background: #f8f9fa;
             font-weight: 600;
@@ -419,11 +436,11 @@
                                 </select>
                             </div>
                         </div>
-                        <div style="margin-top: 15px; text-align: center;">
-                            <button onclick="applyFilters()" style="background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin-right: 10px;">
+                        <div style="margin-top: 15px; text-align: center; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;">
+                            <button onclick="applyFilters()" style="background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">
                                 Appliquer les filtres
                             </button>
-                            <button onclick="selectAllVisible()" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin-right: 10px;">
+                            <button onclick="selectAllVisible()" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">
                                 Tout sélectionner
                             </button>
                             <button onclick="deselectAll()" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">
@@ -434,13 +451,13 @@
                     
                     <!-- Actions en lot -->
                     <div id="bulkActions" style="display: none; background: #fff3cd; padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid #ffeaa7;">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px;">
                             <span id="selectedCount" style="font-weight: 600; color: #856404;">0 commande(s) sélectionnée(s)</span>
-                            <div>
-                                <button onclick="markSelectedAsDelivered()" style="background: #17a2b8; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-right: 10px;">
+                            <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                                <button onclick="markSelectedAsDelivered()" style="background: #17a2b8; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
                                     Marquer comme livrées
                                 </button>
-                                <button onclick="deleteSelected()" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-right: 10px;">
+                                <button onclick="deleteSelected()" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
                                     Supprimer sélectionnées
                                 </button>
                                 <button onclick="deleteAllFiltered()" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
@@ -922,7 +939,9 @@
                 <table class="orders-table">
                     <thead>
                         <tr>
-                            <th><input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()"></th>
+                            <th style="width: 40px; text-align: center;">
+                                <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()" title="Tout sélectionner">
+                            </th>
                             <th>Date</th>
                             <th>Utilisateur</th>
                             <th>Email</th>
@@ -940,15 +959,30 @@
                 const statusClass = getStatusClass(order.status);
                 const statusText = getStatusText(order.status);
                 
+                // Gérer les données manquantes ou undefined
+                const orderDate = order.orderDate || (order.createdAt ? 
+                    (order.createdAt.toDate ? order.createdAt.toDate().toLocaleDateString() : new Date(order.createdAt).toLocaleDateString()) : 
+                    'N/A');
+                const orderTime = order.orderTime || (order.createdAt ? 
+                    (order.createdAt.toDate ? order.createdAt.toDate().toLocaleTimeString() : new Date(order.createdAt).toLocaleTimeString()) : 
+                    '');
+                const userName = order.userName || 'N/A';
+                const userEmail = order.userEmail || 'N/A';
+                const classNumber = order.classNumber || 'N/A';
+                const product = getProductName(order.product) || 'N/A';
+                const price = order.price !== undefined ? (order.price === 0 ? 'FREE' : order.price + '€') : 'N/A';
+                
                 tableHTML += `
                     <tr>
-                        <td><input type="checkbox" class="order-checkbox" data-order-id="${order.id}" onchange="updateBulkActions()"></td>
-                        <td>${order.orderDate} ${order.orderTime}</td>
-                        <td>${order.userName || 'N/A'}</td>
-                        <td>${order.userEmail || 'N/A'}</td>
-                        <td><strong style="color: #007bff; font-size: 1.1rem;">${order.classNumber || 'N/A'}</strong></td>
-                        <td>${getProductName(order.product)}</td>
-                        <td>${order.price === 0 ? 'FREE' : order.price + '€'}</td>
+                        <td style="text-align: center;">
+                            <input type="checkbox" class="order-checkbox" data-order-id="${order.id}" onchange="updateBulkActions()">
+                        </td>
+                        <td>${orderDate} ${orderTime}</td>
+                        <td>${userName}</td>
+                        <td>${userEmail}</td>
+                        <td><strong style="color: #007bff; font-size: 1.1rem;">${classNumber}</strong></td>
+                        <td>${product}</td>
+                        <td>${price}</td>
                         <td><span class="status-badge ${statusClass}">${statusText}</span></td>
                         <td>
                             <select onchange="updateOrderStatus('${order.id}', this.value)" style="padding: 4px; border: 1px solid #ddd; border-radius: 4px;">
