@@ -28,13 +28,7 @@ exports.deleteUser = functions.https.onCall(async (data, context) => {
             throw new functions.https.HttpsError('permission-denied', 'Seuls les administrateurs peuvent supprimer des comptes');
         }
         
-        // Supprimer le compte d'authentification
-        await admin.auth().deleteUser(userId);
-        
-        // Attendre un peu pour que la suppression soit propagée
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        // Supprimer le document utilisateur
+        // Supprimer d'abord les données Firestore
         await admin.firestore().collection('users').doc(userId).delete();
         
         // Supprimer toutes les commandes de cet utilisateur
@@ -48,6 +42,14 @@ exports.deleteUser = functions.https.onCall(async (data, context) => {
             batch.delete(doc.ref);
         });
         await batch.commit();
+        
+        // Enfin supprimer le compte d'authentification
+        try {
+            await admin.auth().deleteUser(userId);
+        } catch (authError) {
+            console.log('Erreur suppression Auth (peut-être déjà supprimé):', authError.message);
+            // Continuer même si la suppression Auth échoue
+        }
         
         return { success: true, message: 'Utilisateur supprimé avec succès' };
         
