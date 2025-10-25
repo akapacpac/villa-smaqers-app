@@ -16,6 +16,9 @@ exports.deleteUser = functions.https.onCall(async (data, context) => {
         // Supprimer le compte d'authentification
         await admin.auth().deleteUser(userId);
         
+        // Attendre un peu pour que la suppression soit propagée
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
         // Supprimer le document utilisateur
         await admin.firestore().collection('users').doc(userId).delete();
         
