@@ -381,9 +381,21 @@
             
             // Charger le contenu de l'onglet
             if (tabName === 'my-orders') {
-                loadMyOrders();
+                if (currentUser) {
+                    loadMyOrders();
+                } else {
+                    document.getElementById('ordersTable').innerHTML = `
+                        <div class="loading">Chargement de vos commandes...</div>
+                    `;
+                }
             } else if (tabName === 'my-account') {
-                loadMyAccount();
+                if (currentUser) {
+                    loadMyAccount();
+                } else {
+                    document.getElementById('userAccount').innerHTML = `
+                        <div class="loading">Chargement de vos informations...</div>
+                    `;
+                }
             }
         }
 
@@ -615,6 +627,14 @@
                             lastName: userData.lastName,
                             role: userData.role
                         };
+                        
+                        // Recharger les onglets si ils sont actifs
+                        if (document.getElementById('my-orders').classList.contains('active')) {
+                            loadMyOrders();
+                        }
+                        if (document.getElementById('my-account').classList.contains('active')) {
+                            loadMyAccount();
+                        }
                     } else {
                         showMessage('Profil utilisateur non trouvé', 'error');
                     }
