@@ -897,6 +897,18 @@
             <!-- Top Bar -->
             <div class="top-bar">
                 <button class="menu-toggle" id="menu-toggle">☰</button>
+                
+                <!-- View Toggle for Admins and Members -->
+                <div id="view-toggle-topbar" style="display: none; margin-right: 20px; gap: 10px; align-items: center;">
+                    <label style="font-weight: bold; color: #333; font-size: 14px;">Vue:</label>
+                    <button id="view-bachelor-topbar" onclick="switchView('bachelor')" style="padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; background: #667eea; color: white; font-weight: 600; font-size: 13px;">
+                        👁️ Bachelor
+                    </button>
+                    <button id="view-master-topbar" onclick="switchView('master')" style="padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; background: #6c757d; color: white; font-weight: 600; font-size: 13px;">
+                        👁️ Master
+                    </button>
+                </div>
+                
                 <div class="user-info" id="user-info">
                     <div class="user-avatar" id="user-avatar">U</div>
                     <div>
@@ -1724,6 +1736,14 @@
             }
             
             // Show view toggle for admins and members
+            const viewToggleTopbar = document.getElementById('view-toggle-topbar');
+            if (viewToggleTopbar && (currentUser.role === 'admin' || currentUser.role === 'member')) {
+                viewToggleTopbar.style.display = 'flex';
+                updateViewButtons();
+            } else if (viewToggleTopbar) {
+                viewToggleTopbar.style.display = 'none';
+            }
+            
             if (viewToggleSection && (currentUser.role === 'admin' || currentUser.role === 'member')) {
                 viewToggleSection.style.display = 'block';
                 updateViewButtons();
@@ -1750,6 +1770,8 @@
                     loadAllOrders();
                 } else if (document.getElementById('manage-orders-page') && document.getElementById('manage-orders-page').classList.contains('active')) {
                     loadAdminOrders();
+                } else if (document.getElementById('statistics-page') && document.getElementById('statistics-page').classList.contains('active')) {
+                    loadStatistics();
                 }
             }
             
@@ -1758,6 +1780,7 @@
         
         // Update view toggle buttons
         function updateViewButtons() {
+            // Update buttons in profile
             const bachelorBtn = document.getElementById('view-bachelor-btn');
             const masterBtn = document.getElementById('view-master-btn');
             
@@ -1768,6 +1791,20 @@
                 } else {
                     bachelorBtn.className = 'btn btn-secondary';
                     masterBtn.className = 'btn';
+                }
+            }
+            
+            // Update buttons in topbar
+            const bachelorTopbar = document.getElementById('view-bachelor-topbar');
+            const masterTopbar = document.getElementById('view-master-topbar');
+            
+            if (bachelorTopbar && masterTopbar) {
+                if (currentView === 'bachelor') {
+                    bachelorTopbar.style.background = '#667eea';
+                    masterTopbar.style.background = '#6c757d';
+                } else {
+                    bachelorTopbar.style.background = '#6c757d';
+                    masterTopbar.style.background = '#667eea';
                 }
             }
         }
