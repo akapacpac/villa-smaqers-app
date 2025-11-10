@@ -2582,19 +2582,30 @@
         
         // Show class selection
         function showClassSelection() {
-            document.getElementById('class-selection-section').style.display = 'block';
-            document.getElementById('class-creation-section').style.display = 'none';
-            document.getElementById('select-class-btn').className = 'btn';
-            document.getElementById('create-class-btn').className = 'btn btn-secondary';
+            const selectionSection = document.getElementById('class-selection-section');
+            const creationSection = document.getElementById('class-creation-section');
+            const selectBtn = document.getElementById('select-class-btn');
+            const createBtn = document.getElementById('create-class-btn');
+            
+            if (selectionSection) selectionSection.style.display = 'block';
+            if (creationSection) creationSection.style.display = 'none';
+            if (selectBtn) selectBtn.className = 'btn';
+            if (createBtn) createBtn.className = 'btn btn-secondary';
+            
             loadClasses();
         }
         
         // Show class creation
         function showClassCreation() {
-            document.getElementById('class-selection-section').style.display = 'none';
-            document.getElementById('class-creation-section').style.display = 'block';
-            document.getElementById('select-class-btn').className = 'btn btn-secondary';
-            document.getElementById('create-class-btn').className = 'btn';
+            const selectionSection = document.getElementById('class-selection-section');
+            const creationSection = document.getElementById('class-creation-section');
+            const selectBtn = document.getElementById('select-class-btn');
+            const createBtn = document.getElementById('create-class-btn');
+            
+            if (selectionSection) selectionSection.style.display = 'none';
+            if (creationSection) creationSection.style.display = 'block';
+            if (selectBtn) selectBtn.className = 'btn btn-secondary';
+            if (createBtn) createBtn.className = 'btn';
         }
         
         // Select class schedule
