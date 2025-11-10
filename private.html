@@ -99,6 +99,54 @@
             border-radius: 20px;
             font-size: 0.8rem;
             font-weight: 600;
+            cursor: pointer;
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s;
+        }
+        
+        .role-badge:hover {
+            opacity: 0.8;
+            transform: scale(1.05);
+        }
+        
+        .role-badge::after {
+            content: '▼';
+            font-size: 0.6rem;
+            margin-left: 5px;
+        }
+        
+        .dropdown-menu {
+            position: absolute;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            min-width: 150px;
+            display: none;
+            margin-top: 5px;
+        }
+        
+        .dropdown-menu.show {
+            display: block;
+        }
+        
+        .dropdown-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+        
+        .dropdown-item:hover {
+            background: #f8f9fa;
         }
 
         .role-student {
@@ -401,8 +449,6 @@
                                 <th>Email</th>
                                 <th>Programme</th>
                                 <th>Rôle actuel</th>
-                                <th>Nouveau rôle</th>
-                                <th>Nouveau programme</th>
                                 <th>Date d'inscription</th>
                                 <th>Actions</th>
                             </tr>
@@ -444,27 +490,28 @@
                         <tr>
                             <td>${fullName}</td>
                             <td>${userData.email}</td>
-                            <td><span class="role-badge" style="background: ${userProgram === 'master' ? '#667eea' : '#28a745'}; color: white;">${programText}</span></td>
-                            <td><span class="role-badge ${getRoleClass(userData.role)}">${getRoleText(userData.role)}</span></td>
-                            <td>
-                                <select id="roleSelect_${doc.id}" class="role-select">
-                                    <option value="student" ${userData.role === 'student' ? 'selected' : ''}>Étudiant</option>
-                                    <option value="member" ${userData.role === 'member' ? 'selected' : ''}>Membre</option>
-                                    <option value="admin" ${userData.role === 'admin' ? 'selected' : ''}>Administrateur</option>
-                                </select>
+                            <td style="position: relative;">
+                                <span class="role-badge" style="background: ${userProgram === 'master' ? '#667eea' : '#28a745'}; color: white;" onclick="showProgramDropdown('${doc.id}', event)">
+                                    ${programText}
+                                </span>
+                                <div id="programDropdown_${doc.id}" class="dropdown-menu">
+                                    <div class="dropdown-item" onclick="updateUserProgram('${doc.id}', 'bachelor')">Bachelor</div>
+                                    <div class="dropdown-item" onclick="updateUserProgram('${doc.id}', 'master')">Master</div>
+                                </div>
                             </td>
-                            <td>
-                                <select id="programSelect_${doc.id}" class="role-select">
-                                    <option value="bachelor" ${userProgram === 'bachelor' ? 'selected' : ''}>Bachelor</option>
-                                    <option value="master" ${userProgram === 'master' ? 'selected' : ''}>Master</option>
-                                </select>
+                            <td style="position: relative;">
+                                <span class="role-badge ${getRoleClass(userData.role)}" onclick="showRoleDropdown('${doc.id}', event)">
+                                    ${getRoleText(userData.role)}
+                                </span>
+                                <div id="roleDropdown_${doc.id}" class="dropdown-menu">
+                                    <div class="dropdown-item" onclick="updateUserRoleDirect('${doc.id}', 'student')">Étudiant</div>
+                                    <div class="dropdown-item" onclick="updateUserRoleDirect('${doc.id}', 'member')">Membre</div>
+                                    <div class="dropdown-item" onclick="updateUserRoleDirect('${doc.id}', 'admin')">Administrateur</div>
+                                </div>
                             </td>
                             <td>${createdAt}</td>
                             <td>
                                 <div class="action-buttons">
-                                    <button onclick="updateUserRole('${doc.id}')" class="btn-update">
-                                        Mettre à jour
-                                    </button>
                                     <button onclick="deleteUser('${doc.id}', '${userData.email}')" class="btn-delete">
                                         Supprimer
                                     </button>
@@ -497,32 +544,84 @@
             }
         }
 
-        async function updateUserRole(userId) {
-            const roleSelect = document.getElementById(`roleSelect_${userId}`);
-            const programSelect = document.getElementById(`programSelect_${userId}`);
-            const newRole = roleSelect.value;
-            const newProgram = programSelect.value;
-
-            try {
-                const updateData = {
-                    role: newRole
-                };
-                
-                // Ajouter le programme seulement s'il a changé
-                if (newProgram) {
-                    updateData.program = newProgram;
+        // Afficher le menu déroulant pour le rôle
+        function showRoleDropdown(userId, event) {
+            event.stopPropagation();
+            // Fermer tous les autres menus
+            document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                if (menu.id !== `roleDropdown_${userId}`) {
+                    menu.classList.remove('show');
                 }
+            });
+            const dropdown = document.getElementById(`roleDropdown_${userId}`);
+            if (dropdown) {
+                dropdown.classList.toggle('show');
+            }
+        }
+        
+        // Afficher le menu déroulant pour le programme
+        function showProgramDropdown(userId, event) {
+            event.stopPropagation();
+            // Fermer tous les autres menus
+            document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                if (menu.id !== `programDropdown_${userId}`) {
+                    menu.classList.remove('show');
+                }
+            });
+            const dropdown = document.getElementById(`programDropdown_${userId}`);
+            if (dropdown) {
+                dropdown.classList.toggle('show');
+            }
+        }
+        
+        // Fermer les menus déroulants quand on clique ailleurs
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.role-badge') && !event.target.closest('.dropdown-menu')) {
+                document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                    menu.classList.remove('show');
+                });
+            }
+        });
+        
+        // Mettre à jour le rôle directement
+        async function updateUserRoleDirect(userId, newRole) {
+            // Fermer le menu
+            document.getElementById(`roleDropdown_${userId}`).classList.remove('show');
+            
+            try {
+                await db.collection('users').doc(userId).update({
+                    role: newRole
+                });
                 
-                await db.collection('users').doc(userId).update(updateData);
-                
-                const programText = newProgram === 'master' ? 'Master' : 'Bachelor';
-                showMessage(`Rôle mis à jour: ${getRoleText(newRole)} | Programme: ${programText}`, 'success');
+                showMessage(`Rôle mis à jour: ${getRoleText(newRole)}`, 'success');
                 
                 // Recharger la liste
                 loadUsers();
                 
             } catch (error) {
-                console.error('Erreur lors de la mise à jour:', error);
+                console.error('Erreur lors de la mise à jour du rôle:', error);
+                showMessage('Erreur lors de la mise à jour: ' + error.message, 'error');
+            }
+        }
+        
+        // Mettre à jour le programme directement
+        async function updateUserProgram(userId, newProgram) {
+            // Fermer le menu
+            document.getElementById(`programDropdown_${userId}`).classList.remove('show');
+            
+            try {
+                await db.collection('users').doc(userId).update({
+                    program: newProgram
+                });
+                
+                const programText = newProgram === 'master' ? 'Master' : 'Bachelor';
+                showMessage(`Programme mis à jour: ${programText}`, 'success');
+                
+                // Recharger la liste
+                loadUsers();
+                
+            } catch (error) {
+                console.error('Erreur lors de la mise à jour du programme:', error);
                 showMessage('Erreur lors de la mise à jour: ' + error.message, 'error');
             }
         }
