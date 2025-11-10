@@ -201,6 +201,7 @@
             cursor: pointer;
             transition: all 0.3s ease;
             width: 100%;
+            margin-top: auto;
         }
 
         .order-btn:hover {
@@ -3370,8 +3371,10 @@
                 
                 document.getElementById('fillingModal').style.display = 'none';
                 await loadCustomFillings();
-                // Recharger les produits dans la page de commande
-                loadProductsForOrders();
+                // Recharger les produits dans la page de commande avec un petit délai pour s'assurer que les données sont bien sauvegardées
+                setTimeout(() => {
+                    loadProductsForOrders();
+                }, 300);
             } catch (error) {
                 console.error('Erreur lors de la sauvegarde du filling:', error);
                 showMessage('❌ Erreur: ' + error.message, 'error');
