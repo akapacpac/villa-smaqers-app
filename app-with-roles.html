@@ -46,6 +46,8 @@
         window.updateDoc = updateDoc;
         window.doc = doc;
         window.onSnapshot = onSnapshot;
+        window.query = query;
+        window.where = where;
     </script>
     
     <style>
@@ -987,6 +989,23 @@
                             <input type="number" id="reg-age" class="form-input" required min="16" max="99">
                         </div>
                         
+                        <div class="form-group">
+                            <label class="form-label">Programme *</label>
+                            <div class="role-selection">
+                                <div class="role-card" onclick="selectProgram('bachelor')">
+                                    <div class="role-icon">🎓</div>
+                                    <div class="role-title">Bachelor</div>
+                                    <div class="role-desc">Programme Bachelor</div>
+                                </div>
+                                <div class="role-card" onclick="selectProgram('master')">
+                                    <div class="role-icon">🎓</div>
+                                    <div class="role-title">Master</div>
+                                    <div class="role-desc">Programme Master</div>
+                                </div>
+                            </div>
+                            <input type="hidden" id="reg-program" value="">
+                        </div>
+                        
                         <div class="form-group" id="code-section" style="display: none;">
                             <label class="form-label">Code d'accès *</label>
                             <input type="text" id="access-code" class="form-input code-input" placeholder="Entrez le code" maxlength="10">
@@ -1046,24 +1065,69 @@
                             <label class="form-label">Article sélectionné</label>
                             <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; font-weight: bold; color: #6c5ce7;" id="selected-item-display"></div>
                         </div>
+                        <!-- Class Selection Section -->
                         <div class="form-group">
-                            <label class="form-label">Salle de classe *</label>
-                            <select id="classroom" class="form-input" required>
-                                <option value="">Choisissez votre salle</option>
-                                <option value="A101">A101</option>
-                                <option value="A102">A102</option>
-                                <option value="B201">B201</option>
-                                <option value="B202">B202</option>
-                                <option value="C301">C301</option>
-                                <option value="C302">C302</option>
-                                <option value="Autre">Autre</option>
-                            </select>
+                            <label class="form-label">Sélectionner ou créer une classe *</label>
+                            
+                            <!-- Search/Create Toggle -->
+                            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                                <button type="button" id="select-class-btn" class="btn" onclick="showClassSelection()" style="flex: 1;">
+                                    📚 Sélectionner une classe existante
+                                </button>
+                                <button type="button" id="create-class-btn" class="btn btn-secondary" onclick="showClassCreation()" style="flex: 1;">
+                                    ➕ Créer une nouvelle classe
+                                </button>
+                            </div>
+                            
+                            <!-- Class Selection -->
+                            <div id="class-selection-section">
+                                <div class="form-group">
+                                    <label class="form-label">Rechercher une classe</label>
+                                    <input type="text" id="class-search" class="form-input" placeholder="Rechercher par salle (ex: 104, 156, 345-378)" oninput="filterClasses()">
+                                </div>
+                                <div id="classes-list" style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; padding: 10px;">
+                                    <p style="text-align: center; color: #666; padding: 20px;">Chargement des classes...</p>
+                                </div>
+                                <div id="selected-class-info" style="display: none; margin-top: 15px; padding: 15px; background: #e8f5e8; border-radius: 8px;">
+                                    <p><strong>Classe sélectionnée:</strong> <span id="selected-class-name"></span></p>
+                                    <p><strong>Horaire:</strong> <span id="selected-class-time"></span></p>
+                                    <p><strong>Livraison prévue:</strong> <span id="selected-delivery-time"></span></p>
+                                    <p style="font-size: 12px; color: #666; margin-top: 10px;">
+                                        <strong>Deadline:</strong> <span id="selected-deadline-time"></span>
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <!-- Class Creation -->
+                            <div id="class-creation-section" style="display: none;">
+                                <div class="form-group">
+                                    <label class="form-label">Numéro de salle *</label>
+                                    <input type="text" id="new-class-room" class="form-input" placeholder="Ex: 104, 156, 345-378" required>
+                                    <small style="color: #666; font-size: 12px;">Entrez le numéro ou nom de la salle</small>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Heure de début du cours *</label>
+                                    <input type="time" id="new-class-start" class="form-input" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Heure de fin du cours *</label>
+                                    <input type="time" id="new-class-end" class="form-input" required>
+                                </div>
+                                <button type="button" class="btn btn-full" onclick="createNewClass()">Créer la classe</button>
+                                <button type="button" class="btn btn-secondary btn-full" onclick="showClassSelection()" style="margin-top: 10px;">Annuler</button>
+                            </div>
+                            
+                            <input type="hidden" id="selected-class-id" value="">
+                            <input type="hidden" id="selected-class-schedule-id" value="">
                         </div>
-                        <div class="form-group" id="other-classroom" style="display: none;">
-                            <label class="form-label">Précisez la salle</label>
-                            <input type="text" id="customClassroom" class="form-input" placeholder="Ex: D401">
+                        
+                        <div id="order-deadline-warning" style="display: none; margin-top: 15px; padding: 15px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px;">
+                            <p style="margin: 0; color: #856404;">
+                                ⚠️ <strong>Attention:</strong> La deadline de commande est dans <span id="deadline-countdown"></span>
+                            </p>
                         </div>
-                        <button class="btn btn-full" onclick="placeOrder()">Passer la commande</button>
+                        
+                        <button class="btn btn-full" onclick="placeOrder()" id="place-order-btn" disabled>Passer la commande</button>
                         <button class="btn btn-secondary btn-full" onclick="backToMenu()" style="margin-top: 10px;">Retour au menu</button>
                     </div>
                 </div>
@@ -1219,6 +1283,24 @@
                             <p><strong>Téléphone:</strong> <span id="profile-phone"></span></p>
                             <p><strong>Âge:</strong> <span id="profile-age"></span> ans</p>
                             <p><strong>Rôle:</strong> <span id="profile-role"></span></p>
+                            <p><strong>Programme:</strong> <span id="profile-program"></span></p>
+                            
+                            <!-- View toggle for admins and members -->
+                            <div id="view-toggle-section" style="display: none; margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                                <label style="font-weight: bold; margin-bottom: 10px; display: block;">Vue actuelle:</label>
+                                <div style="display: flex; gap: 10px;">
+                                    <button id="view-bachelor-btn" class="btn" onclick="switchView('bachelor')" style="flex: 1;">
+                                        👁️ Bachelor
+                                    </button>
+                                    <button id="view-master-btn" class="btn btn-secondary" onclick="switchView('master')" style="flex: 1;">
+                                        👁️ Master
+                                    </button>
+                                </div>
+                                <p style="margin-top: 10px; font-size: 12px; color: #666;">
+                                    Vue actuelle: <strong id="current-view-display">Bachelor</strong>
+                                </p>
+                            </div>
+                            
                             <button class="btn" onclick="editProfile()">Modifier le profil</button>
                             <button class="btn btn-danger" onclick="logout()" style="margin-left: 10px;">Se déconnecter</button>
                         </div>
@@ -1377,6 +1459,8 @@
         
         let currentUser = null;
         let selectedRole = null;
+        let selectedProgram = null;
+        let currentView = 'bachelor'; // Vue actuelle pour admins/membres (bachelor ou master)
         
         // Initialize EmailJS
         (function() {
@@ -1614,6 +1698,8 @@
             const phoneElement = document.querySelector('#profile-phone');
             const ageElement = document.querySelector('#profile-age');
             const roleElement = document.querySelector('#profile-role');
+            const programElement = document.querySelector('#profile-program');
+            const viewToggleSection = document.getElementById('view-toggle-section');
             
             if (nameElement) {
                 nameElement.textContent = `${currentUser.firstName || 'Prénom'} ${currentUser.lastName || 'Nom'}`;
@@ -1630,6 +1716,59 @@
             if (roleElement) {
                 roleElement.textContent = currentUser.role === 'admin' ? 'Administrateur' : 
                                         currentUser.role === 'member' ? 'Membre' : 'Étudiant';
+            }
+            if (programElement) {
+                const programText = currentUser.program === 'master' ? 'Master' : 
+                                   currentUser.program === 'bachelor' ? 'Bachelor' : 'Non spécifié';
+                programElement.textContent = programText;
+            }
+            
+            // Show view toggle for admins and members
+            if (viewToggleSection && (currentUser.role === 'admin' || currentUser.role === 'member')) {
+                viewToggleSection.style.display = 'block';
+                updateViewButtons();
+            } else if (viewToggleSection) {
+                viewToggleSection.style.display = 'none';
+            }
+        }
+        
+        // Switch view between Bachelor and Master (for admins/members)
+        function switchView(program) {
+            currentView = program;
+            updateViewButtons();
+            
+            // Update display
+            const currentViewDisplay = document.getElementById('current-view-display');
+            if (currentViewDisplay) {
+                currentViewDisplay.textContent = program === 'master' ? 'Master' : 'Bachelor';
+            }
+            
+            // Reload orders/admin data with new view filter
+            if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'member')) {
+                // Reload admin orders or all orders view
+                if (document.getElementById('all-orders-page') && document.getElementById('all-orders-page').classList.contains('active')) {
+                    loadAllOrders();
+                } else if (document.getElementById('manage-orders-page') && document.getElementById('manage-orders-page').classList.contains('active')) {
+                    loadAdminOrders();
+                }
+            }
+            
+            console.log('View switched to:', program);
+        }
+        
+        // Update view toggle buttons
+        function updateViewButtons() {
+            const bachelorBtn = document.getElementById('view-bachelor-btn');
+            const masterBtn = document.getElementById('view-master-btn');
+            
+            if (bachelorBtn && masterBtn) {
+                if (currentView === 'bachelor') {
+                    bachelorBtn.className = 'btn';
+                    masterBtn.className = 'btn btn-secondary';
+                } else {
+                    bachelorBtn.className = 'btn btn-secondary';
+                    masterBtn.className = 'btn';
+                }
             }
         }
         
@@ -1664,8 +1803,12 @@
         function selectRole(role) {
             selectedRole = role;
             
-            // Update UI - remove selected from all cards
-            document.querySelectorAll('.role-card').forEach(card => card.classList.remove('selected'));
+            // Update UI - remove selected from all cards in role selection
+            document.querySelectorAll('.role-selection .role-card').forEach(card => {
+                if (card.onclick && card.onclick.toString().includes('selectRole')) {
+                    card.classList.remove('selected');
+                }
+            });
             
             // Add selected to the clicked card
             if (role === 'student') {
@@ -1685,6 +1828,28 @@
             console.log('Role selected:', role); // Debug
         }
         
+        // Select program (Bachelor/Master)
+        function selectProgram(program) {
+            selectedProgram = program;
+            document.getElementById('reg-program').value = program;
+            
+            // Update UI - remove selected from all program cards
+            document.querySelectorAll('.role-selection .role-card').forEach(card => {
+                if (card.onclick && card.onclick.toString().includes('selectProgram')) {
+                    card.classList.remove('selected');
+                }
+            });
+            
+            // Add selected to the clicked card
+            if (program === 'bachelor') {
+                document.querySelector('[onclick="selectProgram(\'bachelor\')"]').classList.add('selected');
+            } else if (program === 'master') {
+                document.querySelector('[onclick="selectProgram(\'master\')"]').classList.add('selected');
+            }
+            
+            console.log('Program selected:', program); // Debug
+        }
+        
         // Register user
         async function registerUser() {
             const firstName = document.getElementById('reg-firstName').value;
@@ -1697,6 +1862,11 @@
             
             if (!firstName || !lastName || !email || !phone || !age) {
                 alert('Veuillez remplir tous les champs');
+                return;
+            }
+            
+            if (!selectedProgram) {
+                alert('Veuillez sélectionner un programme (Bachelor ou Master)');
                 return;
             }
             
@@ -1755,6 +1925,7 @@
                     phone,
                     age: parseInt(age),
                     role: userRole,
+                    program: selectedProgram, // Bachelor or Master
                     emailVerified: true,
                     registrationDate: new Date().toISOString(),
                     accessCode: selectedRole === 'member' ? accessCode : null // Save the access code used
@@ -1947,7 +2118,10 @@
         // Load my orders
         async function loadMyOrders() {
             try {
-                const ordersSnapshot = await getDocs(collection(db, 'orders'));
+                // Filter by user's program
+                const userProgram = currentUser?.program || 'bachelor';
+                const ordersQuery = query(collection(db, 'orders'), where('program', '==', userProgram));
+                const ordersSnapshot = await getDocs(ordersQuery);
                 const orders = [];
                 ordersSnapshot.forEach(doc => {
                     orders.push({ id: doc.id, ...doc.data() });
@@ -2011,13 +2185,19 @@
         async function loadAllOrders() {
             try {
                 console.log('Chargement des commandes...');
-                const ordersSnapshot = await getDocs(collection(db, 'orders'));
+                // Filter by program if admin/member viewing
+                const programFilter = (currentUser && (currentUser.role === 'admin' || currentUser.role === 'member')) 
+                    ? currentView 
+                    : (currentUser?.program || 'bachelor');
+                
+                const ordersQuery = query(collection(db, 'orders'), where('program', '==', programFilter));
+                const ordersSnapshot = await getDocs(ordersQuery);
                 allOrders = [];
                 ordersSnapshot.forEach(doc => {
                     allOrders.push({ id: doc.id, ...doc.data() });
                 });
                 
-                console.log('Commandes chargées:', allOrders.length);
+                console.log('Commandes chargées:', allOrders.length, 'pour programme:', programFilter);
                 displayFilteredOrders();
             } catch (error) {
                 console.error('Erreur lors du chargement des commandes:', error);
@@ -2346,8 +2526,14 @@
         // Load statistics
         async function loadStatistics() {
             try {
+                // Filter by program if admin/member viewing
+                const programFilter = (currentUser && (currentUser.role === 'admin' || currentUser.role === 'member')) 
+                    ? currentView 
+                    : (currentUser?.program || 'bachelor');
+                
+                const ordersQuery = query(collection(db, 'orders'), where('program', '==', programFilter));
                 const [ordersSnapshot, usersSnapshot] = await Promise.all([
-                    getDocs(collection(db, 'orders')),
+                    getDocs(ordersQuery),
                     getDocs(collection(db, 'users'))
                 ]);
                 
@@ -2589,7 +2775,13 @@
         // Load admin orders
         async function loadAdminOrders() {
             try {
-                const ordersSnapshot = await getDocs(collection(db, 'orders'));
+                // Filter by program if admin/member viewing
+                const programFilter = (currentUser && (currentUser.role === 'admin' || currentUser.role === 'member')) 
+                    ? currentView 
+                    : (currentUser?.program || 'bachelor');
+                
+                const ordersQuery = query(collection(db, 'orders'), where('program', '==', programFilter));
+                const ordersSnapshot = await getDocs(ordersQuery);
                 const orders = [];
                 ordersSnapshot.forEach(doc => {
                     orders.push({ id: doc.id, ...doc.data() });
@@ -2705,32 +2897,341 @@
         // Back to menu
         function backToMenu() {
             document.getElementById('order-form').style.display = 'none';
+            // Reset class selection
+            document.getElementById('selected-class-id').value = '';
+            document.getElementById('selected-class-schedule-id').value = '';
+            document.getElementById('selected-class-info').style.display = 'none';
+            document.getElementById('place-order-btn').disabled = true;
+        }
+        
+        // Load classes from Firebase
+        let allClasses = [];
+        async function loadClasses() {
+            try {
+                const userProgram = currentUser?.program || 'bachelor';
+                const classesSnapshot = await getDocs(query(collection(db, 'classes'), where('program', '==', userProgram)));
+                allClasses = [];
+                classesSnapshot.forEach(doc => {
+                    const classData = { id: doc.id, ...doc.data() };
+                    // Sort schedules by start time
+                    if (classData.schedules) {
+                        classData.schedules.sort((a, b) => {
+                            const timeA = a.startTime || '';
+                            const timeB = b.startTime || '';
+                            return timeA.localeCompare(timeB);
+                        });
+                    }
+                    allClasses.push(classData);
+                });
+                
+                // Sort classes by room number (natural sort)
+                allClasses.sort((a, b) => {
+                    const roomA = a.room || '';
+                    const roomB = b.room || '';
+                    // Extract numbers for comparison
+                    const numA = parseInt(roomA.replace(/\D/g, '')) || 0;
+                    const numB = parseInt(roomB.replace(/\D/g, '')) || 0;
+                    if (numA !== numB) return numA - numB;
+                    return roomA.localeCompare(roomB);
+                });
+                
+                displayClasses();
+            } catch (error) {
+                console.error('Erreur lors du chargement des classes:', error);
+                document.getElementById('classes-list').innerHTML = '<p style="color: red;">Erreur lors du chargement des classes</p>';
+            }
+        }
+        
+        // Display classes in the list
+        function displayClasses(filter = '') {
+            const classesList = document.getElementById('classes-list');
+            const searchTerm = filter.toLowerCase();
+            
+            const filteredClasses = allClasses.filter(cls => {
+                if (!searchTerm) return true;
+                return cls.room.toLowerCase().includes(searchTerm);
+            });
+            
+            if (filteredClasses.length === 0) {
+                classesList.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">Aucune classe trouvée</p>';
+                return;
+            }
+            
+            classesList.innerHTML = filteredClasses.map(cls => {
+                const schedulesHtml = cls.schedules && cls.schedules.length > 0 
+                    ? cls.schedules.map((schedule, idx) => {
+                        const startTime = schedule.startTime || '';
+                        const endTime = schedule.endTime || '';
+                        const deliveryTime = calculateDeliveryTime(startTime, endTime);
+                        const deadline = calculateDeadline(deliveryTime);
+                        const now = new Date();
+                        const deadlineDate = new Date(deadline);
+                        const isPast = deadlineDate < now;
+                        
+                        return `
+                            <div class="schedule-item" style="padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; ${isPast ? 'opacity: 0.5;' : ''}" 
+                                 onclick="selectClassSchedule('${cls.id}', ${idx})">
+                                <div style="font-weight: bold;">${startTime} - ${endTime}</div>
+                                <div style="font-size: 12px; color: #666;">
+                                    Livraison: ${formatTime(deliveryTime)} | Deadline: ${formatTime(deadline)}
+                                    ${isPast ? ' <span style="color: red;">(Expiré)</span>' : ''}
+                                </div>
+                            </div>
+                        `;
+                    }).join('')
+                    : '<p style="color: #666; font-size: 12px;">Aucun horaire disponible</p>';
+                
+                return `
+                    <div class="class-item" style="margin-bottom: 15px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background: #f8f9fa;">
+                        <div style="font-weight: bold; font-size: 18px; margin-bottom: 10px; color: #6c5ce7;">
+                            📚 Salle ${cls.room}
+                        </div>
+                        <div style="margin-top: 10px;">
+                            <strong>Horaires disponibles:</strong>
+                            ${schedulesHtml}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Filter classes
+        function filterClasses() {
+            const searchTerm = document.getElementById('class-search').value;
+            displayClasses(searchTerm);
+        }
+        
+        // Show class selection
+        function showClassSelection() {
+            document.getElementById('class-selection-section').style.display = 'block';
+            document.getElementById('class-creation-section').style.display = 'none';
+            document.getElementById('select-class-btn').className = 'btn';
+            document.getElementById('create-class-btn').className = 'btn btn-secondary';
+            loadClasses();
+        }
+        
+        // Show class creation
+        function showClassCreation() {
+            document.getElementById('class-selection-section').style.display = 'none';
+            document.getElementById('class-creation-section').style.display = 'block';
+            document.getElementById('select-class-btn').className = 'btn btn-secondary';
+            document.getElementById('create-class-btn').className = 'btn';
+        }
+        
+        // Select class schedule
+        function selectClassSchedule(classId, scheduleIndex) {
+            const classData = allClasses.find(c => c.id === classId);
+            if (!classData || !classData.schedules || !classData.schedules[scheduleIndex]) {
+                alert('Erreur: classe ou horaire introuvable');
+                return;
+            }
+            
+            const schedule = classData.schedules[scheduleIndex];
+            const startTime = schedule.startTime || '';
+            const endTime = schedule.endTime || '';
+            const deliveryTime = calculateDeliveryTime(startTime, endTime);
+            const deadline = calculateDeadline(deliveryTime);
+            
+            // Check if deadline has passed
+            const now = new Date();
+            const deadlineDate = new Date(deadline);
+            if (deadlineDate < now) {
+                alert('⚠️ La deadline de commande pour cet horaire est passée. Veuillez sélectionner un autre horaire.');
+                return;
+            }
+            
+            // Save selection
+            document.getElementById('selected-class-id').value = classId;
+            document.getElementById('selected-class-schedule-id').value = scheduleIndex;
+            
+            // Display selected class info
+            document.getElementById('selected-class-name').textContent = `Salle ${classData.room}`;
+            document.getElementById('selected-class-time').textContent = `${startTime} - ${endTime}`;
+            document.getElementById('selected-delivery-time').textContent = formatTime(deliveryTime);
+            document.getElementById('selected-deadline-time').textContent = formatTime(deadline);
+            document.getElementById('selected-class-info').style.display = 'block';
+            
+            // Enable order button
+            document.getElementById('place-order-btn').disabled = false;
+            
+            // Update deadline warning
+            updateDeadlineWarning(deadline);
+        }
+        
+        // Create new class
+        async function createNewClass() {
+            const room = document.getElementById('new-class-room').value.trim();
+            const startTime = document.getElementById('new-class-start').value;
+            const endTime = document.getElementById('new-class-end').value;
+            const userProgram = currentUser?.program || 'bachelor';
+            
+            if (!room || !startTime || !endTime) {
+                alert('Veuillez remplir tous les champs');
+                return;
+            }
+            
+            if (startTime >= endTime) {
+                alert('L\'heure de fin doit être après l\'heure de début');
+                return;
+            }
+            
+            try {
+                // Check if class with same room and program already exists
+                const existingClasses = await getDocs(query(collection(db, 'classes'), where('room', '==', room), where('program', '==', userProgram)));
+                
+                if (!existingClasses.empty) {
+                    // Class exists, add schedule to it
+                    const existingClass = existingClasses.docs[0];
+                    const classData = existingClass.data();
+                    const schedules = classData.schedules || [];
+                    
+                    // Check if schedule already exists
+                    const scheduleExists = schedules.some(s => s.startTime === startTime && s.endTime === endTime);
+                    if (scheduleExists) {
+                        alert('Cet horaire existe déjà pour cette classe');
+                        return;
+                    }
+                    
+                    // Add new schedule
+                    schedules.push({
+                        startTime,
+                        endTime,
+                        createdAt: new Date().toISOString()
+                    });
+                    
+                    await updateDoc(doc(db, 'classes', existingClass.id), {
+                        schedules
+                    });
+                    
+                    alert('Horaire ajouté à la classe existante !');
+                } else {
+                    // Create new class
+                    const newClass = {
+                        room,
+                        program: userProgram,
+                        schedules: [{
+                            startTime,
+                            endTime,
+                            createdAt: new Date().toISOString()
+                        }],
+                        createdAt: new Date().toISOString()
+                    };
+                    
+                    await addDoc(collection(db, 'classes'), newClass);
+                    alert('Classe créée avec succès !');
+                }
+                
+                // Reset form and reload classes
+                document.getElementById('new-class-room').value = '';
+                document.getElementById('new-class-start').value = '';
+                document.getElementById('new-class-end').value = '';
+                showClassSelection();
+                loadClasses();
+            } catch (error) {
+                console.error('Erreur lors de la création de la classe:', error);
+                alert('Erreur lors de la création de la classe');
+            }
+        }
+        
+        // Calculate delivery time (middle of class)
+        function calculateDeliveryTime(startTime, endTime) {
+            const [startHour, startMin] = startTime.split(':').map(Number);
+            const [endHour, endMin] = endTime.split(':').map(Number);
+            
+            const startDate = new Date();
+            startDate.setHours(startHour, startMin, 0, 0);
+            
+            const endDate = new Date();
+            endDate.setHours(endHour, endMin, 0, 0);
+            
+            // Middle time
+            const middleTime = new Date((startDate.getTime() + endDate.getTime()) / 2);
+            
+            return middleTime;
+        }
+        
+        // Calculate deadline (5 minutes before delivery)
+        function calculateDeadline(deliveryTime) {
+            const deadline = new Date(deliveryTime);
+            deadline.setMinutes(deadline.getMinutes() - 5);
+            return deadline;
+        }
+        
+        // Format time for display
+        function formatTime(date) {
+            if (!(date instanceof Date)) return '';
+            return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        }
+        
+        // Update deadline warning
+        function updateDeadlineWarning(deadline) {
+            const warningDiv = document.getElementById('order-deadline-warning');
+            const countdownSpan = document.getElementById('deadline-countdown');
+            
+            const now = new Date();
+            const deadlineDate = new Date(deadline);
+            const diff = deadlineDate - now;
+            
+            if (diff <= 0) {
+                warningDiv.style.display = 'block';
+                countdownSpan.textContent = '⚠️ EXPIRÉ';
+                countdownSpan.style.color = 'red';
+                document.getElementById('place-order-btn').disabled = true;
+            } else {
+                const minutes = Math.floor(diff / 60000);
+                const seconds = Math.floor((diff % 60000) / 1000);
+                countdownSpan.textContent = `${minutes}min ${seconds}s`;
+                countdownSpan.style.color = '#856404';
+                warningDiv.style.display = 'block';
+                
+                // Update every second
+                setTimeout(() => updateDeadlineWarning(deadline), 1000);
+            }
         }
         
         // Place order
         async function placeOrder() {
-            const classroom = document.getElementById('classroom').value;
-            const customClassroom = document.getElementById('customClassroom').value;
             const selectedItem = document.getElementById('selected-item-display').textContent;
+            const classId = document.getElementById('selected-class-id').value;
+            const scheduleIndex = parseInt(document.getElementById('selected-class-schedule-id').value);
             
-            if (!classroom) {
-                alert('Veuillez sélectionner une salle de classe');
+            if (!classId || isNaN(scheduleIndex)) {
+                alert('Veuillez sélectionner une classe et un horaire');
                 return;
             }
             
-            const finalClassroom = classroom === 'Autre' ? customClassroom : classroom;
+            const classData = allClasses.find(c => c.id === classId);
+            if (!classData || !classData.schedules || !classData.schedules[scheduleIndex]) {
+                alert('Erreur: classe ou horaire introuvable');
+                return;
+            }
             
-            if (classroom === 'Autre' && !customClassroom) {
-                alert('Veuillez préciser la salle de classe');
+            const schedule = classData.schedules[scheduleIndex];
+            const startTime = schedule.startTime || '';
+            const endTime = schedule.endTime || '';
+            const deliveryTime = calculateDeliveryTime(startTime, endTime);
+            const deadline = calculateDeadline(deliveryTime);
+            
+            // Check deadline one more time
+            const now = new Date();
+            const deadlineDate = new Date(deadline);
+            if (deadlineDate < now) {
+                alert('⚠️ La deadline de commande est passée. Veuillez sélectionner un autre horaire.');
                 return;
             }
             
             try {
                 // Save order to Firebase
-                const now = new Date();
                 const order = {
                     item: selectedItem,
-                    classroom: finalClassroom,
+                    classroom: classData.room,
+                    classId: classId,
+                    scheduleIndex: scheduleIndex,
+                    startTime: startTime,
+                    endTime: endTime,
+                    deliveryTime: deliveryTime.toISOString(),
+                    deadline: deadline.toISOString(),
+                    program: currentUser.program,
                     timestamp: now.toISOString(),
                     timestampReadable: now.toLocaleString('fr-FR'),
                     profile: currentUser,
@@ -2745,8 +3246,6 @@
                 // Show festive popup
                 showOrderSuccessPopup();
                 backToMenu();
-                document.getElementById('classroom').value = '';
-                document.getElementById('customClassroom').value = '';
             } catch (error) {
                 console.error('Erreur lors de la commande:', error);
                 const errorMsg = `Erreur Firebase: ${error.code || error.message}`;
