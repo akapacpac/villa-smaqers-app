@@ -3737,11 +3737,12 @@
                         snacksGrid.innerHTML = snacks.map(snack => {
                             const stock = snackStock[snack.productId] || 0;
                             const isAvailable = stock > 0;
+                            const priceDisplay = (snack.price && snack.price > 0) ? `${snack.price}€` : 'FREE';
                             return `
                                 <div class="product-card" style="${!isAvailable ? 'opacity: 0.6;' : ''}" onclick="${isAvailable ? `selectProduct('${snack.productId}')` : ''}">
                                     <div class="product-icon">${snack.emoji || '🍪'}</div>
                                     <div class="product-name">${snack.name}</div>
-                                    <div class="product-price">${snack.price || 0}€</div>
+                                    <div class="product-price">${priceDisplay}</div>
                                     <div class="product-description">${snack.description || '&nbsp;'}</div>
                                     <div style="font-size: 0.85rem; margin-bottom: 10px; ${isAvailable ? 'color: #28a745;' : 'color: #dc3545;'}">
                                         ${isAvailable ? `Stock: ${stock}` : 'Stock: 0 (Indisponible)'}
