@@ -374,9 +374,20 @@
 </head>
 <body>
     <div class="container">
-        <div class="header">
+        <div class="header" style="position: relative;">
             <h1>🏪 Magasin Villa des SMAQeurs</h1>
             <p>Commandez vos snacks préférés !</p>
+            
+            <!-- View Toggle for Admins and Members -->
+            <div id="view-toggle-shop" style="display: none; position: absolute; top: 10px; right: 20px; gap: 10px; align-items: center; background: rgba(255,255,255,0.9); padding: 8px 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                <label style="font-weight: bold; color: #333; font-size: 14px; margin-right: 5px;">Vue:</label>
+                <button id="view-bachelor-shop" onclick="switchViewShop('bachelor')" style="padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; background: #667eea; color: white; font-weight: 600; font-size: 13px;">
+                    👁️ Bachelor
+                </button>
+                <button id="view-master-shop" onclick="switchViewShop('master')" style="padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; background: #6c757d; color: white; font-weight: 600; font-size: 13px;">
+                    👁️ Master
+                </button>
+            </div>
         </div>
 
         <div class="nav-tabs">
@@ -756,6 +767,62 @@
     <script>
         let currentUser = null;
         let pendingOrder = null; // Stocke la commande en attente
+        let currentView = 'bachelor'; // Vue actuelle pour admins/membres
+        
+        // Switch view between Bachelor and Master (for admins/members)
+        function switchViewShop(program) {
+            currentView = program;
+            updateViewButtonsShop();
+            
+            // Reload stock data with new view
+            if (currentUser && currentUser.role === 'admin') {
+                if (document.getElementById('restock').classList.contains('active')) {
+                    loadStockData();
+                }
+            }
+            
+            // Reload orders with new view
+            if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'member')) {
+                if (document.getElementById('admin').classList.contains('active')) {
+                    loadAllOrders();
+                }
+            }
+            
+            console.log('View switched to:', program);
+        }
+        
+        // Update view toggle buttons in shop
+        function updateViewButtonsShop() {
+            const bachelorBtn = document.getElementById('view-bachelor-shop');
+            const masterBtn = document.getElementById('view-master-shop');
+            
+            if (bachelorBtn && masterBtn) {
+                if (currentView === 'bachelor') {
+                    bachelorBtn.style.background = '#667eea';
+                    masterBtn.style.background = '#6c757d';
+                } else {
+                    bachelorBtn.style.background = '#6c757d';
+                    masterBtn.style.background = '#667eea';
+                }
+            }
+        }
+        
+        // Get current program for stock/orders
+        function getCurrentProgram() {
+            if (!currentUser) return 'bachelor';
+            
+            // Students are locked to their program
+            if (currentUser.role === 'student') {
+                return currentUser.program || 'bachelor';
+            }
+            
+            // Admins/members can switch views
+            if (currentUser.role === 'admin' || currentUser.role === 'member') {
+                return currentView || 'bachelor';
+            }
+            
+            return 'bachelor';
+        }
 
         function showTab(tabName) {
             // Masquer tous les onglets
@@ -1476,8 +1543,16 @@
                             email: user.email,
                             firstName: userData.firstName,
                             lastName: userData.lastName,
-                            role: userData.role
+                            role: userData.role,
+                            program: userData.program || 'bachelor'
                         };
+                        
+                        // Initialize currentView based on user role
+                        if (currentUser.role === 'admin' || currentUser.role === 'member') {
+                            currentView = currentView || 'bachelor';
+                        } else {
+                            currentView = currentUser.program || 'bachelor';
+                        }
                     } else {
                         // Si le profil n'existe pas, le créer avec des valeurs par défaut
                         console.log('Profil non trouvé, création automatique...');
@@ -1495,8 +1570,10 @@
                             email: user.email,
                             firstName: 'Utilisateur',
                             lastName: 'Nouveau',
-                            role: 'student'
+                            role: 'student',
+                            program: 'bachelor'
                         };
+                        currentView = 'bachelor';
                         
                         showMessage('Profil créé automatiquement. Vous pouvez le modifier dans "Mon Compte".', 'success');
                     }
@@ -1506,6 +1583,17 @@
                     // Afficher l'onglet Livraison si c'est un admin ou membre
                     if (currentUser.role === 'admin' || currentUser.role === 'member') {
                         document.querySelector('button[onclick="showTab(\'admin\')"]').style.display = 'block';
+                    }
+                    
+                    // Afficher le bouton View pour admins/membres
+                    const viewToggleShop = document.getElementById('view-toggle-shop');
+                    if (viewToggleShop) {
+                        if (currentUser.role === 'admin' || currentUser.role === 'member') {
+                            viewToggleShop.style.display = 'flex';
+                            updateViewButtonsShop();
+                        } else {
+                            viewToggleShop.style.display = 'none';
+                        }
                     }
                     
                     // Afficher l'onglet Restock SEULEMENT pour les admins

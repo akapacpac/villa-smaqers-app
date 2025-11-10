@@ -899,8 +899,8 @@
                 <button class="menu-toggle" id="menu-toggle">☰</button>
                 
                 <!-- View Toggle for Admins and Members -->
-                <div id="view-toggle-topbar" style="display: none; margin-right: 20px; gap: 10px; align-items: center;">
-                    <label style="font-weight: bold; color: #333; font-size: 14px;">Vue:</label>
+                <div id="view-toggle-topbar" style="display: none; margin-right: auto; margin-left: 20px; gap: 10px; align-items: center; flex-direction: row;">
+                    <label style="font-weight: bold; color: #333; font-size: 14px; margin-right: 5px;">Vue:</label>
                     <button id="view-bachelor-topbar" onclick="switchView('bachelor')" style="padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; background: #667eea; color: white; font-weight: 600; font-size: 13px;">
                         👁️ Bachelor
                     </button>
@@ -1677,6 +1677,15 @@
                     currentUser = { ...user, ...userDoc.data() };
                     console.log('Utilisateur chargé:', currentUser);
                     
+                    // Initialize currentView based on user role
+                    if (currentUser.role === 'admin' || currentUser.role === 'member') {
+                        // Admins/members can switch views, default to bachelor
+                        currentView = currentView || 'bachelor';
+                    } else {
+                        // Students are locked to their program
+                        currentView = currentUser.program || 'bachelor';
+                    }
+                    
                     // Update UI with user data
                     updateUserProfileUI();
                     return true;
@@ -1688,8 +1697,10 @@
                         lastName: '',
                         phone: '',
                         age: '',
-                        role: 'student'
+                        role: 'student',
+                        program: 'bachelor'
                     };
+                    currentView = 'bachelor';
                     console.log('Profil utilisateur créé:', currentUser);
                     updateUserProfileUI();
                     return true;
@@ -1735,13 +1746,15 @@
                 programElement.textContent = programText;
             }
             
-            // Show view toggle for admins and members
+            // Show view toggle for admins and members only
             const viewToggleTopbar = document.getElementById('view-toggle-topbar');
-            if (viewToggleTopbar && (currentUser.role === 'admin' || currentUser.role === 'member')) {
-                viewToggleTopbar.style.display = 'flex';
-                updateViewButtons();
-            } else if (viewToggleTopbar) {
-                viewToggleTopbar.style.display = 'none';
+            if (viewToggleTopbar) {
+                if (currentUser.role === 'admin' || currentUser.role === 'member') {
+                    viewToggleTopbar.style.display = 'flex';
+                    updateViewButtons();
+                } else {
+                    viewToggleTopbar.style.display = 'none';
+                }
             }
             
             if (viewToggleSection && (currentUser.role === 'admin' || currentUser.role === 'member')) {
