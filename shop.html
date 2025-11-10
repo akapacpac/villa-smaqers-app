@@ -2500,7 +2500,7 @@
                     allClasses.push(classData);
                 });
                 
-                // Sort classes by room number (natural sort)
+                // Sort classes by room number (natural sort - ordre croissant: 104, 156, 345-378, etc.)
                 allClasses.sort((a, b) => {
                     const roomA = a.room || '';
                     const roomB = b.room || '';
@@ -2514,7 +2514,10 @@
                 displayClasses();
             } catch (error) {
                 console.error('Erreur lors du chargement des classes:', error);
-                document.getElementById('classes-list').innerHTML = '<p style="color: red;">Erreur lors du chargement des classes</p>';
+                const classesList = document.getElementById('classes-list');
+                if (classesList) {
+                    classesList.innerHTML = '<p style="color: red; text-align: center; padding: 20px;">Erreur lors du chargement des classes</p>';
+                }
             }
         }
         
