@@ -1101,7 +1101,10 @@
             event.target.classList.add('active');
             
             // Charger le contenu de l'onglet
-            if (tabName === 'my-orders') {
+            if (tabName === 'orders') {
+                // Recharger les produits dans la page de commande
+                loadProductsForOrders();
+            } else if (tabName === 'my-orders') {
                 if (currentUser) {
                     loadMyOrders();
                 } else {
@@ -3629,18 +3632,38 @@
         async function loadProductsForOrders() {
             try {
                 // Charger les fillings
-                const fillingsSnapshot = await db.collection('customFillings').orderBy('order', 'asc').get();
-                const fillings = [];
-                fillingsSnapshot.forEach(doc => {
-                    fillings.push({ id: doc.id, ...doc.data() });
-                });
+                let fillings = [];
+                try {
+                    const fillingsSnapshot = await db.collection('customFillings').orderBy('order', 'asc').get();
+                    fillingsSnapshot.forEach(doc => {
+                        fillings.push({ id: doc.id, ...doc.data() });
+                    });
+                } catch (error) {
+                    // Si l'index n'existe pas, charger sans tri et trier en JavaScript
+                    console.warn('Index manquant pour order, chargement sans tri:', error);
+                    const fillingsSnapshot = await db.collection('customFillings').get();
+                    fillingsSnapshot.forEach(doc => {
+                        fillings.push({ id: doc.id, ...doc.data() });
+                    });
+                    fillings.sort((a, b) => (a.order || 999) - (b.order || 999));
+                }
                 
                 // Charger les snacks
-                const snacksSnapshot = await db.collection('customSnacks').orderBy('name', 'asc').get();
-                const snacks = [];
-                snacksSnapshot.forEach(doc => {
-                    snacks.push({ id: doc.id, ...doc.data() });
-                });
+                let snacks = [];
+                try {
+                    const snacksSnapshot = await db.collection('customSnacks').orderBy('name', 'asc').get();
+                    snacksSnapshot.forEach(doc => {
+                        snacks.push({ id: doc.id, ...doc.data() });
+                    });
+                } catch (error) {
+                    // Si l'index n'existe pas, charger sans tri et trier en JavaScript
+                    console.warn('Index manquant pour name, chargement sans tri:', error);
+                    const snacksSnapshot = await db.collection('customSnacks').get();
+                    snacksSnapshot.forEach(doc => {
+                        snacks.push({ id: doc.id, ...doc.data() });
+                    });
+                    snacks.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+                }
                 
                 // Afficher les fillings (crêpes)
                 const crepesGrid = document.getElementById('crepesGrid');
