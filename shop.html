@@ -805,7 +805,7 @@
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label">Article sélectionné</label>
                 <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; font-weight: bold; color: #6c5ce7;" id="modal-selected-item-display"></div>
-            </div>
+                </div>
             
             <!-- Class Selection Section -->
             <div class="form-group">
@@ -819,7 +819,7 @@
                     <button type="button" id="create-class-btn" class="btn btn-secondary" onclick="showClassCreation()" style="flex: 1;">
                         ➕ Créer une nouvelle classe
                     </button>
-                </div>
+            </div>
                 
                 <!-- Class Selection -->
                 <div id="class-selection-section" style="display: block;">
@@ -885,6 +885,7 @@
         let pendingOrder = null; // Stocke la commande en attente
         let currentView = 'bachelor'; // Vue actuelle pour admins/membres
         let allClasses = []; // Stocke toutes les classes chargées
+        let deadlineTimer = null; // Timer pour le compte à rebours de la deadline
         
         // Switch view between Bachelor and Master (for admins/members)
         async function switchViewShop(program) {
@@ -1066,6 +1067,8 @@
             document.getElementById('selected-class-id').value = '';
             document.getElementById('selected-class-schedule-id').value = '';
             document.getElementById('selected-class-info').style.display = 'none';
+            // Arrêter le compte à rebours
+            stopDeadlineWarning();
         }
 
         async function confirmOrder() {
@@ -1130,7 +1133,7 @@
                     orderDate: new Date().toLocaleDateString('fr-FR'),
                     orderTime: new Date().toLocaleTimeString('fr-FR')
                 };
-                
+
                 // Utiliser une transaction pour s'assurer que le stock est décrémenté atomiquement
                 await db.runTransaction(async (transaction) => {
                     // Vérifier le stock global pour le programme actuel
@@ -2825,6 +2828,12 @@
         
         // Update deadline warning
         function updateDeadlineWarning(deadline) {
+            // Annuler le timer précédent s'il existe
+            if (deadlineTimer) {
+                clearTimeout(deadlineTimer);
+                deadlineTimer = null;
+            }
+            
             const warningDiv = document.getElementById('order-deadline-warning');
             const countdownSpan = document.getElementById('deadline-countdown');
             if (!warningDiv || !countdownSpan) return;
@@ -2850,8 +2859,20 @@
             
             warningDiv.style.display = 'block';
             
-            // Update every second
-            setTimeout(() => updateDeadlineWarning(deadline), 1000);
+            // Update every second - stocker le timer ID
+            deadlineTimer = setTimeout(() => updateDeadlineWarning(deadline), 1000);
+        }
+        
+        // Stop deadline warning timer
+        function stopDeadlineWarning() {
+            if (deadlineTimer) {
+                clearTimeout(deadlineTimer);
+                deadlineTimer = null;
+            }
+            const warningDiv = document.getElementById('order-deadline-warning');
+            if (warningDiv) {
+                warningDiv.style.display = 'none';
+            }
         }
         
     </script>
