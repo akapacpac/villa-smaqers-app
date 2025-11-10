@@ -1053,8 +1053,12 @@
             }
 
             try {
+                const program = getCurrentProgram();
+                
+                // Filtrer les commandes par utilisateur ET programme
                 const querySnapshot = await db.collection('orders')
                     .where('userId', '==', currentUser.uid)
+                    .where('program', '==', program)
                     .get();
                 
                 // Trier manuellement par date
