@@ -433,6 +433,16 @@
             <h1>🏪 Magasin Villa des SMAQeurs</h1>
             <p>Commandez vos snacks préférés !</p>
             
+            <!-- View Toggle for Admins and Members - En haut du header -->
+            <div id="view-toggle-shop" style="display: none; position: absolute; top: 20px; right: 20px; padding: 10px 15px; background: rgba(255,255,255,0.95); border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); display: flex; gap: 10px; align-items: center;">
+                <label style="font-weight: bold; color: #333; font-size: 14px; margin-right: 5px;">Vue:</label>
+                <button id="view-bachelor-shop" onclick="switchViewShop('bachelor')" style="padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; background: #667eea; color: white; font-weight: 600; font-size: 14px;">
+                    👁️ Bachelor
+                </button>
+                <button id="view-master-shop" onclick="switchViewShop('master')" style="padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; background: #6c757d; color: white; font-weight: 600; font-size: 14px;">
+                    👁️ Master
+                </button>
+            </div>
         </div>
 
         <div class="nav-tabs">
@@ -459,17 +469,6 @@
         <div class="tab-content">
             <!-- Onglet Commander -->
             <div id="orders" class="tab-pane active">
-                <!-- View Toggle for Admins and Members - Above "Choisissez votre commande" -->
-                <div id="view-toggle-shop" style="display: none; margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; display: flex; gap: 10px; align-items: center; justify-content: flex-end;">
-                    <label style="font-weight: bold; color: #333; font-size: 14px; margin-right: 5px;">Vue:</label>
-                    <button id="view-bachelor-shop" onclick="switchViewShop('bachelor')" style="padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; background: #667eea; color: white; font-weight: 600; font-size: 14px;">
-                        👁️ Bachelor
-                    </button>
-                    <button id="view-master-shop" onclick="switchViewShop('master')" style="padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; background: #6c757d; color: white; font-weight: 600; font-size: 14px;">
-                        👁️ Master
-                    </button>
-                </div>
-                
                 <h2 style="margin-bottom: 30px; color: #333;">Choisissez votre commande</h2>
                 
                 <div class="product-grid">
