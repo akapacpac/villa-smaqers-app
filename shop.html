@@ -2110,13 +2110,16 @@
                 });
                 
                 historyHTML += `</div>`;
-                document.getElementById('restockHistory').innerHTML = historyHTML;
+                restockHistoryDiv.innerHTML = historyHTML;
                 
             } catch (error) {
                 console.error('Erreur lors du chargement de l\'historique:', error);
-                document.getElementById('restockHistory').innerHTML = `
-                    <div class="error">Erreur lors du chargement de l'historique</div>
-                `;
+                const restockHistoryDiv = document.getElementById('restockHistory');
+                if (restockHistoryDiv) {
+                    restockHistoryDiv.innerHTML = `
+                        <div class="error">Erreur lors du chargement de l'historique: ${error.message || error}</div>
+                    `;
+                }
             }
         }
 
