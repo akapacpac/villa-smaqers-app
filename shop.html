@@ -1987,11 +1987,18 @@
         }
 
         async function loadRestockHistory() {
+            const restockHistoryDiv = document.getElementById('restockHistory');
+            if (!restockHistoryDiv) {
+                console.error('Element restockHistory non trouvé');
+                return;
+            }
+            
             try {
                 const program = getCurrentProgram();
-                const restockHistoryDiv = document.getElementById('restockHistory');
-                if (!restockHistoryDiv) {
-                    console.error('Element restockHistory non trouvé');
+                if (!program) {
+                    restockHistoryDiv.innerHTML = `
+                        <div class="error">Erreur: Programme non défini</div>
+                    `;
                     return;
                 }
                 
@@ -2090,15 +2097,15 @@
                     const dateStr = date.toLocaleDateString('fr-FR') + ' ' + date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
                     
                     const quantityText = data.type === 'reset' ? '🔄 Reset' : 
-                                       data.type === 'filling' ? `${getProductName(data.productType)}: ${data.quantity === 'unlimited' ? '∞' : data.quantity}` :
-                                       `+${data.quantity} crêpes`;
+                                       data.type === 'filling' ? `${getProductName ? getProductName(data.productType) : data.productType}: ${data.quantity === 'unlimited' ? '∞' : data.quantity}` :
+                                       `+${data.quantity || 0} crêpes`;
                     
                     historyHTML += `
                         <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #28a745; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                                 <div>
                                     <strong style="color: #28a745; font-size: 1.1rem;">${quantityText}</strong>
-                                    <div style="font-size: 0.9rem; color: #666;">par ${data.adminName} (${data.program === 'bachelor' ? 'Bachelor' : 'Master'})</div>
+                                    <div style="font-size: 0.9rem; color: #666;">par ${data.adminName || 'Admin'} (${data.program === 'bachelor' ? 'Bachelor' : 'Master'})</div>
                                 </div>
                                 <div style="text-align: right;">
                                     <div style="font-size: 0.9rem; color: #666;">${dateStr}</div>
@@ -2114,10 +2121,11 @@
                 
             } catch (error) {
                 console.error('Erreur lors du chargement de l\'historique:', error);
-                const restockHistoryDiv = document.getElementById('restockHistory');
                 if (restockHistoryDiv) {
+                    const errorMessage = error.message || error.toString() || 'Erreur inconnue';
                     restockHistoryDiv.innerHTML = `
-                        <div class="error">Erreur lors du chargement de l'historique: ${error.message || error}</div>
+                        <div class="error">Erreur lors du chargement de l'historique: ${errorMessage}<br>
+                        <small style="color: #999;">Vérifiez la console pour plus de détails</small></div>
                     `;
                 }
             }
