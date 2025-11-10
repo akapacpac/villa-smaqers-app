@@ -2524,7 +2524,7 @@
             }
         }
         
-        // Display classes in the list
+        // Display classes in the list (compact format - one line per schedule)
         function displayClasses(filter = '') {
             const classesList = document.getElementById('classes-list');
             if (!classesList) return;
@@ -2541,38 +2541,64 @@
                 return;
             }
             
-            classesList.innerHTML = filteredClasses.map(cls => {
-                const schedulesHtml = cls.schedules && cls.schedules.length > 0 
-                    ? cls.schedules.map((schedule, idx) => {
-                        const startTime = schedule.startTime || '';
-                        const endTime = schedule.endTime || '';
-                        const deliveryTime = calculateDeliveryTime(startTime, endTime);
-                        const deadline = calculateDeadline(deliveryTime);
-                        const now = new Date();
-                        const deadlineDate = new Date(deadline);
-                        const isPast = deadlineDate < now;
-                        
-                        return `
-                            <div class="schedule-item" style="padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; ${isPast ? 'opacity: 0.5;' : ''}" 
-                                 onclick="selectClassSchedule('${cls.id}', ${idx})">
-                                <div style="font-weight: bold;">${startTime} - ${endTime}</div>
-                                <div style="font-size: 12px; color: #666;">
-                                    Livraison: ${formatTime(deliveryTime)} | Deadline: ${formatTime(deadline)}
-                                    ${isPast ? ' <span style="color: red;">(Expiré)</span>' : ''}
-                                </div>
-                            </div>
-                        `;
-                    }).join('')
-                    : '<p style="color: #666; font-size: 12px;">Aucun horaire disponible</p>';
+            // Créer une liste plate de tous les horaires avec leur classe
+            const allSchedules = [];
+            filteredClasses.forEach(cls => {
+                if (cls.schedules && cls.schedules.length > 0) {
+                    cls.schedules.forEach((schedule, idx) => {
+                        allSchedules.push({
+                            classId: cls.id,
+                            scheduleIndex: idx,
+                            room: cls.room,
+                            startTime: schedule.startTime || '',
+                            endTime: schedule.endTime || '',
+                            schedule: schedule
+                        });
+                    });
+                }
+            });
+            
+            // Trier par salle puis par heure de début
+            allSchedules.sort((a, b) => {
+                const roomA = a.room || '';
+                const roomB = b.room || '';
+                const numA = parseInt(roomA.replace(/\D/g, '')) || 0;
+                const numB = parseInt(roomB.replace(/\D/g, '')) || 0;
+                if (numA !== numB) return numA - numB;
+                if (roomA !== roomB) return roomA.localeCompare(roomB);
+                return (a.startTime || '').localeCompare(b.startTime || '');
+            });
+            
+            if (allSchedules.length === 0) {
+                classesList.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">Aucun horaire disponible</p>';
+                return;
+            }
+            
+            // Afficher chaque horaire sur une ligne compacte
+            classesList.innerHTML = allSchedules.map(item => {
+                const deliveryTime = calculateDeliveryTime(item.startTime, item.endTime);
+                const deadline = calculateDeadline(deliveryTime);
+                const now = new Date();
+                const deadlineDate = new Date(deadline);
+                const isPast = deadlineDate < now;
                 
                 return `
-                    <div class="class-item" style="margin-bottom: 15px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background: #f8f9fa;">
-                        <div style="font-weight: bold; font-size: 18px; margin-bottom: 10px; color: #6c5ce7;">
-                            📚 Salle ${cls.room}
-                        </div>
-                        <div style="margin-top: 10px;">
-                            <strong>Horaires disponibles:</strong>
-                            ${schedulesHtml}
+                    <div class="schedule-line" 
+                         onclick="selectClassSchedule('${item.classId}', ${item.scheduleIndex})"
+                         style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; margin: 3px 0; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; background: ${isPast ? '#f5f5f5' : 'white'}; transition: all 0.2s; ${isPast ? 'opacity: 0.6;' : ''}"
+                         onmouseover="if (!this.style.opacity || this.style.opacity !== '0.6') this.style.background='#f0f4ff'"
+                         onmouseout="if (!this.style.opacity || this.style.opacity !== '0.6') this.style.background='${isPast ? '#f5f5f5' : 'white'}'">
+                        <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
+                            <div style="font-weight: bold; color: #6c5ce7; min-width: 80px; font-size: 14px;">
+                                📚 Salle ${item.room}
+                            </div>
+                            <div style="font-weight: 600; color: #333; min-width: 120px; font-size: 14px;">
+                                ${item.startTime} - ${item.endTime}
+                            </div>
+                            <div style="font-size: 12px; color: #666; flex: 1;">
+                                Livraison: ${formatTime(deliveryTime)} | Deadline: ${formatTime(deadline)}
+                                ${isPast ? ' <span style="color: red; font-weight: bold;">(Expiré)</span>' : ''}
+                            </div>
                         </div>
                     </div>
                 `;
