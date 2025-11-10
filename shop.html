@@ -2257,9 +2257,17 @@
                                new Date(data.timestamp || new Date()));
                     const dateStr = date.toLocaleDateString('fr-FR') + ' ' + date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
                     
-                    const quantityText = data.type === 'reset' ? '🔄 Reset' : 
-                                       data.type === 'filling' ? `${getProductName ? getProductName(data.productType) : data.productType}: ${data.quantity === 'unlimited' ? '∞' : data.quantity}` :
-                                       `+${data.quantity || 0} crêpes`;
+                    let quantityText = '';
+                    if (data.type === 'reset') {
+                        quantityText = '🔄 Reset';
+                    } else if (data.type === 'filling') {
+                        quantityText = `${getProductName ? getProductName(data.productType) : data.productType}: ${data.quantity === 'unlimited' ? '∞' : data.quantity}`;
+                    } else if (data.type === 'snack') {
+                        const change = data.quantity >= 0 ? `+${data.quantity}` : `${data.quantity}`;
+                        quantityText = `🍪 ${data.productName || data.productId}: ${change}`;
+                    } else {
+                        quantityText = `+${data.quantity || 0} crêpes`;
+                    }
                     
                     historyHTML += `
                         <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #28a745; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
