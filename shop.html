@@ -3462,8 +3462,10 @@
                 
                 document.getElementById('snackModal').style.display = 'none';
                 await loadCustomSnacks();
-                // Recharger les produits dans la page de commande
-                loadProductsForOrders();
+                // Recharger les produits dans la page de commande avec un petit délai pour s'assurer que les données sont bien sauvegardées
+                setTimeout(() => {
+                    loadProductsForOrders();
+                }, 300);
             } catch (error) {
                 console.error('Erreur lors de la sauvegarde du snack:', error);
                 showMessage('❌ Erreur: ' + error.message, 'error');
@@ -3478,8 +3480,10 @@
                 await db.collection('customSnacks').doc(snackId).delete();
                 showMessage('✅ Snack supprimé avec succès !', 'success');
                 await loadCustomSnacks();
-                // Recharger les produits dans la page de commande
-                loadProductsForOrders();
+                // Recharger les produits dans la page de commande avec un petit délai
+                setTimeout(() => {
+                    loadProductsForOrders();
+                }, 300);
             } catch (error) {
                 console.error('Erreur lors de la suppression du snack:', error);
                 showMessage('❌ Erreur: ' + error.message, 'error');
