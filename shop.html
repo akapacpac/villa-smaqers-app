@@ -741,23 +741,83 @@
     </div>
 
     <!-- Modal pour la classe -->
-    <div id="classModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
-        <div style="background: white; padding: 30px; border-radius: 15px; max-width: 400px; width: 90%; box-shadow: 0 20px 40px rgba(0,0,0,0.3);">
+    <div id="classModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; overflow-y: auto;">
+        <div style="background: white; padding: 30px; border-radius: 15px; max-width: 600px; width: 90%; max-height: 90vh; box-shadow: 0 20px 40px rgba(0,0,0,0.3); margin: 20px;">
             <h3 style="margin-bottom: 20px; color: #333; text-align: center;">Confirmer votre commande</h3>
-            <div style="margin-bottom: 20px;">
-                <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #333;">Classe de livraison :</label>
-                <input type="text" id="modalClassInput" placeholder="Ex: 456" maxlength="3" pattern="[0-9]{3}" 
-                       style="width: 100%; padding: 12px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 1rem; text-align: center;"
-                       oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 3)">
-                <div style="margin-top: 5px; font-size: 0.9rem; color: #666; text-align: center;">
-                    Entrez votre numéro de classe (3 chiffres)
-                </div>
+            
+            <!-- Selected Product Display -->
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Article sélectionné</label>
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; font-weight: bold; color: #6c5ce7;" id="modal-selected-item-display"></div>
             </div>
-            <div style="display: flex; gap: 10px; justify-content: center;">
+            
+            <!-- Class Selection Section -->
+            <div class="form-group">
+                <label class="form-label">Sélectionner ou créer une classe *</label>
+                
+                <!-- Search/Create Toggle -->
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <button type="button" id="select-class-btn" class="btn" onclick="showClassSelection()" style="flex: 1;">
+                        📚 Sélectionner une classe existante
+                    </button>
+                    <button type="button" id="create-class-btn" class="btn btn-secondary" onclick="showClassCreation()" style="flex: 1;">
+                        ➕ Créer une nouvelle classe
+                    </button>
+                </div>
+                
+                <!-- Class Selection -->
+                <div id="class-selection-section">
+                    <div class="form-group">
+                        <label class="form-label">Rechercher une classe</label>
+                        <input type="text" id="class-search" class="form-input" placeholder="Rechercher par salle (ex: 104, 156, 345-378)" oninput="filterClasses()">
+                    </div>
+                    <div id="classes-list" style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; padding: 10px;">
+                        <p style="text-align: center; color: #666; padding: 20px;">Chargement des classes...</p>
+                    </div>
+                    <div id="selected-class-info" style="display: none; margin-top: 15px; padding: 15px; background: #e8f5e8; border-radius: 8px;">
+                        <p><strong>Classe sélectionnée:</strong> <span id="selected-class-name"></span></p>
+                        <p><strong>Horaire:</strong> <span id="selected-class-time"></span></p>
+                        <p><strong>Livraison prévue:</strong> <span id="selected-delivery-time"></span></p>
+                        <p style="font-size: 12px; color: #666; margin-top: 10px;">
+                            <strong>Deadline:</strong> <span id="selected-deadline-time"></span>
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Class Creation -->
+                <div id="class-creation-section" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label">Numéro de salle *</label>
+                        <input type="text" id="new-class-room" class="form-input" placeholder="Ex: 104, 156, 345-378" required>
+                        <small style="color: #666; font-size: 12px;">Entrez le numéro ou nom de la salle</small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Heure de début du cours *</label>
+                        <input type="time" id="new-class-start" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Heure de fin du cours *</label>
+                        <input type="time" id="new-class-end" class="form-input" required>
+                    </div>
+                    <button type="button" class="btn btn-full" onclick="createNewClass()">Créer la classe</button>
+                    <button type="button" class="btn btn-secondary btn-full" onclick="showClassSelection()" style="margin-top: 10px;">Annuler</button>
+                </div>
+                
+                <input type="hidden" id="selected-class-id" value="">
+                <input type="hidden" id="selected-class-schedule-id" value="">
+            </div>
+            
+            <div id="order-deadline-warning" style="display: none; margin-top: 15px; padding: 15px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px;">
+                <p style="margin: 0; color: #856404;">
+                    ⚠️ <strong>Attention:</strong> La deadline de commande est dans <span id="deadline-countdown"></span>
+                </p>
+            </div>
+            
+            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
                 <button onclick="hideClassModal()" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">
                     Annuler
                 </button>
-                <button onclick="confirmOrder()" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">
+                <button onclick="confirmOrder()" id="modal-confirm-btn" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;" disabled>
                     Confirmer
                 </button>
             </div>
@@ -768,6 +828,7 @@
         let currentUser = null;
         let pendingOrder = null; // Stocke la commande en attente
         let currentView = 'bachelor'; // Vue actuelle pour admins/membres
+        let allClasses = []; // Stocke toutes les classes chargées
         
         // Switch view between Bachelor and Master (for admins/members)
         async function switchViewShop(program) {
@@ -922,24 +983,61 @@
             // Stocker la commande en attente
             pendingOrder = { product, price };
             
+            // Afficher le produit sélectionné
+            const productName = getProductName(product);
+            document.getElementById('modal-selected-item-display').textContent = productName;
+            
+            // Réinitialiser la sélection de classe
+            document.getElementById('selected-class-id').value = '';
+            document.getElementById('selected-class-schedule-id').value = '';
+            document.getElementById('selected-class-info').style.display = 'none';
+            document.getElementById('modal-confirm-btn').disabled = true;
+            
+            // Afficher la section de sélection par défaut
+            showClassSelection();
+            
             // Afficher la modal
             document.getElementById('classModal').classList.add('show');
-            document.getElementById('modalClassInput').value = '';
-            document.getElementById('modalClassInput').focus();
         }
 
         function hideClassModal() {
             document.getElementById('classModal').classList.remove('show');
             pendingOrder = null;
+            // Reset class selection
+            document.getElementById('selected-class-id').value = '';
+            document.getElementById('selected-class-schedule-id').value = '';
+            document.getElementById('selected-class-info').style.display = 'none';
         }
 
         async function confirmOrder() {
             if (!pendingOrder) return;
 
-            const classNumber = document.getElementById('modalClassInput').value.trim();
-            
-            if (!classNumber || classNumber.length !== 3) {
-                showMessage('Veuillez entrer un numéro de classe valide (3 chiffres)', 'error');
+            const classId = document.getElementById('selected-class-id').value;
+            const scheduleIndex = parseInt(document.getElementById('selected-class-schedule-id').value);
+
+            if (!classId || isNaN(scheduleIndex)) {
+                showMessage('Veuillez sélectionner une classe et un horaire', 'error');
+                return;
+            }
+
+            // Trouver les données de la classe
+            const classData = allClasses.find(c => c.id === classId);
+            if (!classData || !classData.schedules || !classData.schedules[scheduleIndex]) {
+                showMessage('Erreur: classe ou horaire introuvable', 'error');
+                return;
+            }
+
+            const schedule = classData.schedules[scheduleIndex];
+            const startTime = schedule.startTime || '';
+            const endTime = schedule.endTime || '';
+            const deliveryTime = calculateDeliveryTime(startTime, endTime);
+            const deadline = calculateDeadline(deliveryTime);
+
+            // Vérifier que la deadline n'est pas passée
+            const now = new Date();
+            const deadlineDate = new Date(deadline);
+            if (deadlineDate < now) {
+                showMessage('⚠️ La deadline de commande est passée. Veuillez sélectionner un autre horaire.', 'error');
                 return;
             }
 
@@ -953,21 +1051,26 @@
                     return;
                 }
 
+                const program = getCurrentProgram();
                 const orderData = {
                     userId: currentUser.uid,
                     userEmail: currentUser.email,
                     userName: `${currentUser.firstName} ${currentUser.lastName}`,
                     product: pendingOrder.product,
                     price: pendingOrder.price,
-                    classNumber: classNumber,
+                    classroom: classData.room,
+                    classId: classId,
+                    scheduleIndex: scheduleIndex,
+                    startTime: startTime,
+                    endTime: endTime,
+                    deliveryTime: deliveryTime.toISOString(),
+                    deadline: deadline.toISOString(),
+                    program: program,
                     status: 'pending',
                     createdAt: new Date(),
                     orderDate: new Date().toLocaleDateString('fr-FR'),
                     orderTime: new Date().toLocaleTimeString('fr-FR')
                 };
-
-                const program = getCurrentProgram();
-                orderData.program = program; // Ajouter le programme à la commande
                 
                 // Utiliser une transaction pour s'assurer que le stock est décrémenté atomiquement
                 await db.runTransaction(async (transaction) => {
@@ -1018,7 +1121,7 @@
                 });
                 
                 // Afficher un message de succès
-                showMessage(`Commande passée avec succès ! Livraison prévue en classe ${classNumber}`, 'success');
+                showMessage(`Commande passée avec succès ! Livraison prévue en salle ${classData.room} à ${formatTime(deliveryTime)}`, 'success');
                 
                 // Fermer la modal
                 hideClassModal();
@@ -2320,6 +2423,305 @@
                 showMessage('Erreur lors de la suppression: ' + error.message, 'error');
             }
         }
+        // ========== CLASS MANAGEMENT FUNCTIONS ==========
+        
+        // Load classes from Firebase
+        async function loadClasses() {
+            try {
+                const userProgram = currentUser?.program || getCurrentProgram();
+                const classesSnapshot = await db.collection('classes').where('program', '==', userProgram).get();
+                allClasses = [];
+                classesSnapshot.forEach(doc => {
+                    const classData = { id: doc.id, ...doc.data() };
+                    // Sort schedules by start time
+                    if (classData.schedules) {
+                        classData.schedules.sort((a, b) => {
+                            const timeA = a.startTime || '';
+                            const timeB = b.startTime || '';
+                            return timeA.localeCompare(timeB);
+                        });
+                    }
+                    allClasses.push(classData);
+                });
+                
+                // Sort classes by room number (natural sort)
+                allClasses.sort((a, b) => {
+                    const roomA = a.room || '';
+                    const roomB = b.room || '';
+                    // Extract numbers for comparison
+                    const numA = parseInt(roomA.replace(/\D/g, '')) || 0;
+                    const numB = parseInt(roomB.replace(/\D/g, '')) || 0;
+                    if (numA !== numB) return numA - numB;
+                    return roomA.localeCompare(roomB);
+                });
+                
+                displayClasses();
+            } catch (error) {
+                console.error('Erreur lors du chargement des classes:', error);
+                document.getElementById('classes-list').innerHTML = '<p style="color: red;">Erreur lors du chargement des classes</p>';
+            }
+        }
+        
+        // Display classes in the list
+        function displayClasses(filter = '') {
+            const classesList = document.getElementById('classes-list');
+            if (!classesList) return;
+            
+            const searchTerm = filter.toLowerCase();
+            
+            const filteredClasses = allClasses.filter(cls => {
+                if (!searchTerm) return true;
+                return cls.room.toLowerCase().includes(searchTerm);
+            });
+            
+            if (filteredClasses.length === 0) {
+                classesList.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">Aucune classe trouvée</p>';
+                return;
+            }
+            
+            classesList.innerHTML = filteredClasses.map(cls => {
+                const schedulesHtml = cls.schedules && cls.schedules.length > 0 
+                    ? cls.schedules.map((schedule, idx) => {
+                        const startTime = schedule.startTime || '';
+                        const endTime = schedule.endTime || '';
+                        const deliveryTime = calculateDeliveryTime(startTime, endTime);
+                        const deadline = calculateDeadline(deliveryTime);
+                        const now = new Date();
+                        const deadlineDate = new Date(deadline);
+                        const isPast = deadlineDate < now;
+                        
+                        return `
+                            <div class="schedule-item" style="padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; ${isPast ? 'opacity: 0.5;' : ''}" 
+                                 onclick="selectClassSchedule('${cls.id}', ${idx})">
+                                <div style="font-weight: bold;">${startTime} - ${endTime}</div>
+                                <div style="font-size: 12px; color: #666;">
+                                    Livraison: ${formatTime(deliveryTime)} | Deadline: ${formatTime(deadline)}
+                                    ${isPast ? ' <span style="color: red;">(Expiré)</span>' : ''}
+                                </div>
+                            </div>
+                        `;
+                    }).join('')
+                    : '<p style="color: #666; font-size: 12px;">Aucun horaire disponible</p>';
+                
+                return `
+                    <div class="class-item" style="margin-bottom: 15px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background: #f8f9fa;">
+                        <div style="font-weight: bold; font-size: 18px; margin-bottom: 10px; color: #6c5ce7;">
+                            📚 Salle ${cls.room}
+                        </div>
+                        <div style="margin-top: 10px;">
+                            <strong>Horaires disponibles:</strong>
+                            ${schedulesHtml}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Filter classes
+        function filterClasses() {
+            const searchInput = document.getElementById('class-search');
+            if (!searchInput) return;
+            const searchTerm = searchInput.value;
+            displayClasses(searchTerm);
+        }
+        
+        // Show class selection
+        function showClassSelection() {
+            document.getElementById('class-selection-section').style.display = 'block';
+            document.getElementById('class-creation-section').style.display = 'none';
+            document.getElementById('select-class-btn').className = 'btn';
+            document.getElementById('create-class-btn').className = 'btn btn-secondary';
+            loadClasses();
+        }
+        
+        // Show class creation
+        function showClassCreation() {
+            document.getElementById('class-selection-section').style.display = 'none';
+            document.getElementById('class-creation-section').style.display = 'block';
+            document.getElementById('select-class-btn').className = 'btn btn-secondary';
+            document.getElementById('create-class-btn').className = 'btn';
+        }
+        
+        // Select class schedule
+        function selectClassSchedule(classId, scheduleIndex) {
+            const classData = allClasses.find(c => c.id === classId);
+            if (!classData || !classData.schedules || !classData.schedules[scheduleIndex]) {
+                alert('Erreur: classe ou horaire introuvable');
+                return;
+            }
+            
+            const schedule = classData.schedules[scheduleIndex];
+            const startTime = schedule.startTime || '';
+            const endTime = schedule.endTime || '';
+            const deliveryTime = calculateDeliveryTime(startTime, endTime);
+            const deadline = calculateDeadline(deliveryTime);
+            
+            // Check if deadline has passed
+            const now = new Date();
+            const deadlineDate = new Date(deadline);
+            if (deadlineDate < now) {
+                alert('⚠️ La deadline de commande pour cet horaire est passée. Veuillez sélectionner un autre horaire.');
+                return;
+            }
+            
+            // Save selection
+            document.getElementById('selected-class-id').value = classId;
+            document.getElementById('selected-class-schedule-id').value = scheduleIndex;
+            
+            // Display selected class info
+            document.getElementById('selected-class-name').textContent = `Salle ${classData.room}`;
+            document.getElementById('selected-class-time').textContent = `${startTime} - ${endTime}`;
+            document.getElementById('selected-delivery-time').textContent = formatTime(deliveryTime);
+            document.getElementById('selected-deadline-time').textContent = formatTime(deadline);
+            document.getElementById('selected-class-info').style.display = 'block';
+            
+            // Enable order button
+            document.getElementById('modal-confirm-btn').disabled = false;
+            
+            // Update deadline warning
+            updateDeadlineWarning(deadline);
+        }
+        
+        // Create new class
+        async function createNewClass() {
+            const room = document.getElementById('new-class-room').value.trim();
+            const startTime = document.getElementById('new-class-start').value;
+            const endTime = document.getElementById('new-class-end').value;
+            const userProgram = currentUser?.program || getCurrentProgram();
+            
+            if (!room || !startTime || !endTime) {
+                alert('Veuillez remplir tous les champs');
+                return;
+            }
+            
+            if (startTime >= endTime) {
+                alert('L\'heure de fin doit être après l\'heure de début');
+                return;
+            }
+            
+            try {
+                // Check if class with same room and program already exists
+                const existingClasses = await db.collection('classes').where('room', '==', room).where('program', '==', userProgram).get();
+                
+                if (!existingClasses.empty) {
+                    // Class exists, add schedule to it
+                    const existingClass = existingClasses.docs[0];
+                    const classData = existingClass.data();
+                    const schedules = classData.schedules || [];
+                    
+                    // Check if schedule already exists
+                    const scheduleExists = schedules.some(s => s.startTime === startTime && s.endTime === endTime);
+                    if (scheduleExists) {
+                        alert('Cet horaire existe déjà pour cette classe');
+                        return;
+                    }
+                    
+                    // Add new schedule
+                    schedules.push({
+                        startTime,
+                        endTime,
+                        createdAt: new Date().toISOString()
+                    });
+                    
+                    await db.collection('classes').doc(existingClass.id).update({
+                        schedules
+                    });
+                    
+                    alert('Horaire ajouté à la classe existante !');
+                } else {
+                    // Create new class
+                    const newClass = {
+                        room,
+                        program: userProgram,
+                        schedules: [{
+                            startTime,
+                            endTime,
+                            createdAt: new Date().toISOString()
+                        }],
+                        createdAt: new Date().toISOString()
+                    };
+                    
+                    await db.collection('classes').add(newClass);
+                    alert('Classe créée avec succès !');
+                }
+                
+                // Reset form and reload classes
+                document.getElementById('new-class-room').value = '';
+                document.getElementById('new-class-start').value = '';
+                document.getElementById('new-class-end').value = '';
+                showClassSelection();
+                loadClasses();
+            } catch (error) {
+                console.error('Erreur lors de la création de la classe:', error);
+                alert('Erreur lors de la création de la classe');
+            }
+        }
+        
+        // Calculate delivery time (middle of class)
+        function calculateDeliveryTime(startTime, endTime) {
+            const [startHour, startMin] = startTime.split(':').map(Number);
+            const [endHour, endMin] = endTime.split(':').map(Number);
+            
+            const startDate = new Date();
+            startDate.setHours(startHour, startMin, 0, 0);
+            
+            const endDate = new Date();
+            endDate.setHours(endHour, endMin, 0, 0);
+            
+            // Middle time
+            const middleTime = new Date((startDate.getTime() + endDate.getTime()) / 2);
+            
+            return middleTime;
+        }
+        
+        // Calculate deadline (5 minutes before delivery)
+        function calculateDeadline(deliveryTime) {
+            const deadline = new Date(deliveryTime);
+            deadline.setMinutes(deadline.getMinutes() - 5);
+            return deadline;
+        }
+        
+        // Format time to HH:MM
+        function formatTime(date) {
+            if (!(date instanceof Date)) {
+                date = new Date(date);
+            }
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            return `${hours}:${minutes}`;
+        }
+        
+        // Update deadline warning
+        function updateDeadlineWarning(deadline) {
+            const warningDiv = document.getElementById('order-deadline-warning');
+            const countdownSpan = document.getElementById('deadline-countdown');
+            if (!warningDiv || !countdownSpan) return;
+            
+            const now = new Date();
+            const deadlineDate = new Date(deadline);
+            
+            if (deadlineDate < now) {
+                warningDiv.style.display = 'none';
+                document.getElementById('modal-confirm-btn').disabled = true;
+                return;
+            }
+            
+            const diff = deadlineDate - now;
+            const minutes = Math.floor(diff / 60000);
+            const seconds = Math.floor((diff % 60000) / 1000);
+            
+            if (minutes > 0) {
+                countdownSpan.textContent = `${minutes} min ${seconds} sec`;
+            } else {
+                countdownSpan.textContent = `${seconds} sec`;
+            }
+            
+            warningDiv.style.display = 'block';
+            
+            // Update every second
+            setTimeout(() => updateDeadlineWarning(deadline), 1000);
+        }
+        
     </script>
 </body>
 </html>

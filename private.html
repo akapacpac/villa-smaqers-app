@@ -402,6 +402,7 @@
                                 <th>Programme</th>
                                 <th>Rôle actuel</th>
                                 <th>Nouveau rôle</th>
+                                <th>Nouveau programme</th>
                                 <th>Date d'inscription</th>
                                 <th>Actions</th>
                             </tr>
@@ -452,6 +453,12 @@
                                     <option value="admin" ${userData.role === 'admin' ? 'selected' : ''}>Administrateur</option>
                                 </select>
                             </td>
+                            <td>
+                                <select id="programSelect_${doc.id}" class="role-select">
+                                    <option value="bachelor" ${userProgram === 'bachelor' ? 'selected' : ''}>Bachelor</option>
+                                    <option value="master" ${userProgram === 'master' ? 'selected' : ''}>Master</option>
+                                </select>
+                            </td>
                             <td>${createdAt}</td>
                             <td>
                                 <div class="action-buttons">
@@ -492,21 +499,31 @@
 
         async function updateUserRole(userId) {
             const roleSelect = document.getElementById(`roleSelect_${userId}`);
+            const programSelect = document.getElementById(`programSelect_${userId}`);
             const newRole = roleSelect.value;
+            const newProgram = programSelect.value;
 
             try {
-                await db.collection('users').doc(userId).update({
+                const updateData = {
                     role: newRole
-                });
+                };
                 
-                showMessage(`Rôle mis à jour avec succès: ${getRoleText(newRole)}`, 'success');
+                // Ajouter le programme seulement s'il a changé
+                if (newProgram) {
+                    updateData.program = newProgram;
+                }
+                
+                await db.collection('users').doc(userId).update(updateData);
+                
+                const programText = newProgram === 'master' ? 'Master' : 'Bachelor';
+                showMessage(`Rôle mis à jour: ${getRoleText(newRole)} | Programme: ${programText}`, 'success');
                 
                 // Recharger la liste
                 loadUsers();
                 
             } catch (error) {
-                console.error('Erreur lors de la mise à jour du rôle:', error);
-                showMessage('Erreur lors de la mise à jour du rôle: ' + error.message, 'error');
+                console.error('Erreur lors de la mise à jour:', error);
+                showMessage('Erreur lors de la mise à jour: ' + error.message, 'error');
             }
         }
 
