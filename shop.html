@@ -770,14 +770,16 @@
         let currentView = 'bachelor'; // Vue actuelle pour admins/membres
         
         // Switch view between Bachelor and Master (for admins/members)
-        function switchViewShop(program) {
+        async function switchViewShop(program) {
             currentView = program;
             updateViewButtonsShop();
             
-            // Reload stock data with new view
+            console.log('View switched to:', program);
+            
+            // Reload stock data with new view (for admins on restock page)
             if (currentUser && currentUser.role === 'admin') {
                 if (document.getElementById('restock').classList.contains('active')) {
-                    loadStockData();
+                    await loadStockData();
                 }
             }
             
@@ -788,7 +790,11 @@
                 }
             }
             
-            console.log('View switched to:', program);
+            // IMPORTANT: Recharger le stock et vérifier les boutons de commande pour TOUS
+            // Cela permet aux étudiants et admins de voir le bon stock après changement de vue
+            setTimeout(async () => {
+                await checkStockOnLoad();
+            }, 300);
         }
         
         // Update view toggle buttons in shop
@@ -1866,7 +1872,8 @@
         // Fonction pour vérifier le stock avant commande
         async function checkStock() {
             try {
-                const stockDoc = await db.collection('stock').doc('current').get();
+                const program = getCurrentProgram();
+                const stockDoc = await db.collection('stock').doc(program).get();
                 if (stockDoc.exists) {
                     return stockDoc.data().quantity || 0;
                 }
