@@ -461,6 +461,9 @@
             <button class="nav-tab admin-only" onclick="showTab('restock')" style="display: none;">
                 📦 Restock
             </button>
+            <button class="nav-tab admin-only" onclick="showTab('customization')" style="display: none;">
+                ⚙️ Personnalisation
+            </button>
             <a href="private.html" class="nav-tab admin-only" style="display: none; text-decoration: none; color: inherit;">
                 🔒 Administration Privée
             </a>
@@ -471,29 +474,19 @@
             <div id="orders" class="tab-pane active">
                 <h2 style="margin-bottom: 30px; color: #333;">Choisissez votre commande</h2>
                 
-                <div class="product-grid">
-                    <div class="product-card" onclick="selectProduct('crepes-sucre')">
-                        <div class="product-icon">🥞</div>
-                        <div class="product-name">Crêpes Sucre</div>
-                        <div class="product-price">FREE</div>
-                        <div class="product-description">Crêpes avec sucre et beurre</div>
-                        <button class="order-btn" onclick="showClassModal('crepes-sucre', 0)">Commander</button>
+                <!-- Section Crêpes -->
+                <div id="crepesSection" style="margin-bottom: 40px;">
+                    <h3 style="margin-bottom: 20px; color: #333; font-size: 1.3rem; border-bottom: 2px solid #667eea; padding-bottom: 10px;">🥞 Crêpes</h3>
+                    <div id="crepesGrid" class="product-grid">
+                        <div class="loading">Chargement des produits...</div>
                     </div>
-
-                    <div class="product-card" onclick="selectProduct('crepes-nutella')">
-                        <div class="product-icon">🍫</div>
-                        <div class="product-name">Crêpes Nutella</div>
-                        <div class="product-price">FREE</div>
-                        <div class="product-description">Crêpes avec Nutella</div>
-                        <button class="order-btn" onclick="showClassModal('crepes-nutella', 0)">Commander</button>
-                    </div>
-
-                    <div class="product-card" onclick="selectProduct('crepes-confiture')">
-                        <div class="product-icon">🍓</div>
-                        <div class="product-name">Crêpes Confiture</div>
-                        <div class="product-price">FREE</div>
-                        <div class="product-description">Crêpes avec confiture</div>
-                        <button class="order-btn" onclick="showClassModal('crepes-confiture', 0)">Commander</button>
+                </div>
+                
+                <!-- Section Snacks (affichée uniquement s'il y a des snacks en stock) -->
+                <div id="snacksSection" style="display: none; margin-bottom: 40px; border-top: 2px solid #e1e5e9; padding-top: 40px;">
+                    <h3 style="margin-bottom: 20px; color: #333; font-size: 1.3rem; border-bottom: 2px solid #667eea; padding-bottom: 10px;">🍪 Snacks</h3>
+                    <div id="snacksGrid" class="product-grid">
+                        <div class="loading">Chargement des snacks...</div>
                     </div>
                 </div>
                 
@@ -791,9 +784,52 @@
                         </div>
                     </div>
                 </div>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
+
+            <!-- Onglet Personnalisation -->
+            <div id="customization" class="tab-pane">
+                <h2 style="margin-bottom: 30px; color: #333;">⚙️ Personnalisation des Produits</h2>
+                
+                <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+                    <!-- Section Fillings de Crêpes -->
+                    <div style="margin-bottom: 40px;">
+                        <h3 style="margin-bottom: 20px; color: #333; font-size: 1.5rem; border-bottom: 2px solid #667eea; padding-bottom: 10px;">
+                            🥞 Fillings de Crêpes (Maximum 9)
+                        </h3>
+                        <p style="color: #666; margin-bottom: 20px; font-size: 0.9rem;">
+                            Gérez les fillings disponibles pour les crêpes. Vous pouvez ajouter, modifier ou supprimer des fillings (maximum 9).
+                        </p>
+                        
+                        <button onclick="showAddFillingModal()" style="background: #28a745; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; margin-bottom: 20px;">
+                            ➕ Ajouter un Filling
+                        </button>
+                        
+                        <div id="fillingsList" style="display: grid; gap: 15px;">
+                            <div class="loading">Chargement des fillings...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Section Snacks -->
+                    <div style="margin-bottom: 40px; border-top: 2px solid #e1e5e9; padding-top: 40px;">
+                        <h3 style="margin-bottom: 20px; color: #333; font-size: 1.5rem; border-bottom: 2px solid #667eea; padding-bottom: 10px;">
+                            🍪 Snacks
+                        </h3>
+                        <p style="color: #666; margin-bottom: 20px; font-size: 0.9rem;">
+                            Gérez les snacks disponibles (eau, coca, cookies, etc.). Ces produits apparaîtront dans la section commande uniquement s'ils sont en stock.
+                        </p>
+                        
+                        <button onclick="showAddSnackModal()" style="background: #28a745; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; margin-bottom: 20px;">
+                            ➕ Ajouter un Snack
+                        </button>
+                        
+                        <div id="snacksList" style="display: grid; gap: 15px;">
+                            <div class="loading">Chargement des snacks...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
     <!-- Modal pour la classe -->
     <div id="classModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; overflow-y: auto;">
@@ -879,12 +915,90 @@
         </div>
     </div>
 
+    <!-- Modal pour ajouter/modifier un Filling -->
+    <div id="fillingModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1001; align-items: center; justify-content: center; overflow-y: auto;">
+        <div style="background: white; padding: 30px; border-radius: 15px; max-width: 500px; width: 90%; max-height: 90vh; box-shadow: 0 20px 40px rgba(0,0,0,0.3); margin: 20px;">
+            <h3 id="fillingModalTitle" style="margin-bottom: 20px; color: #333; text-align: center;">Ajouter un Filling</h3>
+            <form id="fillingForm" onsubmit="event.preventDefault(); saveFilling();">
+                <div class="form-group">
+                    <label class="form-label">Nom du filling *</label>
+                    <input type="text" id="fillingName" class="form-input" placeholder="Ex: Crêpes Sucre" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Emoji *</label>
+                    <input type="text" id="fillingEmoji" class="form-input" placeholder="Ex: 🥞" maxlength="2" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea id="fillingDescription" class="form-input" rows="3" placeholder="Ex: Crêpes avec sucre et beurre"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">ID Produit * (unique)</label>
+                    <input type="text" id="fillingProductId" class="form-input" placeholder="Ex: crepes-sucre" required>
+                    <small style="color: #666; font-size: 12px;">Cet ID sera utilisé pour identifier le produit dans les commandes</small>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Ordre d'affichage</label>
+                    <input type="number" id="fillingOrder" class="form-input" min="1" value="1">
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+                    <button type="button" onclick="document.getElementById('fillingModal').style.display = 'none'" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">
+                        Annuler
+                    </button>
+                    <button type="submit" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">
+                        Enregistrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal pour ajouter/modifier un Snack -->
+    <div id="snackModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1001; align-items: center; justify-content: center; overflow-y: auto;">
+        <div style="background: white; padding: 30px; border-radius: 15px; max-width: 500px; width: 90%; max-height: 90vh; box-shadow: 0 20px 40px rgba(0,0,0,0.3); margin: 20px;">
+            <h3 id="snackModalTitle" style="margin-bottom: 20px; color: #333; text-align: center;">Ajouter un Snack</h3>
+            <form id="snackForm" onsubmit="event.preventDefault(); saveSnack();">
+                <div class="form-group">
+                    <label class="form-label">Nom du snack *</label>
+                    <input type="text" id="snackName" class="form-input" placeholder="Ex: Eau" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Emoji *</label>
+                    <input type="text" id="snackEmoji" class="form-input" placeholder="Ex: 💧" maxlength="2" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea id="snackDescription" class="form-input" rows="3" placeholder="Ex: Bouteille d'eau 50cl"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">ID Produit * (unique)</label>
+                    <input type="text" id="snackProductId" class="form-input" placeholder="Ex: eau" required>
+                    <small style="color: #666; font-size: 12px;">Cet ID sera utilisé pour identifier le produit dans les commandes</small>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Prix (€) *</label>
+                    <input type="number" id="snackPrice" class="form-input" min="0" step="0.01" value="0" required>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+                    <button type="button" onclick="document.getElementById('snackModal').style.display = 'none'" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">
+                        Annuler
+                    </button>
+                    <button type="submit" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">
+                        Enregistrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         let currentUser = null;
         let pendingOrder = null; // Stocke la commande en attente
         let currentView = 'bachelor'; // Vue actuelle pour admins/membres
         let allClasses = []; // Stocke toutes les classes chargées
         let deadlineTimer = null; // Timer pour le compte à rebours de la deadline
+        let customFillings = []; // Fillings personnalisés
+        let customSnacks = []; // Snacks personnalisés
         
         // Switch view between Bachelor and Master (for admins/members)
         async function switchViewShop(program) {
@@ -1018,6 +1132,15 @@
                             <div class="error">Accès refusé. Seuls les administrateurs peuvent accéder à cette section.</div>
                         `;
                     }
+                }
+            } else if (tabName === 'customization') {
+                if (currentUser && currentUser.role === 'admin') {
+                    loadCustomFillings();
+                    loadCustomSnacks();
+                } else {
+                    document.getElementById('customization').innerHTML = `
+                        <div class="error">Accès refusé. Seuls les administrateurs peuvent accéder à cette section.</div>
+                    `;
                 }
             }
         }
@@ -1788,9 +1911,13 @@
                         }
                     }
                     
+                    // Charger les produits dans la page de commande
+                    loadProductsForOrders();
+                    
                     // Afficher l'onglet Restock SEULEMENT pour les admins
                     if (currentUser.role === 'admin') {
                         document.querySelector('button[onclick="showTab(\'restock\')"]').style.display = 'block';
+                        document.querySelector('button[onclick="showTab(\'customization\')"]').style.display = 'block';
                     }
                     
                     // Afficher le lien privé SEULEMENT pour les admins
@@ -2966,6 +3093,400 @@
             const warningDiv = document.getElementById('order-deadline-warning');
             if (warningDiv) {
                 warningDiv.style.display = 'none';
+            }
+        }
+        
+        // ========== GESTION DES FILLINGS ET SNACKS PERSONNALISÉS ==========
+        
+        // Charger les fillings personnalisés depuis Firebase
+        async function loadCustomFillings() {
+            try {
+                const fillingsSnapshot = await db.collection('customFillings').orderBy('order', 'asc').get();
+                customFillings = [];
+                fillingsSnapshot.forEach(doc => {
+                    customFillings.push({ id: doc.id, ...doc.data() });
+                });
+                displayFillings();
+            } catch (error) {
+                console.error('Erreur lors du chargement des fillings:', error);
+                document.getElementById('fillingsList').innerHTML = `
+                    <div class="error">Erreur lors du chargement des fillings: ${error.message}</div>
+                `;
+            }
+        }
+        
+        // Charger les snacks personnalisés depuis Firebase
+        async function loadCustomSnacks() {
+            try {
+                const snacksSnapshot = await db.collection('customSnacks').orderBy('name', 'asc').get();
+                customSnacks = [];
+                snacksSnapshot.forEach(doc => {
+                    customSnacks.push({ id: doc.id, ...doc.data() });
+                });
+                displaySnacks();
+            } catch (error) {
+                console.error('Erreur lors du chargement des snacks:', error);
+                document.getElementById('snacksList').innerHTML = `
+                    <div class="error">Erreur lors du chargement des snacks: ${error.message}</div>
+                `;
+            }
+        }
+        
+        // Afficher la liste des fillings
+        function displayFillings() {
+            const fillingsList = document.getElementById('fillingsList');
+            if (!fillingsList) return;
+            
+            if (customFillings.length === 0) {
+                fillingsList.innerHTML = `
+                    <div style="text-align: center; padding: 20px; color: #666; background: #f8f9fa; border-radius: 8px;">
+                        Aucun filling configuré. Cliquez sur "Ajouter un Filling" pour commencer.
+                    </div>
+                `;
+                return;
+            }
+            
+            fillingsList.innerHTML = customFillings.map((filling, index) => `
+                <div style="background: white; padding: 20px; border-radius: 12px; border: 2px solid #e1e5e9; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <span style="font-size: 2rem;">${filling.emoji || '🥞'}</span>
+                            <div>
+                                <h4 style="margin: 0; color: #333; font-size: 1.2rem;">${filling.name}</h4>
+                                <p style="margin: 5px 0 0 0; color: #666; font-size: 0.9rem;">${filling.description || ''}</p>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button onclick="editFilling('${filling.id}')" style="background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">
+                                ✏️ Modifier
+                            </button>
+                            <button onclick="deleteFilling('${filling.id}')" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">
+                                🗑️ Supprimer
+                            </button>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.85rem; color: #999;">
+                        ID: ${filling.productId || 'N/A'} | Ordre: ${filling.order || index + 1}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Afficher la liste des snacks
+        function displaySnacks() {
+            const snacksList = document.getElementById('snacksList');
+            if (!snacksList) return;
+            
+            if (customSnacks.length === 0) {
+                snacksList.innerHTML = `
+                    <div style="text-align: center; padding: 20px; color: #666; background: #f8f9fa; border-radius: 8px;">
+                        Aucun snack configuré. Cliquez sur "Ajouter un Snack" pour commencer.
+                    </div>
+                `;
+                return;
+            }
+            
+            snacksList.innerHTML = customSnacks.map(snack => `
+                <div style="background: white; padding: 20px; border-radius: 12px; border: 2px solid #e1e5e9; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <span style="font-size: 2rem;">${snack.emoji || '🍪'}</span>
+                            <div>
+                                <h4 style="margin: 0; color: #333; font-size: 1.2rem;">${snack.name}</h4>
+                                <p style="margin: 5px 0 0 0; color: #666; font-size: 0.9rem;">${snack.description || ''}</p>
+                                <p style="margin: 5px 0 0 0; color: #28a745; font-weight: 600;">Prix: ${snack.price || 0}€</p>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button onclick="editSnack('${snack.id}')" style="background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">
+                                ✏️ Modifier
+                            </button>
+                            <button onclick="deleteSnack('${snack.id}')" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">
+                                🗑️ Supprimer
+                            </button>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.85rem; color: #999;">
+                        ID: ${snack.productId || 'N/A'}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Afficher le modal pour ajouter un filling
+        function showAddFillingModal() {
+            if (customFillings.length >= 9) {
+                showMessage('❌ Maximum 9 fillings autorisés !', 'error');
+                return;
+            }
+            
+            document.getElementById('fillingModalTitle').textContent = 'Ajouter un Filling';
+            document.getElementById('fillingForm').reset();
+            document.getElementById('fillingForm').setAttribute('data-filling-id', '');
+            document.getElementById('fillingModal').style.display = 'flex';
+        }
+        
+        // Afficher le modal pour modifier un filling
+        async function editFilling(fillingId) {
+            const filling = customFillings.find(f => f.id === fillingId);
+            if (!filling) return;
+            
+            document.getElementById('fillingModalTitle').textContent = 'Modifier le Filling';
+            document.getElementById('fillingName').value = filling.name || '';
+            document.getElementById('fillingEmoji').value = filling.emoji || '🥞';
+            document.getElementById('fillingDescription').value = filling.description || '';
+            document.getElementById('fillingProductId').value = filling.productId || '';
+            document.getElementById('fillingOrder').value = filling.order || customFillings.length + 1;
+            document.getElementById('fillingForm').setAttribute('data-filling-id', fillingId);
+            document.getElementById('fillingModal').style.display = 'flex';
+        }
+        
+        // Sauvegarder un filling
+        async function saveFilling() {
+            const form = document.getElementById('fillingForm');
+            const fillingId = form.getAttribute('data-filling-id');
+            const name = document.getElementById('fillingName').value.trim();
+            const emoji = document.getElementById('fillingEmoji').value.trim();
+            const description = document.getElementById('fillingDescription').value.trim();
+            const productId = document.getElementById('fillingProductId').value.trim();
+            const order = parseInt(document.getElementById('fillingOrder').value) || customFillings.length + 1;
+            
+            if (!name || !emoji || !productId) {
+                showMessage('❌ Veuillez remplir tous les champs obligatoires (nom, emoji, ID produit)', 'error');
+                return;
+            }
+            
+            // Vérifier que l'ID produit n'existe pas déjà (sauf si on modifie)
+            if (!fillingId) {
+                const existing = customFillings.find(f => f.productId === productId);
+                if (existing) {
+                    showMessage('❌ Cet ID produit existe déjà !', 'error');
+                    return;
+                }
+            }
+            
+            try {
+                const fillingData = {
+                    name,
+                    emoji,
+                    description,
+                    productId,
+                    order,
+                    updatedAt: new Date()
+                };
+                
+                if (fillingId) {
+                    await db.collection('customFillings').doc(fillingId).update(fillingData);
+                    showMessage('✅ Filling modifié avec succès !', 'success');
+                } else {
+                    fillingData.createdAt = new Date();
+                    await db.collection('customFillings').add(fillingData);
+                    showMessage('✅ Filling ajouté avec succès !', 'success');
+                }
+                
+                document.getElementById('fillingModal').style.display = 'none';
+                await loadCustomFillings();
+                // Recharger les produits dans la page de commande
+                loadProductsForOrders();
+            } catch (error) {
+                console.error('Erreur lors de la sauvegarde du filling:', error);
+                showMessage('❌ Erreur: ' + error.message, 'error');
+            }
+        }
+        
+        // Supprimer un filling
+        async function deleteFilling(fillingId) {
+            if (!confirm('Êtes-vous sûr de vouloir supprimer ce filling ?')) return;
+            
+            try {
+                await db.collection('customFillings').doc(fillingId).delete();
+                showMessage('✅ Filling supprimé avec succès !', 'success');
+                await loadCustomFillings();
+                // Recharger les produits dans la page de commande
+                loadProductsForOrders();
+            } catch (error) {
+                console.error('Erreur lors de la suppression du filling:', error);
+                showMessage('❌ Erreur: ' + error.message, 'error');
+            }
+        }
+        
+        // Afficher le modal pour ajouter un snack
+        function showAddSnackModal() {
+            document.getElementById('snackModalTitle').textContent = 'Ajouter un Snack';
+            document.getElementById('snackForm').reset();
+            document.getElementById('snackForm').setAttribute('data-snack-id', '');
+            document.getElementById('snackModal').style.display = 'flex';
+        }
+        
+        // Afficher le modal pour modifier un snack
+        async function editSnack(snackId) {
+            const snack = customSnacks.find(s => s.id === snackId);
+            if (!snack) return;
+            
+            document.getElementById('snackModalTitle').textContent = 'Modifier le Snack';
+            document.getElementById('snackName').value = snack.name || '';
+            document.getElementById('snackEmoji').value = snack.emoji || '🍪';
+            document.getElementById('snackDescription').value = snack.description || '';
+            document.getElementById('snackProductId').value = snack.productId || '';
+            document.getElementById('snackPrice').value = snack.price || 0;
+            document.getElementById('snackForm').setAttribute('data-snack-id', snackId);
+            document.getElementById('snackModal').style.display = 'flex';
+        }
+        
+        // Sauvegarder un snack
+        async function saveSnack() {
+            const form = document.getElementById('snackForm');
+            const snackId = form.getAttribute('data-snack-id');
+            const name = document.getElementById('snackName').value.trim();
+            const emoji = document.getElementById('snackEmoji').value.trim();
+            const description = document.getElementById('snackDescription').value.trim();
+            const productId = document.getElementById('snackProductId').value.trim();
+            const price = parseFloat(document.getElementById('snackPrice').value) || 0;
+            
+            if (!name || !emoji || !productId) {
+                showMessage('❌ Veuillez remplir tous les champs obligatoires (nom, emoji, ID produit)', 'error');
+                return;
+            }
+            
+            // Vérifier que l'ID produit n'existe pas déjà (sauf si on modifie)
+            if (!snackId) {
+                const existing = customSnacks.find(s => s.productId === productId);
+                if (existing) {
+                    showMessage('❌ Cet ID produit existe déjà !', 'error');
+                    return;
+                }
+            }
+            
+            try {
+                const snackData = {
+                    name,
+                    emoji,
+                    description,
+                    productId,
+                    price,
+                    updatedAt: new Date()
+                };
+                
+                if (snackId) {
+                    await db.collection('customSnacks').doc(snackId).update(snackData);
+                    showMessage('✅ Snack modifié avec succès !', 'success');
+                } else {
+                    snackData.createdAt = new Date();
+                    await db.collection('customSnacks').add(snackData);
+                    showMessage('✅ Snack ajouté avec succès !', 'success');
+                }
+                
+                document.getElementById('snackModal').style.display = 'none';
+                await loadCustomSnacks();
+                // Recharger les produits dans la page de commande
+                loadProductsForOrders();
+            } catch (error) {
+                console.error('Erreur lors de la sauvegarde du snack:', error);
+                showMessage('❌ Erreur: ' + error.message, 'error');
+            }
+        }
+        
+        // Supprimer un snack
+        async function deleteSnack(snackId) {
+            if (!confirm('Êtes-vous sûr de vouloir supprimer ce snack ?')) return;
+            
+            try {
+                await db.collection('customSnacks').doc(snackId).delete();
+                showMessage('✅ Snack supprimé avec succès !', 'success');
+                await loadCustomSnacks();
+                // Recharger les produits dans la page de commande
+                loadProductsForOrders();
+            } catch (error) {
+                console.error('Erreur lors de la suppression du snack:', error);
+                showMessage('❌ Erreur: ' + error.message, 'error');
+            }
+        }
+        
+        // Charger et afficher les produits dans la page de commande
+        async function loadProductsForOrders() {
+            try {
+                // Charger les fillings
+                const fillingsSnapshot = await db.collection('customFillings').orderBy('order', 'asc').get();
+                const fillings = [];
+                fillingsSnapshot.forEach(doc => {
+                    fillings.push({ id: doc.id, ...doc.data() });
+                });
+                
+                // Charger les snacks
+                const snacksSnapshot = await db.collection('customSnacks').orderBy('name', 'asc').get();
+                const snacks = [];
+                snacksSnapshot.forEach(doc => {
+                    snacks.push({ id: doc.id, ...doc.data() });
+                });
+                
+                // Afficher les fillings (crêpes)
+                const crepesGrid = document.getElementById('crepesGrid');
+                if (crepesGrid) {
+                    if (fillings.length === 0) {
+                        crepesGrid.innerHTML = `
+                            <div style="text-align: center; padding: 20px; color: #666; background: #f8f9fa; border-radius: 8px; grid-column: 1 / -1;">
+                                Aucun filling configuré. Les administrateurs peuvent en ajouter dans l'onglet "Personnalisation".
+                            </div>
+                        `;
+                    } else {
+                        crepesGrid.innerHTML = fillings.map(filling => `
+                            <div class="product-card" onclick="selectProduct('${filling.productId}')">
+                                <div class="product-icon">${filling.emoji || '🥞'}</div>
+                                <div class="product-name">${filling.name}</div>
+                                <div class="product-price">FREE</div>
+                                <div class="product-description">${filling.description || ''}</div>
+                                <button class="order-btn" onclick="showClassModal('${filling.productId}', 0)">Commander</button>
+                            </div>
+                        `).join('');
+                    }
+                }
+                
+                // Afficher les snacks (uniquement s'il y en a en stock)
+                const snacksGrid = document.getElementById('snacksGrid');
+                const snacksSection = document.getElementById('snacksSection');
+                if (snacksGrid && snacksSection) {
+                    if (snacks.length === 0) {
+                        snacksSection.style.display = 'none';
+                    } else {
+                        // Vérifier le stock des snacks
+                        const program = getCurrentProgram();
+                        const snackStockDoc = await db.collection('snackStock').doc(program).get();
+                        const snackStock = snackStockDoc.exists ? snackStockDoc.data() : {};
+                        
+                        // Filtrer les snacks qui ont du stock
+                        const availableSnacks = snacks.filter(snack => {
+                            const stock = snackStock[snack.productId] || 0;
+                            return stock > 0;
+                        });
+                        
+                        if (availableSnacks.length === 0) {
+                            snacksSection.style.display = 'none';
+                        } else {
+                            snacksSection.style.display = 'block';
+                            snacksGrid.innerHTML = availableSnacks.map(snack => {
+                                const stock = snackStock[snack.productId] || 0;
+                                return `
+                                    <div class="product-card" onclick="selectProduct('${snack.productId}')">
+                                        <div class="product-icon">${snack.emoji || '🍪'}</div>
+                                        <div class="product-name">${snack.name}</div>
+                                        <div class="product-price">${snack.price || 0}€</div>
+                                        <div class="product-description">${snack.description || ''}</div>
+                                        <div style="font-size: 0.85rem; color: #28a745; margin-bottom: 10px;">Stock: ${stock}</div>
+                                        <button class="order-btn" onclick="showClassModal('${snack.productId}', ${snack.price || 0})">Commander</button>
+                                    </div>
+                                `;
+                            }).join('');
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Erreur lors du chargement des produits:', error);
+                const crepesGrid = document.getElementById('crepesGrid');
+                if (crepesGrid) {
+                    crepesGrid.innerHTML = `
+                        <div class="error">Erreur lors du chargement des produits: ${error.message}</div>
+                    `;
+                }
             }
         }
         
