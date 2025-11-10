@@ -186,6 +186,8 @@
             color: #666;
             font-size: 0.9rem;
             margin-bottom: 15px;
+            min-height: 40px;
+            flex: 1;
         }
 
         .order-btn {
@@ -3701,7 +3703,7 @@
                                 <div class="product-icon">${filling.emoji || '🥞'}</div>
                                 <div class="product-name">${filling.name}</div>
                                 <div class="product-price">FREE</div>
-                                <div class="product-description">${filling.description || ''}</div>
+                                <div class="product-description">${filling.description || '&nbsp;'}</div>
                                 <button class="order-btn" onclick="showClassModal('${filling.productId}', 0)">Commander</button>
                             </div>
                         `).join('');
@@ -3730,7 +3732,7 @@
                                     <div class="product-icon">${snack.emoji || '🍪'}</div>
                                     <div class="product-name">${snack.name}</div>
                                     <div class="product-price">${snack.price || 0}€</div>
-                                    <div class="product-description">${snack.description || ''}</div>
+                                    <div class="product-description">${snack.description || '&nbsp;'}</div>
                                     <div style="font-size: 0.85rem; margin-bottom: 10px; ${isAvailable ? 'color: #28a745;' : 'color: #dc3545;'}">
                                         ${isAvailable ? `Stock: ${stock}` : 'Stock: 0 (Indisponible)'}
                                     </div>
