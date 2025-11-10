@@ -893,21 +893,24 @@
             
             console.log('View switched to:', program);
             
-            // Reload stock data with new view (for admins on restock page)
+            // Recharger TOUTES les données pour synchroniser tous les onglets
+            
+            // 1. Recharger le stock (pour l'onglet restock et pour les commandes)
             if (currentUser && currentUser.role === 'admin') {
-                if (document.getElementById('restock').classList.contains('active')) {
-                    await loadStockData();
-                }
+                await loadStockData();
             }
             
-            // Reload orders with new view
+            // 2. Recharger les commandes admin (onglet admin)
             if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'member')) {
-                if (document.getElementById('admin').classList.contains('active')) {
-                    loadAllOrders();
-                }
+                loadAllOrders();
             }
             
-            // IMPORTANT: Recharger le stock et vérifier les boutons de commande pour TOUS
+            // 3. Recharger mes commandes (onglet my-orders)
+            if (currentUser) {
+                loadMyOrders();
+            }
+            
+            // 4. Recharger le stock et vérifier les boutons de commande (onglet orders)
             // Cela permet aux étudiants et admins de voir le bon stock après changement de vue
             setTimeout(async () => {
                 await checkStockOnLoad();
