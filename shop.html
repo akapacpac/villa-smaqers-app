@@ -1049,11 +1049,14 @@
             document.getElementById('selected-class-info').style.display = 'none';
             document.getElementById('modal-confirm-btn').disabled = true;
             
-            // Afficher la section de sélection par défaut
-            showClassSelection();
-            
-            // Afficher la modal
+            // Afficher la modal d'abord
             document.getElementById('classModal').classList.add('show');
+            
+            // Afficher la section de sélection par défaut après un court délai
+            // pour s'assurer que la modal est bien rendue
+            setTimeout(() => {
+                showClassSelection();
+            }, 50);
         }
 
         function hideClassModal() {
@@ -2591,12 +2594,21 @@
             const selectBtn = document.getElementById('select-class-btn');
             const createBtn = document.getElementById('create-class-btn');
             
-            if (selectionSection) selectionSection.style.display = 'block';
-            if (creationSection) creationSection.style.display = 'none';
+            if (selectionSection) {
+                selectionSection.style.display = 'block';
+                selectionSection.style.visibility = 'visible';
+            }
+            if (creationSection) {
+                creationSection.style.display = 'none';
+                creationSection.style.visibility = 'hidden';
+            }
             if (selectBtn) selectBtn.className = 'btn';
             if (createBtn) createBtn.className = 'btn btn-secondary';
             
-            loadClasses();
+            // Charger les classes avec un petit délai pour s'assurer que la section est visible
+            setTimeout(() => {
+                loadClasses();
+            }, 100);
         }
         
         // Show class creation
@@ -2606,8 +2618,14 @@
             const selectBtn = document.getElementById('select-class-btn');
             const createBtn = document.getElementById('create-class-btn');
             
-            if (selectionSection) selectionSection.style.display = 'none';
-            if (creationSection) creationSection.style.display = 'block';
+            if (selectionSection) {
+                selectionSection.style.display = 'none';
+                selectionSection.style.visibility = 'hidden';
+            }
+            if (creationSection) {
+                creationSection.style.display = 'block';
+                creationSection.style.visibility = 'visible';
+            }
             if (selectBtn) selectBtn.className = 'btn btn-secondary';
             if (createBtn) createBtn.className = 'btn';
         }
