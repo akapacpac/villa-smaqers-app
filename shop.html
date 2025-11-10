@@ -774,6 +774,27 @@
                         </div>
                     </div>
 
+                    <!-- Gestion du Stock des Snacks -->
+                    <div style="background: #f8f9fa; padding: 25px; border-radius: 12px; margin-bottom: 25px;">
+                        <h3 style="margin: 0 0 20px 0; color: #333; font-size: 1.2rem;">🍪 Gestion du Stock des Snacks</h3>
+                        
+                        <div style="background: white; padding: 20px; border-radius: 10px; border: 2px solid #e1e5e9;">
+                            <p style="color: #666; margin-bottom: 20px; font-size: 0.9rem;">
+                                Gérez le stock de chaque snack. Les snacks n'apparaîtront dans la page de commande que s'ils ont un stock > 0.
+                            </p>
+                            
+                            <div id="snacksStockManagement" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                                <div class="loading">Chargement des snacks...</div>
+                            </div>
+                            
+                            <div style="margin-top: 20px;">
+                                <button onclick="resetAllSnacksStock()" style="background: linear-gradient(135deg, #dc3545, #c82333); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9rem;">
+                                    🔄 Reset Tous les Snacks
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Historique des restocks -->
                     <div style="background: #f8f9fa; padding: 25px; border-radius: 12px;">
                         <h3 style="margin: 0 0 20px 0; color: #333; font-size: 1.2rem;">📈 Historique des Restocks</h3>
@@ -2048,6 +2069,9 @@
                 
                 // Mettre à jour l'affichage
                 updateStockDisplay();
+                
+                // Charger le stock des snacks
+                await loadSnacksStock();
                 
                 // Charger l'historique des restocks
                 loadRestockHistory();
