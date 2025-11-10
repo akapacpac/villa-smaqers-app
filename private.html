@@ -251,8 +251,23 @@
             </div>
 
             <div id="adminContent" style="display: none;">
-                <h2>Gestion des utilisateurs</h2>
-                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2>Gestion des utilisateurs</h2>
+                    
+                    <!-- View toggle for Bachelor/Master -->
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <label style="font-weight: bold; color: #333;">Vue:</label>
+                        <button id="view-bachelor-btn" onclick="switchView('bachelor')" style="padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; background: #667eea; color: white; font-weight: 600;">
+                            👁️ Bachelor
+                        </button>
+                        <button id="view-master-btn" onclick="switchView('master')" style="padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; background: #6c757d; color: white; font-weight: 600;">
+                            👁️ Master
+                        </button>
+                        <span id="current-view-indicator" style="font-size: 0.9rem; color: #666; margin-left: 10px;">
+                            (Bachelor)
+                        </span>
+                    </div>
+                </div>
                 
                 <!-- Statistiques -->
                 <div class="stats">
@@ -272,6 +287,14 @@
                         <div class="stat-number" id="adminCount">-</div>
                         <div class="stat-label">Administrateurs</div>
                     </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="bachelorCount">-</div>
+                        <div class="stat-label">Bachelor</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="masterCount">-</div>
+                        <div class="stat-label">Master</div>
+                    </div>
                 </div>
 
                 <!-- Tableau des utilisateurs -->
@@ -284,6 +307,7 @@
 
     <script>
         let currentUser = null;
+        let currentView = 'bachelor'; // Default view
 
         function showMessage(message, type) {
             const messageEl = document.createElement('div');
@@ -316,6 +340,32 @@
             return classes[role] || 'role-student';
         }
 
+        // Switch view between Bachelor and Master
+        function switchView(program) {
+            currentView = program;
+            updateViewButtons();
+            loadUsers(); // Reload users with new filter
+        }
+        
+        // Update view toggle buttons
+        function updateViewButtons() {
+            const bachelorBtn = document.getElementById('view-bachelor-btn');
+            const masterBtn = document.getElementById('view-master-btn');
+            const indicator = document.getElementById('current-view-indicator');
+            
+            if (bachelorBtn && masterBtn) {
+                if (currentView === 'bachelor') {
+                    bachelorBtn.style.background = '#667eea';
+                    masterBtn.style.background = '#6c757d';
+                    if (indicator) indicator.textContent = '(Bachelor)';
+                } else {
+                    bachelorBtn.style.background = '#6c757d';
+                    masterBtn.style.background = '#667eea';
+                    if (indicator) indicator.textContent = '(Master)';
+                }
+            }
+        }
+        
         async function loadUsers() {
             if (!currentUser || currentUser.role !== 'admin') {
                 document.getElementById('accessDenied').style.display = 'block';
@@ -340,6 +390,8 @@
                 let studentCount = 0;
                 let memberCount = 0;
                 let adminCount = 0;
+                let bachelorCount = 0;
+                let masterCount = 0;
 
                 let tableHTML = `
                     <table class="users-table">
@@ -347,6 +399,7 @@
                             <tr>
                                 <th>Nom complet</th>
                                 <th>Email</th>
+                                <th>Programme</th>
                                 <th>Rôle actuel</th>
                                 <th>Nouveau rôle</th>
                                 <th>Date d'inscription</th>
@@ -359,7 +412,17 @@
                 querySnapshot.forEach((doc) => {
                     const userData = doc.data();
                     
+                    // Filter by program if currentView is set
+                    const userProgram = userData.program || 'bachelor';
+                    if (currentView && userProgram !== currentView) {
+                        return; // Skip users not matching current view
+                    }
+                    
                     totalUsers++;
+                    
+                    // Count by program
+                    if (userProgram === 'bachelor') bachelorCount++;
+                    if (userProgram === 'master') masterCount++;
                     
                     switch (userData.role) {
                         case 'student': studentCount++; break;
@@ -368,6 +431,8 @@
                     }
 
                     const fullName = `${userData.firstName || 'N/A'} ${userData.lastName || 'N/A'}`;
+                    const programText = userProgram === 'master' ? 'Master' : 
+                                       userProgram === 'bachelor' ? 'Bachelor' : 'Non spécifié';
                     const createdAt = userData.createdAt ? 
                         (userData.createdAt.toDate ? 
                             userData.createdAt.toDate().toLocaleDateString('fr-FR') : 
@@ -378,6 +443,7 @@
                         <tr>
                             <td>${fullName}</td>
                             <td>${userData.email}</td>
+                            <td><span class="role-badge" style="background: ${userProgram === 'master' ? '#667eea' : '#28a745'}; color: white;">${programText}</span></td>
                             <td><span class="role-badge ${getRoleClass(userData.role)}">${getRoleText(userData.role)}</span></td>
                             <td>
                                 <select id="roleSelect_${doc.id}" class="role-select">
@@ -411,6 +477,8 @@
                 document.getElementById('studentCount').textContent = studentCount;
                 document.getElementById('memberCount').textContent = memberCount;
                 document.getElementById('adminCount').textContent = adminCount;
+                document.getElementById('bachelorCount').textContent = bachelorCount;
+                document.getElementById('masterCount').textContent = masterCount;
 
                 document.getElementById('usersTable').innerHTML = tableHTML;
                 
