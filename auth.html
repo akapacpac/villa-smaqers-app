@@ -186,6 +186,18 @@
                     <input type="password" id="signupPassword" placeholder="Votre mot de passe" required>
                 </div>
                 
+                <div class="form-group">
+                    <label>Programme *</label>
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button type="button" id="program-bachelor" class="btn" onclick="selectProgram('bachelor')" style="flex: 1; background: #667eea;">
+                            🎓 Bachelor
+                        </button>
+                        <button type="button" id="program-master" class="btn" onclick="selectProgram('master')" style="flex: 1; background: #6c757d;">
+                            🎓 Master
+                        </button>
+                    </div>
+                    <input type="hidden" id="signupProgram" value="" required>
+                </div>
                 
                 <button type="submit" class="btn">
                     Créer le compte
@@ -201,6 +213,23 @@
     </div>
 
     <script>
+        // Select program (Bachelor/Master)
+        function selectProgram(program) {
+            document.getElementById('signupProgram').value = program;
+            
+            // Update button styles
+            const bachelorBtn = document.getElementById('program-bachelor');
+            const masterBtn = document.getElementById('program-master');
+            
+            if (program === 'bachelor') {
+                bachelorBtn.style.background = '#667eea';
+                masterBtn.style.background = '#6c757d';
+            } else {
+                bachelorBtn.style.background = '#6c757d';
+                masterBtn.style.background = '#667eea';
+            }
+        }
+        
         function showError(message) {
             const errorEl = document.getElementById('errorMessage');
             const successEl = document.getElementById('successMessage');
@@ -295,7 +324,13 @@
             const lastName = document.getElementById('signupLastName').value;
             const email = document.getElementById('signupEmail').value;
             const password = document.getElementById('signupPassword').value;
+            const program = document.getElementById('signupProgram').value;
             const role = 'student'; // Tous les nouveaux comptes sont des étudiants
+            
+            if (!program) {
+                showError('Veuillez sélectionner un programme (Bachelor ou Master)');
+                return;
+            }
             
             try {
                 // Créer le compte Firebase
@@ -311,6 +346,7 @@
                     lastName: lastName,
                     email: email,
                     role: role,
+                    program: program, // Bachelor or Master
                     createdAt: new Date()
                 });
                 
@@ -340,6 +376,7 @@
                                 lastName: lastName,
                                 email: email,
                                 role: role,
+                                program: program || 'bachelor', // Bachelor or Master
                                 createdAt: new Date(),
                                 emailVerified: user.emailVerified
                             });
