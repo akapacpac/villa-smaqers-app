@@ -1989,16 +1989,88 @@
         async function loadRestockHistory() {
             try {
                 const program = getCurrentProgram();
+                const restockHistoryDiv = document.getElementById('restockHistory');
+                if (!restockHistoryDiv) {
+                    console.error('Element restockHistory non trouvé');
+                    return;
+                }
                 
                 // Filtrer l'historique par programme
-                const historySnapshot = await db.collection('restockHistory')
-                    .where('program', '==', program)
-                    .orderBy('timestamp', 'desc')
-                    .limit(10)
-                    .get();
+                // Note: Si l'index composite n'existe pas, on récupère tout et on filtre/trie en JavaScript
+                let historySnapshot;
+                try {
+                    historySnapshot = await db.collection('restockHistory')
+                        .where('program', '==', program)
+                        .orderBy('timestamp', 'desc')
+                        .limit(10)
+                        .get();
+                } catch (error) {
+                    // Si l'index composite n'existe pas, récupérer tout et filtrer en JavaScript
+                    console.warn('Index composite manquant, récupération de tous les restocks:', error);
+                    const allHistory = await db.collection('restockHistory').get();
+                    const filteredDocs = [];
+                    allHistory.forEach(doc => {
+                        const data = doc.data();
+                        if (data.program === program) {
+                            filteredDocs.push({ id: doc.id, data: data });
+                        }
+                    });
+                    // Trier par timestamp (le plus récent en premier)
+                    filteredDocs.sort((a, b) => {
+                        const timeA = a.data.timestamp?.toDate ? a.data.timestamp.toDate().getTime() : 
+                                     (a.data.timestamp?.getTime ? a.data.timestamp.getTime() : 
+                                     (new Date(a.data.timestamp || 0)).getTime());
+                        const timeB = b.data.timestamp?.toDate ? b.data.timestamp.toDate().getTime() : 
+                                     (b.data.timestamp?.getTime ? b.data.timestamp.getTime() : 
+                                     (new Date(b.data.timestamp || 0)).getTime());
+                        return timeB - timeA; // Descendant
+                    });
+                    // Limiter à 10
+                    filteredDocs.splice(10);
+                    
+                    if (filteredDocs.length === 0) {
+                        restockHistoryDiv.innerHTML = `
+                            <div style="text-align: center; padding: 20px; color: #666;">
+                                Aucun restock effectué pour le moment (${program === 'bachelor' ? 'Bachelor' : 'Master'})
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    let historyHTML = `<div style="display: grid; gap: 10px;">`;
+                    filteredDocs.forEach(item => {
+                        const data = item.data;
+                        const date = data.timestamp?.toDate ? data.timestamp.toDate() : 
+                                   (data.timestamp?.getTime ? new Date(data.timestamp) : 
+                                   new Date(data.timestamp || new Date()));
+                        const dateStr = date.toLocaleDateString('fr-FR') + ' ' + date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                        
+                        const quantityText = data.type === 'crepes' 
+                            ? `+${data.quantity} crêpes`
+                            : `${data.type}: ${data.quantity || 'N/A'}`;
+                        
+                        historyHTML += `
+                            <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #28a745; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                                    <div>
+                                        <strong style="color: #28a745; font-size: 1.1rem;">${quantityText}</strong>
+                                        <div style="font-size: 0.9rem; color: #666;">par ${data.adminName || 'Admin'} (${data.program === 'bachelor' ? 'Bachelor' : 'Master'})</div>
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <div style="font-size: 0.9rem; color: #666;">${dateStr}</div>
+                                        ${data.previousStock !== undefined ? `<div style="font-size: 0.8rem; color: #999;">Stock: ${data.previousStock} → ${data.newStock}</div>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    historyHTML += `</div>`;
+                    restockHistoryDiv.innerHTML = historyHTML;
+                    return;
+                }
                 
                 if (historySnapshot.empty) {
-                    document.getElementById('restockHistory').innerHTML = `
+                    restockHistoryDiv.innerHTML = `
                         <div style="text-align: center; padding: 20px; color: #666;">
                             Aucun restock effectué pour le moment (${program === 'bachelor' ? 'Bachelor' : 'Master'})
                         </div>
@@ -2012,8 +2084,10 @@
                 
                 historySnapshot.forEach(doc => {
                     const data = doc.data();
-                    const date = data.timestamp.toDate ? data.timestamp.toDate() : new Date(data.timestamp);
-                    const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+                    const date = data.timestamp?.toDate ? data.timestamp.toDate() : 
+                               (data.timestamp?.getTime ? new Date(data.timestamp) : 
+                               new Date(data.timestamp || new Date()));
+                    const dateStr = date.toLocaleDateString('fr-FR') + ' ' + date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
                     
                     const quantityText = data.type === 'reset' ? '🔄 Reset' : 
                                        data.type === 'filling' ? `${getProductName(data.productType)}: ${data.quantity === 'unlimited' ? '∞' : data.quantity}` :
