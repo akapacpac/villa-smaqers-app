@@ -2574,20 +2574,31 @@
                 return;
             }
             
-            // Afficher chaque horaire sur une ligne compacte
-            classesList.innerHTML = allSchedules.map(item => {
+            // Filtrer les classes expirées - ne garder que celles dont la deadline n'est pas passée
+            const now = new Date();
+            const validSchedules = allSchedules.filter(item => {
                 const deliveryTime = calculateDeliveryTime(item.startTime, item.endTime);
                 const deadline = calculateDeadline(deliveryTime);
-                const now = new Date();
                 const deadlineDate = new Date(deadline);
-                const isPast = deadlineDate < now;
+                return deadlineDate >= now;
+            });
+            
+            if (validSchedules.length === 0) {
+                classesList.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">Aucun horaire disponible (tous les horaires sont expirés)</p>';
+                return;
+            }
+            
+            // Afficher chaque horaire sur une ligne compacte (seulement les non-expirés)
+            classesList.innerHTML = validSchedules.map(item => {
+                const deliveryTime = calculateDeliveryTime(item.startTime, item.endTime);
+                const deadline = calculateDeadline(deliveryTime);
                 
                 return `
                     <div class="schedule-line" 
                          onclick="selectClassSchedule('${item.classId}', ${item.scheduleIndex})"
-                         style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; margin: 3px 0; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; background: ${isPast ? '#f5f5f5' : 'white'}; transition: all 0.2s; ${isPast ? 'opacity: 0.6;' : ''}"
-                         onmouseover="if (!this.style.opacity || this.style.opacity !== '0.6') this.style.background='#f0f4ff'"
-                         onmouseout="if (!this.style.opacity || this.style.opacity !== '0.6') this.style.background='${isPast ? '#f5f5f5' : 'white'}'">
+                         style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; margin: 3px 0; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; background: white; transition: all 0.2s;"
+                         onmouseover="this.style.background='#f0f4ff'"
+                         onmouseout="this.style.background='white'">
                         <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
                             <div style="font-weight: bold; color: #6c5ce7; min-width: 80px; font-size: 14px;">
                                 📚 Salle ${item.room}
@@ -2597,7 +2608,6 @@
                             </div>
                             <div style="font-size: 12px; color: #666; flex: 1;">
                                 Livraison: ${formatTime(deliveryTime)} | Deadline: ${formatTime(deadline)}
-                                ${isPast ? ' <span style="color: red; font-weight: bold;">(Expiré)</span>' : ''}
                             </div>
                         </div>
                     </div>
@@ -2776,11 +2786,19 @@
             const [startHour, startMin] = startTime.split(':').map(Number);
             const [endHour, endMin] = endTime.split(':').map(Number);
             
-            const startDate = new Date();
+            const now = new Date();
+            const startDate = new Date(now);
             startDate.setHours(startHour, startMin, 0, 0);
             
-            const endDate = new Date();
+            const endDate = new Date(now);
             endDate.setHours(endHour, endMin, 0, 0);
+            
+            // Si l'heure de fin est avant l'heure de début (ex: 22:30 - 23:30), 
+            // cela signifie que c'est le même jour, donc pas besoin d'ajouter un jour
+            // Mais si endHour < startHour (ex: 23:00 - 01:00), alors on ajoute un jour à endDate
+            if (endHour < startHour || (endHour === startHour && endMin < startMin)) {
+                endDate.setDate(endDate.getDate() + 1);
+            }
             
             // Middle time
             const middleTime = new Date((startDate.getTime() + endDate.getTime()) / 2);
