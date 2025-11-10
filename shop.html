@@ -1004,10 +1004,17 @@
             } else if (tabName === 'restock') {
                 if (currentUser && currentUser.role === 'admin') {
                     loadStockData();
+                    // Charger l'historique des restocks
+                    setTimeout(() => {
+                        loadRestockHistory();
+                    }, 500);
                 } else {
-                    document.getElementById('restockHistory').innerHTML = `
-                        <div class="error">Accès refusé. Seuls les administrateurs peuvent accéder à cette section.</div>
-                    `;
+                    const restockHistoryDiv = document.getElementById('restockHistory');
+                    if (restockHistoryDiv) {
+                        restockHistoryDiv.innerHTML = `
+                            <div class="error">Accès refusé. Seuls les administrateurs peuvent accéder à cette section.</div>
+                        `;
+                    }
                 }
             }
         }
