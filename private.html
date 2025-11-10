@@ -127,10 +127,11 @@
             border: 1px solid #ddd;
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            z-index: 1000;
+            z-index: 10000;
             min-width: 150px;
             display: none !important;
             margin-top: 5px;
+            white-space: nowrap;
         }
         
         .dropdown-menu.show {
@@ -561,6 +562,9 @@
             const dropdown = document.getElementById(`roleDropdown_${userId}`);
             if (dropdown) {
                 dropdown.classList.add('show');
+                console.log('Role dropdown opened for user:', userId);
+            } else {
+                console.error('Role dropdown not found for user:', userId);
             }
         }
         
@@ -578,6 +582,9 @@
             const dropdown = document.getElementById(`programDropdown_${userId}`);
             if (dropdown) {
                 dropdown.classList.add('show');
+                console.log('Program dropdown opened for user:', userId);
+            } else {
+                console.error('Program dropdown not found for user:', userId);
             }
         }
         
