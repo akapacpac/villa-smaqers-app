@@ -1636,6 +1636,14 @@
                     if (document.getElementById('admin').classList.contains('active')) {
                         loadAllOrders();
                     }
+                    if (document.getElementById('restock').classList.contains('active')) {
+                        loadStockData();
+                    }
+                    
+                    // Recharger le stock et vérifier les boutons de commande après chargement utilisateur
+                    setTimeout(async () => {
+                        await checkStockOnLoad();
+                    }, 500);
                 } catch (error) {
                     console.error('Erreur lors du chargement du profil:', error);
                     showMessage('Erreur lors du chargement du profil', 'error');
