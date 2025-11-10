@@ -480,8 +480,8 @@
                     <div id="crepesGrid" class="product-grid">
                         <div class="loading">Chargement des produits...</div>
                     </div>
-                </div>
-                
+                    </div>
+
                 <!-- Section Snacks (affichée uniquement s'il y a des snacks en stock) -->
                 <div id="snacksSection" style="display: none; margin-bottom: 40px; border-top: 2px solid #e1e5e9; padding-top: 40px;">
                     <h3 style="margin-bottom: 20px; color: #333; font-size: 1.3rem; border-bottom: 2px solid #667eea; padding-bottom: 10px;">🍪 Snacks</h3>
@@ -847,10 +847,10 @@
                         
                         <div id="snacksList" style="display: grid; gap: 15px;">
                             <div class="loading">Chargement des snacks...</div>
-                        </div>
-                    </div>
                 </div>
             </div>
+        </div>
+    </div>
 
     <!-- Modal pour la classe -->
     <div id="classModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; overflow-y: auto;">
@@ -2169,9 +2169,9 @@
                 try {
                     historySnapshot = await db.collection('restockHistory')
                         .where('program', '==', program)
-                        .orderBy('timestamp', 'desc')
-                        .limit(10)
-                        .get();
+                    .orderBy('timestamp', 'desc')
+                    .limit(10)
+                    .get();
                 } catch (error) {
                     // Si l'index composite n'existe pas, récupérer tout et filtrer en JavaScript
                     console.warn('Index composite manquant, récupération de tous les restocks:', error);
@@ -3138,12 +3138,34 @@
                 fillingsSnapshot.forEach(doc => {
                     customFillings.push({ id: doc.id, ...doc.data() });
                 });
+                
+                // Si aucun filling n'existe, créer les fillings par défaut
+                if (customFillings.length === 0) {
+                    const defaultFillings = [
+                        { name: 'Crêpes Sucre', emoji: '🥞', description: 'Crêpes avec sucre et beurre', productId: 'crepes-sucre', order: 1 },
+                        { name: 'Crêpes Nutella', emoji: '🍫', description: 'Crêpes avec Nutella', productId: 'crepes-nutella', order: 2 },
+                        { name: 'Crêpes Confiture', emoji: '🍓', description: 'Crêpes avec confiture', productId: 'crepes-confiture', order: 3 }
+                    ];
+                    
+                    for (const filling of defaultFillings) {
+                        const docRef = await db.collection('customFillings').add({
+                            ...filling,
+                            createdAt: new Date(),
+                            updatedAt: new Date()
+                        });
+                        customFillings.push({ id: docRef.id, ...filling });
+                    }
+                }
+                
                 displayFillings();
             } catch (error) {
                 console.error('Erreur lors du chargement des fillings:', error);
-                document.getElementById('fillingsList').innerHTML = `
-                    <div class="error">Erreur lors du chargement des fillings: ${error.message}</div>
-                `;
+                const fillingsList = document.getElementById('fillingsList');
+                if (fillingsList) {
+                    fillingsList.innerHTML = `
+                        <div class="error">Erreur lors du chargement des fillings: ${error.message}</div>
+                    `;
+                }
             }
         }
         
@@ -3178,27 +3200,31 @@
                 return;
             }
             
-            fillingsList.innerHTML = customFillings.map((filling, index) => `
-                <div style="background: white; padding: 20px; border-radius: 12px; border: 2px solid #e1e5e9; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <div style="display: flex; align-items: center; gap: 15px;">
-                            <span style="font-size: 2rem;">${filling.emoji || '🥞'}</span>
-                            <div>
-                                <h4 style="margin: 0; color: #333; font-size: 1.2rem;">${filling.name}</h4>
-                                <p style="margin: 5px 0 0 0; color: #666; font-size: 0.9rem;">${filling.description || ''}</p>
+            // Trier par ordre
+            const sortedFillings = [...customFillings].sort((a, b) => (a.order || 999) - (b.order || 999));
+            
+            fillingsList.innerHTML = sortedFillings.map((filling, index) => `
+                <div style="background: white; padding: 20px; border-radius: 12px; border: 2px solid #e1e5e9; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 20px;">
+                        <div style="display: flex; align-items: flex-start; gap: 15px; flex: 1;">
+                            <span style="font-size: 2.5rem; line-height: 1;">${filling.emoji || '🥞'}</span>
+                            <div style="flex: 1;">
+                                <h4 style="margin: 0 0 8px 0; color: #333; font-size: 1.3rem; font-weight: 600;">${filling.name || 'Sans nom'}</h4>
+                                <p style="margin: 0 0 10px 0; color: #666; font-size: 0.95rem; line-height: 1.4;">${filling.description || 'Aucune description'}</p>
+                                <div style="font-size: 0.85rem; color: #999; display: flex; gap: 15px; flex-wrap: wrap;">
+                                    <span><strong>ID:</strong> <code style="background: #f0f0f0; padding: 2px 6px; border-radius: 3px;">${filling.productId || 'N/A'}</code></span>
+                                    <span><strong>Ordre:</strong> ${filling.order || index + 1}</span>
+                                </div>
                             </div>
                         </div>
-                        <div style="display: flex; gap: 10px;">
-                            <button onclick="editFilling('${filling.id}')" style="background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">
+                        <div style="display: flex; gap: 10px; flex-shrink: 0;">
+                            <button onclick="editFilling('${filling.id}')" style="background: #007bff; color: white; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600; white-space: nowrap; transition: all 0.2s;" onmouseover="this.style.background='#0056b3'" onmouseout="this.style.background='#007bff'">
                                 ✏️ Modifier
                             </button>
-                            <button onclick="deleteFilling('${filling.id}')" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">
+                            <button onclick="deleteFilling('${filling.id}')" style="background: #dc3545; color: white; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600; white-space: nowrap; transition: all 0.2s;" onmouseover="this.style.background='#c82333'" onmouseout="this.style.background='#dc3545'">
                                 🗑️ Supprimer
                             </button>
                         </div>
-                    </div>
-                    <div style="font-size: 0.85rem; color: #999;">
-                        ID: ${filling.productId || 'N/A'} | Ordre: ${filling.order || index + 1}
                     </div>
                 </div>
             `).join('');
@@ -3219,27 +3245,27 @@
             }
             
             snacksList.innerHTML = customSnacks.map(snack => `
-                <div style="background: white; padding: 20px; border-radius: 12px; border: 2px solid #e1e5e9; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <div style="display: flex; align-items: center; gap: 15px;">
-                            <span style="font-size: 2rem;">${snack.emoji || '🍪'}</span>
-                            <div>
-                                <h4 style="margin: 0; color: #333; font-size: 1.2rem;">${snack.name}</h4>
-                                <p style="margin: 5px 0 0 0; color: #666; font-size: 0.9rem;">${snack.description || ''}</p>
-                                <p style="margin: 5px 0 0 0; color: #28a745; font-weight: 600;">Prix: ${snack.price || 0}€</p>
+                <div style="background: white; padding: 20px; border-radius: 12px; border: 2px solid #e1e5e9; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 20px;">
+                        <div style="display: flex; align-items: flex-start; gap: 15px; flex: 1;">
+                            <span style="font-size: 2.5rem; line-height: 1;">${snack.emoji || '🍪'}</span>
+                            <div style="flex: 1;">
+                                <h4 style="margin: 0 0 8px 0; color: #333; font-size: 1.3rem; font-weight: 600;">${snack.name || 'Sans nom'}</h4>
+                                <p style="margin: 0 0 10px 0; color: #666; font-size: 0.95rem; line-height: 1.4;">${snack.description || 'Aucune description'}</p>
+                                <div style="font-size: 0.85rem; color: #999; display: flex; gap: 15px; flex-wrap: wrap;">
+                                    <span><strong>Prix:</strong> <span style="color: #28a745; font-weight: 600; font-size: 1rem;">${snack.price || 0}€</span></span>
+                                    <span><strong>ID:</strong> <code style="background: #f0f0f0; padding: 2px 6px; border-radius: 3px;">${snack.productId || 'N/A'}</code></span>
+                                </div>
                             </div>
                         </div>
-                        <div style="display: flex; gap: 10px;">
-                            <button onclick="editSnack('${snack.id}')" style="background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">
+                        <div style="display: flex; gap: 10px; flex-shrink: 0;">
+                            <button onclick="editSnack('${snack.id}')" style="background: #007bff; color: white; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600; white-space: nowrap; transition: all 0.2s;" onmouseover="this.style.background='#0056b3'" onmouseout="this.style.background='#007bff'">
                                 ✏️ Modifier
                             </button>
-                            <button onclick="deleteSnack('${snack.id}')" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">
+                            <button onclick="deleteSnack('${snack.id}')" style="background: #dc3545; color: white; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600; white-space: nowrap; transition: all 0.2s;" onmouseover="this.style.background='#c82333'" onmouseout="this.style.background='#dc3545'">
                                 🗑️ Supprimer
                             </button>
                         </div>
-                    </div>
-                    <div style="font-size: 0.85rem; color: #999;">
-                        ID: ${snack.productId || 'N/A'}
                     </div>
                 </div>
             `).join('');
