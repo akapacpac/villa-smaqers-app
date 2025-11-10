@@ -3719,8 +3719,11 @@
                     } else {
                         // Vérifier le stock des snacks
                         const program = getCurrentProgram();
+                        console.log('Loading snacks for program:', program, 'Current user:', currentUser?.role, 'Current view:', currentView);
+                        
                         const snackStockDoc = await db.collection('snackStock').doc(program).get();
                         const snackStock = snackStockDoc.exists ? snackStockDoc.data() : {};
+                        console.log('Snack stock data:', snackStock);
                         
                         // Afficher tous les snacks, mais indiquer le stock et désactiver si stock = 0
                         snacksSection.style.display = 'block';
@@ -3743,6 +3746,8 @@
                             `;
                         }).join('');
                     }
+                } else {
+                    console.error('snacksGrid or snacksSection not found!', { snacksGrid, snacksSection });
                 }
             } catch (error) {
                 console.error('Erreur lors du chargement des produits:', error);
