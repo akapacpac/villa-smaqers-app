@@ -3426,6 +3426,171 @@
             }
         }
         
+        // Charger et afficher le stock des snacks dans l'onglet Restock
+        async function loadSnacksStock() {
+            try {
+                const program = getCurrentProgram();
+                const snacksStockManagement = document.getElementById('snacksStockManagement');
+                if (!snacksStockManagement) return;
+                
+                // Charger les snacks personnalisés
+                const snacksSnapshot = await db.collection('customSnacks').orderBy('name', 'asc').get();
+                const snacks = [];
+                snacksSnapshot.forEach(doc => {
+                    snacks.push({ id: doc.id, ...doc.data() });
+                });
+                
+                if (snacks.length === 0) {
+                    snacksStockManagement.innerHTML = `
+                        <div style="text-align: center; padding: 20px; color: #666; background: #f8f9fa; border-radius: 8px; grid-column: 1 / -1;">
+                            Aucun snack configuré. Ajoutez des snacks dans l'onglet "Personnalisation".
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Charger le stock actuel des snacks
+                const snackStockDoc = await db.collection('snackStock').doc(program).get();
+                const snackStock = snackStockDoc.exists ? snackStockDoc.data() : {};
+                
+                // Afficher chaque snack avec son stock
+                snacksStockManagement.innerHTML = snacks.map(snack => {
+                    const currentStock = snackStock[snack.productId] || 0;
+                    return `
+                        <div style="padding: 15px; border: 1px solid #e1e5e9; border-radius: 8px;">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                                <span style="font-size: 1.5rem;">${snack.emoji || '🍪'}</span>
+                                <div style="flex: 1;">
+                                    <h4 style="margin: 0; color: #333;">${snack.name}</h4>
+                                    <p style="margin: 5px 0 0 0; color: #666; font-size: 0.85rem;">${snack.description || ''}</p>
+                                </div>
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #555;">Stock actuel :</label>
+                                <div style="font-size: 1.1rem; font-weight: bold; color: #007bff;" id="snackStock_${snack.productId}">${currentStock}</div>
+                            </div>
+                            <div style="display: flex; gap: 10px; align-items: end;">
+                                <div style="flex: 1;">
+                                    <input type="number" id="snackQty_${snack.productId}" min="0" max="10000" placeholder="Quantité" 
+                                           style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem;">
+                                </div>
+                                <button onclick="updateSnackStock('${snack.productId}', '${snack.name}')" 
+                                        style="background: #007bff; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">
+                                    Mettre à jour
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Erreur lors du chargement du stock des snacks:', error);
+                const snacksStockManagement = document.getElementById('snacksStockManagement');
+                if (snacksStockManagement) {
+                    snacksStockManagement.innerHTML = `
+                        <div class="error">Erreur lors du chargement: ${error.message}</div>
+                    `;
+                }
+            }
+        }
+        
+        // Mettre à jour le stock d'un snack
+        async function updateSnackStock(productId, snackName) {
+            try {
+                const program = getCurrentProgram();
+                const qtyInput = document.getElementById(`snackQty_${productId}`);
+                if (!qtyInput) return;
+                
+                const quantity = parseInt(qtyInput.value);
+                if (isNaN(quantity) || quantity < 0) {
+                    showMessage('❌ Veuillez entrer une quantité valide (≥ 0)', 'error');
+                    return;
+                }
+                
+                // Charger le stock actuel
+                const snackStockDoc = await db.collection('snackStock').doc(program).get();
+                const snackStock = snackStockDoc.exists ? snackStockDoc.data() : {};
+                const previousStock = snackStock[productId] || 0;
+                
+                // Mettre à jour le stock
+                snackStock[productId] = quantity;
+                await db.collection('snackStock').doc(program).set({
+                    ...snackStock,
+                    program: program,
+                    lastUpdated: new Date()
+                });
+                
+                // Mettre à jour l'affichage
+                const stockDisplay = document.getElementById(`snackStock_${productId}`);
+                if (stockDisplay) {
+                    stockDisplay.textContent = quantity;
+                }
+                
+                // Enregistrer dans l'historique
+                const adminName = currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : 'Admin';
+                await db.collection('restockHistory').add({
+                    type: 'snack',
+                    productId: productId,
+                    productName: snackName,
+                    quantity: quantity - previousStock,
+                    previousStock: previousStock,
+                    newStock: quantity,
+                    program: program,
+                    adminName: adminName,
+                    timestamp: new Date()
+                });
+                
+                showMessage(`✅ Stock de ${snackName} mis à jour: ${previousStock} → ${quantity}`, 'success');
+                
+                // Vider le champ
+                qtyInput.value = '';
+                
+                // Recharger l'historique
+                loadRestockHistory();
+                
+                // Recharger les produits dans la page de commande pour mettre à jour l'affichage
+                loadProductsForOrders();
+                
+            } catch (error) {
+                console.error('Erreur lors de la mise à jour du stock:', error);
+                showMessage('❌ Erreur: ' + error.message, 'error');
+            }
+        }
+        
+        // Réinitialiser tous les snacks à 0
+        async function resetAllSnacksStock() {
+            if (!confirm('Êtes-vous sûr de vouloir réinitialiser le stock de TOUS les snacks à 0 ?')) return;
+            
+            try {
+                const program = getCurrentProgram();
+                
+                // Charger tous les snacks
+                const snacksSnapshot = await db.collection('customSnacks').get();
+                const snackStock = {};
+                snacksSnapshot.forEach(doc => {
+                    const snack = doc.data();
+                    snackStock[snack.productId] = 0;
+                });
+                
+                await db.collection('snackStock').doc(program).set({
+                    ...snackStock,
+                    program: program,
+                    lastUpdated: new Date()
+                });
+                
+                showMessage('✅ Stock de tous les snacks réinitialisé à 0', 'success');
+                
+                // Recharger l'affichage
+                await loadSnacksStock();
+                
+                // Recharger les produits dans la page de commande
+                loadProductsForOrders();
+                
+            } catch (error) {
+                console.error('Erreur lors de la réinitialisation:', error);
+                showMessage('❌ Erreur: ' + error.message, 'error');
+            }
+        }
+        
         // Charger et afficher les produits dans la page de commande
         async function loadProductsForOrders() {
             try {
