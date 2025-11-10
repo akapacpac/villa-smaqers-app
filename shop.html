@@ -44,6 +44,15 @@
             background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
             min-height: 100vh;
             color: #333;
+            transition: background 0.3s ease;
+        }
+        
+        body.bachelor-theme {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        body.master-theme {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
         }
 
         .container {
@@ -454,7 +463,7 @@
 <body>
     <div class="container">
         <div class="header" style="position: relative;">
-            <h1>🏪 Magasin Villa des SMAQeurs</h1>
+            <h1 id="shop-title">🏪 Magasin Villa des SMAQeurs</h1>
             <p>Commandez vos snacks préférés !</p>
             
             <!-- View Toggle for Admins and Members - En haut du header -->
@@ -1045,10 +1054,35 @@
         let customFillings = []; // Fillings personnalisés
         let customSnacks = []; // Snacks personnalisés
         
+        // Mettre à jour le thème (fond et titre) selon le programme
+        function updateTheme() {
+            const program = getCurrentProgram();
+            const body = document.body;
+            const titleElement = document.getElementById('shop-title');
+            
+            // Mettre à jour le fond
+            body.classList.remove('bachelor-theme', 'master-theme');
+            if (program === 'bachelor') {
+                body.classList.add('bachelor-theme');
+            } else {
+                body.classList.add('master-theme');
+            }
+            
+            // Mettre à jour le titre
+            if (titleElement) {
+                if (program === 'bachelor') {
+                    titleElement.textContent = '🏪 Magasin EBS';
+                } else {
+                    titleElement.textContent = '🏪 Magasin Villa des SMAQeurs';
+                }
+            }
+        }
+        
         // Switch view between Bachelor and Master (for admins/members)
         async function switchViewShop(program) {
             currentView = program;
             updateViewButtonsShop();
+            updateTheme(); // Mettre à jour le thème
             
             console.log('View switched to:', program);
             
@@ -1958,6 +1992,9 @@
                             viewToggleShop.style.display = 'none';
                         }
                     }
+                    
+                    // Mettre à jour le thème (fond et titre) selon le programme
+                    updateTheme();
                     
                     // Charger les produits dans la page de commande
                     loadProductsForOrders();
