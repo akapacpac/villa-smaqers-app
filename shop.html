@@ -960,10 +960,13 @@
                     orderTime: new Date().toLocaleTimeString('fr-FR')
                 };
 
+                const program = getCurrentProgram();
+                orderData.program = program; // Ajouter le programme à la commande
+                
                 // Utiliser une transaction pour s'assurer que le stock est décrémenté atomiquement
                 await db.runTransaction(async (transaction) => {
-                    // Vérifier le stock global
-                    const stockRef = db.collection('stock').doc('current');
+                    // Vérifier le stock global pour le programme actuel
+                    const stockRef = db.collection('stock').doc(program);
                     const stockDoc = await transaction.get(stockRef);
                     
                     if (!stockDoc.exists) {
@@ -975,8 +978,8 @@
                         throw new Error('Stock global insuffisant');
                     }
                     
-                    // Vérifier le status du filling
-                    const fillingRef = db.collection('fillingStatus').doc('current');
+                    // Vérifier le status du filling pour le programme actuel
+                    const fillingRef = db.collection('fillingStatus').doc(program);
                     const fillingDoc = await transaction.get(fillingRef);
                     
                     if (fillingDoc.exists) {
@@ -1303,7 +1306,12 @@
             }
 
             try {
-                const querySnapshot = await db.collection('orders').get();
+                const program = getCurrentProgram();
+                
+                // Filtrer les commandes par programme
+                const querySnapshot = await db.collection('orders')
+                    .where('program', '==', program)
+                    .get();
                 
                 if (querySnapshot.empty) {
                     document.getElementById('adminOrdersTable').innerHTML = `
@@ -1683,20 +1691,23 @@
         // Fonctions pour la gestion du stock
         async function loadStockData() {
             try {
-                // Charger le stock global
-                const stockDoc = await db.collection('stock').doc('current').get();
+                const program = getCurrentProgram();
+                
+                // Charger le stock global pour le programme actuel
+                const stockDoc = await db.collection('stock').doc(program).get();
                 if (stockDoc.exists) {
                     currentStock = stockDoc.data().quantity || 0;
                 } else {
                     currentStock = 0;
-                    await db.collection('stock').doc('current').set({
+                    await db.collection('stock').doc(program).set({
                         quantity: 0,
-                        lastUpdated: new Date()
+                        lastUpdated: new Date(),
+                        program: program
                     });
                 }
                 
-                // Charger les status des fillings
-                const fillingDoc = await db.collection('fillingStatus').doc('current').get();
+                // Charger les status des fillings pour le programme actuel
+                const fillingDoc = await db.collection('fillingStatus').doc(program).get();
                 if (fillingDoc.exists) {
                     const data = fillingDoc.data();
                     fillingStatus = {
@@ -1710,7 +1721,10 @@
                         'crepes-nutella': 'unlimited',
                         'crepes-confiture': 'unlimited'
                     };
-                    await db.collection('fillingStatus').doc('current').set(fillingStatus);
+                    await db.collection('fillingStatus').doc(program).set({
+                        ...fillingStatus,
+                        program: program
+                    });
                 }
                 
                 // Mettre à jour l'affichage
@@ -1739,13 +1753,17 @@
             }
             
             try {
-                // Mettre à jour le stock global
+                const program = getCurrentProgram();
+                const previousStock = currentStock;
+                
+                // Mettre à jour le stock global pour le programme actuel
                 const newStock = currentStock + quantity;
                 
                 // Sauvegarder en base
-                await db.collection('stock').doc('current').set({
+                await db.collection('stock').doc(program).set({
                     quantity: newStock,
-                    lastUpdated: new Date()
+                    lastUpdated: new Date(),
+                    program: program
                 });
                 
                 // Mettre à jour les variables locales
@@ -1755,12 +1773,13 @@
                 updateStockDisplay();
                 document.getElementById('restockQuantity').value = '';
                 
-                // Enregistrer l'historique du restock
+                // Enregistrer l'historique du restock avec le programme
                 await db.collection('restockHistory').add({
                     type: 'crepes',
                     quantity: quantity,
-                    previousStock: currentStock - quantity,
+                    previousStock: previousStock,
                     newStock: newStock,
+                    program: program,
                     adminId: currentUser.uid,
                     adminName: currentUser.firstName + ' ' + currentUser.lastName,
                     timestamp: new Date()
@@ -1782,7 +1801,11 @@
 
         async function loadRestockHistory() {
             try {
+                const program = getCurrentProgram();
+                
+                // Filtrer l'historique par programme
                 const historySnapshot = await db.collection('restockHistory')
+                    .where('program', '==', program)
                     .orderBy('timestamp', 'desc')
                     .limit(10)
                     .get();
@@ -1790,7 +1813,7 @@
                 if (historySnapshot.empty) {
                     document.getElementById('restockHistory').innerHTML = `
                         <div style="text-align: center; padding: 20px; color: #666;">
-                            Aucun restock effectué pour le moment
+                            Aucun restock effectué pour le moment (${program === 'bachelor' ? 'Bachelor' : 'Master'})
                         </div>
                     `;
                     return;
@@ -1805,16 +1828,20 @@
                     const date = data.timestamp.toDate ? data.timestamp.toDate() : new Date(data.timestamp);
                     const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
                     
+                    const quantityText = data.type === 'reset' ? '🔄 Reset' : 
+                                       data.type === 'filling' ? `${getProductName(data.productType)}: ${data.quantity === 'unlimited' ? '∞' : data.quantity}` :
+                                       `+${data.quantity} crêpes`;
+                    
                     historyHTML += `
                         <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #28a745; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                                 <div>
-                                    <strong style="color: #28a745; font-size: 1.1rem;">+${data.quantity} crêpes</strong>
-                                    <div style="font-size: 0.9rem; color: #666;">par ${data.adminName}</div>
+                                    <strong style="color: #28a745; font-size: 1.1rem;">${quantityText}</strong>
+                                    <div style="font-size: 0.9rem; color: #666;">par ${data.adminName} (${data.program === 'bachelor' ? 'Bachelor' : 'Master'})</div>
                                 </div>
                                 <div style="text-align: right;">
                                     <div style="font-size: 0.9rem; color: #666;">${dateStr}</div>
-                                    <div style="font-size: 0.8rem; color: #999;">Stock: ${data.previousStock} → ${data.newStock}</div>
+                                    ${data.previousStock !== undefined ? `<div style="font-size: 0.8rem; color: #999;">Stock: ${data.previousStock} → ${data.newStock}</div>` : ''}
                                 </div>
                             </div>
                         </div>
@@ -1896,20 +1923,24 @@
             }
             
             try {
+                const program = getCurrentProgram();
+                
                 // Mettre à jour le status du filling
                 fillingStatus[productType] = quantity;
                 
-                // Sauvegarder en base
-                await db.collection('fillingStatus').doc('current').set({
+                // Sauvegarder en base pour le programme actuel
+                await db.collection('fillingStatus').doc(program).set({
                     ...fillingStatus,
-                    lastUpdated: new Date()
+                    lastUpdated: new Date(),
+                    program: program
                 });
                 
-                // Enregistrer l'historique
+                // Enregistrer l'historique avec le programme
                 await db.collection('restockHistory').add({
                     type: 'filling',
                     productType: productType,
                     quantity: quantity,
+                    program: program,
                     adminId: currentUser.uid,
                     adminName: currentUser.firstName + ' ' + currentUser.lastName,
                     timestamp: new Date()
@@ -1940,6 +1971,8 @@
             const isUnlimited = checkbox.checked;
             
             try {
+                const program = getCurrentProgram();
+                
                 if (isUnlimited) {
                     fillingStatus[productType] = 'unlimited';
                 } else {
@@ -1952,17 +1985,19 @@
                     fillingStatus[productType] = parseInt(quantity);
                 }
                 
-                // Sauvegarder en base
-                await db.collection('fillingStatus').doc('current').set({
+                // Sauvegarder en base pour le programme actuel
+                await db.collection('fillingStatus').doc(program).set({
                     ...fillingStatus,
-                    lastUpdated: new Date()
+                    lastUpdated: new Date(),
+                    program: program
                 });
                 
-                // Enregistrer l'historique
+                // Enregistrer l'historique avec le programme
                 await db.collection('restockHistory').add({
                     type: 'filling',
                     productType: productType,
                     quantity: isUnlimited ? 'unlimited' : fillingStatus[productType],
+                    program: program,
                     adminId: currentUser.uid,
                     adminName: currentUser.firstName + ' ' + currentUser.lastName,
                     timestamp: new Date()
@@ -1993,15 +2028,17 @@
         // Fonction pour vérifier si une commande est possible (stock + filling)
         async function canOrderProduct(productType) {
             try {
-                // Vérifier le stock global
-                const stockDoc = await db.collection('stock').doc('current').get();
+                const program = getCurrentProgram();
+                
+                // Vérifier le stock global pour le programme actuel
+                const stockDoc = await db.collection('stock').doc(program).get();
                 if (!stockDoc.exists) return false;
                 
                 const globalStock = stockDoc.data().quantity || 0;
                 if (globalStock <= 0) return false;
                 
-                // Vérifier le status du filling
-                const fillingDoc = await db.collection('fillingStatus').doc('current').get();
+                // Vérifier le status du filling pour le programme actuel
+                const fillingDoc = await db.collection('fillingStatus').doc(program).get();
                 if (!fillingDoc.exists) return true; // Pas de status = OK
                 
                 const data = fillingDoc.data();
@@ -2021,28 +2058,32 @@
 
         // Fonction pour reset tout le stock
         async function resetAllStock() {
-            if (!confirm('⚠️ Êtes-vous sûr de vouloir remettre à zéro TOUT le stock ?\n\nCette action est irréversible et effacera tous les stocks actuels.')) {
+            const program = getCurrentProgram();
+            if (!confirm(`⚠️ Êtes-vous sûr de vouloir remettre à zéro le stock ${program === 'bachelor' ? 'Bachelor' : 'Master'} ?\n\nCette action est irréversible et effacera tous les stocks actuels pour ce programme.`)) {
                 return;
             }
 
             try {
-                // Reset stock global
-                await db.collection('stock').doc('current').set({
+                // Reset stock global pour le programme actuel
+                await db.collection('stock').doc(program).set({
                     quantity: 0,
-                    lastUpdated: new Date()
+                    lastUpdated: new Date(),
+                    program: program
                 });
 
-                // Reset stocks individuels
-                await db.collection('individualStock').doc('current').set({
-                    'crepes-sucre': 0,
-                    'crepes-nutella': 0,
-                    'crepes-confiture': 0,
-                    lastUpdated: new Date()
+                // Reset fillings pour le programme actuel
+                await db.collection('fillingStatus').doc(program).set({
+                    'crepes-sucre': 'unlimited',
+                    'crepes-nutella': 'unlimited',
+                    'crepes-confiture': 'unlimited',
+                    lastUpdated: new Date(),
+                    program: program
                 });
 
-                // Enregistrer l'historique du reset
+                // Enregistrer l'historique du reset avec le programme
                 await db.collection('restockHistory').add({
                     type: 'reset',
+                    program: program,
                     adminId: currentUser.uid,
                     adminName: currentUser.firstName + ' ' + currentUser.lastName,
                     timestamp: new Date()
@@ -2050,10 +2091,10 @@
 
                 // Mettre à jour les variables locales
                 currentStock = 0;
-                individualStocks = {
-                    'crepes-sucre': 0,
-                    'crepes-nutella': 0,
-                    'crepes-confiture': 0
+                fillingStatus = {
+                    'crepes-sucre': 'unlimited',
+                    'crepes-nutella': 'unlimited',
+                    'crepes-confiture': 'unlimited'
                 };
 
                 // Mettre à jour l'affichage
