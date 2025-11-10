@@ -105,6 +105,7 @@
             align-items: center;
             gap: 5px;
             transition: all 0.2s;
+            user-select: none;
         }
         
         .role-badge:hover {
@@ -116,22 +117,25 @@
             content: '▼';
             font-size: 0.6rem;
             margin-left: 5px;
+            opacity: 0.7;
         }
         
         .dropdown-menu {
             position: absolute;
+            top: 100%;
+            left: 0;
             background: white;
             border: 1px solid #ddd;
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             z-index: 1000;
             min-width: 150px;
-            display: none;
+            display: none !important;
             margin-top: 5px;
         }
         
         .dropdown-menu.show {
-            display: block;
+            display: block !important;
         }
         
         .dropdown-item {
@@ -490,23 +494,23 @@
                         <tr>
                             <td>${fullName}</td>
                             <td>${userData.email}</td>
-                            <td style="position: relative;">
+                            <td style="position: relative; padding: 8px;">
                                 <span class="role-badge" style="background: ${userProgram === 'master' ? '#667eea' : '#28a745'}; color: white;" onclick="showProgramDropdown('${doc.id}', event)">
                                     ${programText}
                                 </span>
-                                <div id="programDropdown_${doc.id}" class="dropdown-menu">
-                                    <div class="dropdown-item" onclick="updateUserProgram('${doc.id}', 'bachelor')">Bachelor</div>
-                                    <div class="dropdown-item" onclick="updateUserProgram('${doc.id}', 'master')">Master</div>
+                                <div id="programDropdown_${doc.id}" class="dropdown-menu" style="display: none !important;">
+                                    <div class="dropdown-item" onclick="updateUserProgram('${doc.id}', 'bachelor'); event.stopPropagation();">Bachelor</div>
+                                    <div class="dropdown-item" onclick="updateUserProgram('${doc.id}', 'master'); event.stopPropagation();">Master</div>
                                 </div>
                             </td>
-                            <td style="position: relative;">
+                            <td style="position: relative; padding: 8px;">
                                 <span class="role-badge ${getRoleClass(userData.role)}" onclick="showRoleDropdown('${doc.id}', event)">
                                     ${getRoleText(userData.role)}
                                 </span>
-                                <div id="roleDropdown_${doc.id}" class="dropdown-menu">
-                                    <div class="dropdown-item" onclick="updateUserRoleDirect('${doc.id}', 'student')">Étudiant</div>
-                                    <div class="dropdown-item" onclick="updateUserRoleDirect('${doc.id}', 'member')">Membre</div>
-                                    <div class="dropdown-item" onclick="updateUserRoleDirect('${doc.id}', 'admin')">Administrateur</div>
+                                <div id="roleDropdown_${doc.id}" class="dropdown-menu" style="display: none !important;">
+                                    <div class="dropdown-item" onclick="updateUserRoleDirect('${doc.id}', 'student'); event.stopPropagation();">Étudiant</div>
+                                    <div class="dropdown-item" onclick="updateUserRoleDirect('${doc.id}', 'member'); event.stopPropagation();">Membre</div>
+                                    <div class="dropdown-item" onclick="updateUserRoleDirect('${doc.id}', 'admin'); event.stopPropagation();">Administrateur</div>
                                 </div>
                             </td>
                             <td>${createdAt}</td>
