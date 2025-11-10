@@ -1803,13 +1803,18 @@
                     timestamp: new Date()
                 });
                 
-                showMessage(`${quantity} crêpes ajoutées au stock ! Nouveau stock: ${newStock}`, 'success');
+                showMessage(`${quantity} crêpes ajoutées au stock ${program === 'bachelor' ? 'Bachelor' : 'Master'} ! Nouveau stock: ${newStock}`, 'success');
                 
                 // Recharger l'historique
                 loadRestockHistory();
                 
-                // Recharger l'état des boutons de commande
-                setTimeout(checkStockOnLoad, 500);
+                // Recharger l'affichage du stock
+                updateStockDisplay();
+                
+                // Recharger l'état des boutons de commande pour TOUS (étudiants et admins)
+                setTimeout(async () => {
+                    await checkStockOnLoad();
+                }, 500);
                 
             } catch (error) {
                 console.error('Erreur lors de l\'ajout du stock:', error);
@@ -1908,6 +1913,14 @@
 
         // Fonction pour mettre à jour l'affichage du stock
         function updateStockDisplay() {
+            const program = getCurrentProgram();
+            
+            // Afficher le programme actuel dans l'indicateur
+            const programIndicator = document.getElementById('stock-program-indicator');
+            if (programIndicator) {
+                programIndicator.textContent = `(${program === 'bachelor' ? 'Bachelor' : 'Master'})`;
+            }
+            
             // Afficher les status des fillings
             document.getElementById('stockSucreDisplay').textContent = fillingStatus['crepes-sucre'] === 'unlimited' ? '∞' : fillingStatus['crepes-sucre'];
             document.getElementById('stockNutellaDisplay').textContent = fillingStatus['crepes-nutella'] === 'unlimited' ? '∞' : fillingStatus['crepes-nutella'];
