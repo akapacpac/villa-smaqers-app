@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+image.png<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -1771,7 +1771,7 @@
                     '');
                 const userName = order.userName || 'N/A';
                 const userEmail = order.userEmail || 'N/A';
-                const classNumber = order.classNumber || 'N/A';
+                const classNumber = order.classroom || order.classNumber || 'N/A';
                 const product = getProductName(order.product) || 'N/A';
                 const price = order.price !== undefined ? (order.price === 0 ? 'FREE' : order.price + '€') : 'N/A';
                 
