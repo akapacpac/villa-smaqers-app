@@ -1954,7 +1954,19 @@
             if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'member' && currentUser.role !== 'boss')) return;
 
             try {
-                const querySnapshot = await db.collection('orders').get();
+                const program = getCurrentProgram();
+                
+                // Filtrer d'abord par programme
+                let querySnapshot;
+                try {
+                    querySnapshot = await db.collection('orders')
+                        .where('program', '==', program)
+                        .get();
+                } catch (error) {
+                    // Si l'index composite n'existe pas, récupérer toutes les commandes et filtrer en JavaScript
+                    console.log('Index composite manquant, filtrage en JavaScript...');
+                    querySnapshot = await db.collection('orders').get();
+                }
                 
                 if (querySnapshot.empty) {
                     document.getElementById('adminOrdersTable').innerHTML = `
@@ -1969,7 +1981,11 @@
                 // Convertir en tableau
                 let orders = [];
                 querySnapshot.forEach((doc) => {
-                    orders.push({ id: doc.id, ...doc.data() });
+                    const orderData = { id: doc.id, ...doc.data() };
+                    // Filtrer par programme si on a récupéré toutes les commandes
+                    if (!orderData.program || orderData.program === program) {
+                        orders.push(orderData);
+                    }
                 });
 
                 // Appliquer les filtres
