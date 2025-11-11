@@ -391,6 +391,7 @@
             display: inline-block;
             transition: all 0.2s;
             user-select: none;
+            white-space: nowrap;
         }
         
         .status-badge-clickable:hover {
@@ -403,7 +404,8 @@
             content: ' ▼';
             font-size: 0.6rem;
             opacity: 0.7;
-            display: inline-block;
+            display: inline;
+            margin-left: 2px;
         }
         
         .status-dropdown-menu {
@@ -1879,28 +1881,28 @@
                 });
             }
             
-            // Grouper les commandes par classe et heure de livraison
-            const groups = {};
+                // Grouper les commandes par classe et heure de livraison
+                const groups = {};
             filteredOrders.forEach((order) => {
-                const classroom = order.classroom || order.classNumber || 'N/A';
-                const deliveryTime = order.deliveryTime ? 
-                    (order.deliveryTime.toDate ? order.deliveryTime.toDate() : new Date(order.deliveryTime)) : 
-                    null;
-                const deliveryTimeStr = deliveryTime ? formatTime(deliveryTime) : 'N/A';
-                const groupKey = `${classroom}_${deliveryTimeStr}`;
+                    const classroom = order.classroom || order.classNumber || 'N/A';
+                    const deliveryTime = order.deliveryTime ? 
+                        (order.deliveryTime.toDate ? order.deliveryTime.toDate() : new Date(order.deliveryTime)) : 
+                        null;
+                    const deliveryTimeStr = deliveryTime ? formatTime(deliveryTime) : 'N/A';
+                    const groupKey = `${classroom}_${deliveryTimeStr}`;
+                    
+                    if (!groups[groupKey]) {
+                        groups[groupKey] = {
+                            classroom: classroom,
+                            deliveryTime: deliveryTimeStr,
+                            orders: []
+                        };
+                    }
+                    groups[groupKey].orders.push(order);
+                });
                 
-                if (!groups[groupKey]) {
-                    groups[groupKey] = {
-                        classroom: classroom,
-                        deliveryTime: deliveryTimeStr,
-                        orders: []
-                    };
-                }
-                groups[groupKey].orders.push(order);
-            });
-            
             // Trier les groupes : d'abord par salle, puis par heure de livraison
-            const sortedGroups = Object.values(groups).sort((a, b) => {
+                const sortedGroups = Object.values(groups).sort((a, b) => {
                 // Comparer d'abord par salle
                 const classroomA = a.classroom.toString();
                 const classroomB = b.classroom.toString();
@@ -1908,14 +1910,14 @@
                     return classroomA.localeCompare(classroomB, undefined, { numeric: true, sensitivity: 'base' });
                 }
                 // Si même salle, comparer par heure
-                if (a.deliveryTime === 'N/A' && b.deliveryTime === 'N/A') return 0;
-                if (a.deliveryTime === 'N/A') return 1;
-                if (b.deliveryTime === 'N/A') return -1;
-                return a.deliveryTime.localeCompare(b.deliveryTime);
-            });
-            
-            let tableHTML = '';
-            
+                    if (a.deliveryTime === 'N/A' && b.deliveryTime === 'N/A') return 0;
+                    if (a.deliveryTime === 'N/A') return 1;
+                    if (b.deliveryTime === 'N/A') return -1;
+                    return a.deliveryTime.localeCompare(b.deliveryTime);
+                });
+                
+                let tableHTML = '';
+                
             if (sortedGroups.length === 0) {
                 tableHTML = `
                     <div style="text-align: center; padding: 40px; color: #666;">
@@ -1938,9 +1940,9 @@
                                     </p>
                                 </div>
                                 <div style="display: flex; gap: 10px; align-items: center;">
-                                    <button onclick="selectGroupOrders('group_${groupIndex}')" style="background: white; color: #007bff; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
-                                        ✅ Sélectionner tout le groupe
-                                    </button>
+                                <button onclick="selectGroupOrders('group_${groupIndex}')" style="background: white; color: #007bff; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                                    ✅ Sélectionner tout le groupe
+                                </button>
                                     <button onclick="deleteGroupOrders('${group.classroom}', '${group.deliveryTime}', ${group.orders.length})" style="background: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
                                         🗑️ Supprimer classe
                                     </button>
@@ -2019,8 +2021,8 @@
                     `;
                 });
             }
-            
-            document.getElementById('adminOrdersTable').innerHTML = tableHTML;
+
+                document.getElementById('adminOrdersTable').innerHTML = tableHTML;
         }
         
         function selectGroupOrders(groupId) {
@@ -2186,7 +2188,10 @@
 
         // Fonction pour afficher le dropdown de statut
         function showStatusDropdown(orderId, event) {
-            event.stopPropagation();
+            if (event) {
+                event.stopPropagation();
+                event.preventDefault();
+            }
             
             // Fermer tous les autres dropdowns
             document.querySelectorAll('.status-dropdown-menu').forEach(menu => {
@@ -2199,6 +2204,16 @@
             const dropdown = document.getElementById(`statusDropdown_${orderId}`);
             if (dropdown) {
                 dropdown.classList.toggle('show');
+                // Forcer l'affichage
+                if (dropdown.classList.contains('show')) {
+                    dropdown.style.display = 'block';
+                    dropdown.style.opacity = '1';
+                    dropdown.style.pointerEvents = 'auto';
+                } else {
+                    dropdown.style.display = 'none';
+                    dropdown.style.opacity = '0';
+                    dropdown.style.pointerEvents = 'none';
+                }
             }
         }
         
@@ -2210,7 +2225,7 @@
                 });
             }
         });
-        
+
         async function updateOrderStatus(orderId, newStatus) {
             if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'member' && currentUser.role !== 'boss')) {
                 showMessage('Seuls les administrateurs, membres et BOSS peuvent modifier les statuts', 'error');
