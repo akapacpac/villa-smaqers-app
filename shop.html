@@ -2971,27 +2971,39 @@
                 // Créer une date pour aujourd'hui à minuit (00:00:00)
                 const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
                 today.setHours(0, 0, 0, 0);
+                const todayStr = today.toISOString().split('T')[0]; // Format YYYY-MM-DD
                 
                 // Récupérer toutes les classes
                 const allClassesSnapshot = await db.collection('classes').get();
                 
                 const deletePromises = [];
+                const updatePromises = [];
+                
                 allClassesSnapshot.forEach(doc => {
                     const classData = doc.data();
-                    const createdAt = classData.createdAt;
-                    
                     let shouldDelete = false;
                     
-                    if (createdAt) {
-                        const createdDate = new Date(createdAt);
-                        createdDate.setHours(0, 0, 0, 0);
-                        // Si createdAt est strictement avant aujourd'hui, supprimer
-                        if (createdDate < today) {
+                    // Vérifier d'abord le champ date (priorité)
+                    if (classData.date) {
+                        // Si date n'est pas aujourd'hui, supprimer
+                        if (classData.date !== todayStr) {
                             shouldDelete = true;
+                            console.log(`Nettoyage: Classe ${classData.room} supprimée (date=${classData.date}, aujourd'hui=${todayStr})`);
+                        }
+                    } else if (classData.createdAt) {
+                        // Sinon utiliser createdAt
+                        const createdDate = classData.createdAt.toDate ? classData.createdAt.toDate() : new Date(classData.createdAt);
+                        const createdDay = new Date(createdDate.getFullYear(), createdDate.getMonth(), createdDate.getDate());
+                        createdDay.setHours(0, 0, 0, 0);
+                        // Si createdAt est strictement avant aujourd'hui, supprimer
+                        if (createdDay.getTime() < today.getTime()) {
+                            shouldDelete = true;
+                            console.log(`Nettoyage: Classe ${classData.room} supprimée (createdAt=${createdDate.toISOString()})`);
                         }
                     } else {
-                        // Si pas de createdAt, supprimer (anciennes classes sans date)
+                        // Si pas de date ni createdAt, supprimer (anciennes classes sans date)
                         shouldDelete = true;
+                        console.log(`Nettoyage: Classe ${classData.room} supprimée (pas de date ni createdAt)`);
                     }
                     
                     // Vérifier aussi les horaires individuels - supprimer les schedules expirés
@@ -2999,25 +3011,31 @@
                         const validSchedules = [];
                         classData.schedules.forEach(schedule => {
                             if (schedule.createdAt) {
-                                const scheduleDate = new Date(schedule.createdAt);
-                                scheduleDate.setHours(0, 0, 0, 0);
-                                if (scheduleDate >= today) {
+                                const scheduleDate = schedule.createdAt.toDate ? schedule.createdAt.toDate() : new Date(schedule.createdAt);
+                                const scheduleDay = new Date(scheduleDate.getFullYear(), scheduleDate.getMonth(), scheduleDate.getDate());
+                                scheduleDay.setHours(0, 0, 0, 0);
+                                // Garder seulement les schedules d'aujourd'hui
+                                if (scheduleDay.getTime() === today.getTime()) {
                                     validSchedules.push(schedule);
+                                } else {
+                                    console.log(`Nettoyage: Schedule ${schedule.startTime}-${schedule.endTime} supprimé (pas d'aujourd'hui)`);
                                 }
                             } else {
-                                // Si pas de createdAt sur le schedule, le garder (ancien format)
-                                validSchedules.push(schedule);
+                                // Si pas de createdAt sur le schedule, le supprimer (trop ancien)
+                                console.log(`Nettoyage: Schedule ${schedule.startTime}-${schedule.endTime} supprimé (pas de createdAt)`);
                             }
                         });
                         
                         // Si tous les schedules sont expirés, supprimer la classe
                         if (validSchedules.length === 0) {
                             shouldDelete = true;
+                            console.log(`Nettoyage: Classe ${classData.room} supprimée (aucun schedule valide)`);
                         } else if (validSchedules.length < classData.schedules.length) {
                             // Mettre à jour la classe avec seulement les schedules valides
-                            db.collection('classes').doc(doc.id).update({
+                            updatePromises.push(db.collection('classes').doc(doc.id).update({
                                 schedules: validSchedules
-                            });
+                            }));
+                            console.log(`Nettoyage: Classe ${classData.room} mise à jour (${validSchedules.length}/${classData.schedules.length} schedules conservés)`);
                         }
                     }
                     
@@ -3025,6 +3043,11 @@
                         deletePromises.push(db.collection('classes').doc(doc.id).delete());
                     }
                 });
+                
+                if (updatePromises.length > 0) {
+                    await Promise.all(updatePromises);
+                    console.log(`${updatePromises.length} classe(s) mise(s) à jour (nettoyage automatique)`);
+                }
                 
                 if (deletePromises.length > 0) {
                     await Promise.all(deletePromises);
