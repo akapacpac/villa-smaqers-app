@@ -304,7 +304,7 @@
             border-bottom: 1px solid #e1e5e9;
             font-size: 0.9rem;
         }
-        
+
         .orders-table td:last-child {
             min-width: 140px;
             white-space: nowrap;
@@ -2004,8 +2004,8 @@
                                 <td>${price}</td>
                                 <td>${voteDisplay}</td>
                                 <td style="position: relative; padding: 8px; overflow: visible; min-width: 140px; white-space: nowrap;">
-                                    <span class="status-badge-clickable ${statusClass}" style="position: relative; z-index: 1; white-space: nowrap !important; display: inline-block;" onclick="showStatusDropdown('${order.id}', event)">
-                                        ${statusText}<span style="font-size: 0.6rem; opacity: 0.7; margin-left: 3px;">▼</span>
+                                    <span class="status-badge-clickable ${statusClass}" style="position: relative; z-index: 1; white-space: nowrap !important; display: inline-block !important;" onclick="event.stopPropagation(); showStatusDropdown('${order.id}', event)">
+                                        ${statusText}<span style="font-size: 0.6rem; opacity: 0.7; margin-left: 3px; display: inline;">▼</span>
                                     </span>
                                     <div id="statusDropdown_${order.id}" class="status-dropdown-menu" style="display: none !important;">
                                         <div class="status-dropdown-item" onclick="updateOrderStatus('${order.id}', 'pending'); event.stopPropagation();">En attente</div>
