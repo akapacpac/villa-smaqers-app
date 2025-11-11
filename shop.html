@@ -3366,17 +3366,62 @@
                 // Charger TOUTES les classes (Bachelor et Master) pour l'onglet Classes
                 const classesSnapshot = await db.collection('classes').get();
                 
+                // Date d'aujourd'hui à minuit pour comparer
+                const now = new Date();
+                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                today.setHours(0, 0, 0, 0);
+                
                 let allClassesList = [];
                 classesSnapshot.forEach(doc => {
                     const classData = { id: doc.id, ...doc.data() };
                     console.log('Classe chargée:', classData);
+                    
+                    // Vérifier si la classe est d'aujourd'hui
+                    let isToday = false;
+                    if (classData.createdAt) {
+                        const createdDate = classData.createdAt.toDate ? classData.createdAt.toDate() : new Date(classData.createdAt);
+                        const createdDay = new Date(createdDate.getFullYear(), createdDate.getMonth(), createdDate.getDate());
+                        createdDay.setHours(0, 0, 0, 0);
+                        isToday = createdDay.getTime() === today.getTime();
+                    }
+                    
+                    // Si la classe n'a pas de createdAt, vérifier les schedules
+                    if (!isToday && classData.schedules && classData.schedules.length > 0) {
+                        // Vérifier si au moins un schedule est d'aujourd'hui
+                        const hasTodaySchedule = classData.schedules.some(schedule => {
+                            if (schedule.createdAt) {
+                                const scheduleDate = schedule.createdAt.toDate ? schedule.createdAt.toDate() : new Date(schedule.createdAt);
+                                const scheduleDay = new Date(scheduleDate.getFullYear(), scheduleDate.getMonth(), scheduleDate.getDate());
+                                scheduleDay.setHours(0, 0, 0, 0);
+                                return scheduleDay.getTime() === today.getTime();
+                            }
+                            return false;
+                        });
+                        isToday = hasTodaySchedule;
+                    }
+                    
+                    // Ne garder que les classes d'aujourd'hui
+                    if (!isToday) {
+                        console.log('Classe ignorée (pas d\'aujourd\'hui):', classData.room);
+                        return;
+                    }
+                    
                     if (classData.schedules && classData.schedules.length > 0) {
                         // Pour chaque schedule, créer une entrée
                         classData.schedules.forEach((schedule, index) => {
                             const startTime = schedule.startTime || '';
                             const endTime = schedule.endTime || '';
                             
-                            if (startTime && endTime) {
+                            // Vérifier si le schedule est d'aujourd'hui
+                            let isScheduleToday = true;
+                            if (schedule.createdAt) {
+                                const scheduleDate = schedule.createdAt.toDate ? schedule.createdAt.toDate() : new Date(schedule.createdAt);
+                                const scheduleDay = new Date(scheduleDate.getFullYear(), scheduleDate.getMonth(), scheduleDate.getDate());
+                                scheduleDay.setHours(0, 0, 0, 0);
+                                isScheduleToday = scheduleDay.getTime() === today.getTime();
+                            }
+                            
+                            if (startTime && endTime && isScheduleToday) {
                                 const deliveryTime = calculateDeliveryTime(startTime, endTime);
                                 
                                 allClassesList.push({
