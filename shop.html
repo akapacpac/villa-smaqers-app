@@ -3366,98 +3366,130 @@
             }
         }
         
-        // Load classes from Firebase
+        // Load classes from Firebase - uniquement celles qui ont des commandes (visibles dans Livraison)
         async function loadClasses() {
-            // Nettoyer les anciennes classes avant de charger
-            await cleanupOldClasses();
             try {
-                // Charger TOUTES les classes (Bachelor et Master)
-                const classesSnapshot = await db.collection('classes').get();
+                // Récupérer toutes les commandes pour extraire les classes qui ont des commandes
+                const program = getCurrentProgram();
+                let ordersSnapshot;
+                try {
+                    ordersSnapshot = await db.collection('orders')
+                        .where('program', '==', program)
+                        .get();
+                } catch (error) {
+                    ordersSnapshot = await db.collection('orders').get();
+                }
                 
-                // Date d'aujourd'hui à minuit pour comparer
-                const now = new Date();
-                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-                today.setHours(0, 0, 0, 0);
-                const todayStr = today.toISOString().split('T')[0]; // Format YYYY-MM-DD
+                // Grouper les commandes par salle et heure de livraison (comme dans Livraison)
+                const classesMap = {}; // { "room_deliveryTime": { room, deliveryTime, orders } }
                 
-                console.log('Date d\'aujourd\'hui pour filtrage:', todayStr);
-                
-                allClasses = [];
-                classesSnapshot.forEach(doc => {
-                    const classData = { id: doc.id, ...doc.data() };
+                ordersSnapshot.forEach((doc) => {
+                    const order = { id: doc.id, ...doc.data() };
                     
-                    // Vérifier si la classe est d'aujourd'hui - STRICT: doit avoir date ou createdAt d'aujourd'hui
-                    let isToday = false;
-                    
-                    // Utiliser le champ date si disponible (format YYYY-MM-DD)
-                    if (classData.date) {
-                        isToday = classData.date === todayStr;
-                        console.log(`Classe ${classData.room}: date=${classData.date}, isToday=${isToday}`);
-                    } else if (classData.createdAt) {
-                        // Sinon utiliser createdAt
-                        const createdDate = classData.createdAt.toDate ? classData.createdAt.toDate() : new Date(classData.createdAt);
-                        const createdDay = new Date(createdDate.getFullYear(), createdDate.getMonth(), createdDate.getDate());
-                        createdDay.setHours(0, 0, 0, 0);
-                        isToday = createdDay.getTime() === today.getTime();
-                        console.log(`Classe ${classData.room}: createdAt=${createdDate.toISOString()}, isToday=${isToday}`);
-                    } else {
-                        // Si pas de date ni createdAt, on ignore la classe (trop ancienne)
-                        console.log(`Classe ${classData.room}: pas de date ni createdAt, ignorée`);
+                    // Filtrer par programme si nécessaire
+                    if (order.program && order.program !== program) {
                         return;
                     }
                     
-                    // Si la classe n'est pas d'aujourd'hui, on l'ignore complètement
-                    if (!isToday) {
-                        console.log(`Classe ${classData.room}: pas d'aujourd'hui, ignorée`);
-                        return;
-                    }
+                    const classroom = order.classroom || order.classNumber || 'N/A';
+                    const deliveryTime = order.deliveryTime ? 
+                        (order.deliveryTime.toDate ? order.deliveryTime.toDate() : new Date(order.deliveryTime)) : 
+                        null;
                     
-                    // Filtrer les schedules pour ne garder QUE ceux d'aujourd'hui
-                    if (classData.schedules && classData.schedules.length > 0) {
-                        classData.schedules = classData.schedules.filter(schedule => {
-                            if (schedule.createdAt) {
-                                const scheduleDate = schedule.createdAt.toDate ? schedule.createdAt.toDate() : new Date(schedule.createdAt);
-                                const scheduleDay = new Date(scheduleDate.getFullYear(), scheduleDate.getMonth(), scheduleDate.getDate());
-                                scheduleDay.setHours(0, 0, 0, 0);
-                                const isScheduleToday = scheduleDay.getTime() === today.getTime();
-                                if (!isScheduleToday) {
-                                    console.log(`Schedule ${schedule.startTime}-${schedule.endTime}: pas d'aujourd'hui, ignoré`);
-                                }
-                                return isScheduleToday;
-                            }
-                            // Si pas de createdAt sur le schedule, on l'ignore (trop ancien)
-                            console.log(`Schedule ${schedule.startTime}-${schedule.endTime}: pas de createdAt, ignoré`);
-                            return false;
-                        });
-                    }
+                    if (!deliveryTime || classroom === 'N/A') return;
                     
-                    // Ne garder la classe que si elle a au moins un schedule d'aujourd'hui
-                    if (classData.schedules && classData.schedules.length > 0) {
-                        // Sort schedules by start time
-                        classData.schedules.sort((a, b) => {
-                            const timeA = a.startTime || '';
-                            const timeB = b.startTime || '';
-                            return timeA.localeCompare(timeB);
-                        });
-                        allClasses.push(classData);
-                        console.log(`Classe ${classData.room}: ajoutée avec ${classData.schedules.length} schedule(s) d'aujourd'hui`);
-                    } else {
-                        console.log(`Classe ${classData.room}: aucun schedule d'aujourd'hui, ignorée`);
+                    const deliveryTimeStr = formatTime(deliveryTime);
+                    const key = `${classroom}_${deliveryTimeStr}`;
+                    
+                    if (!classesMap[key]) {
+                        classesMap[key] = {
+                            room: classroom,
+                            deliveryTime: deliveryTime,
+                            deliveryTimeStr: deliveryTimeStr,
+                            orders: []
+                        };
                     }
+                    classesMap[key].orders.push(order);
                 });
                 
-                console.log(`Total classes d'aujourd'hui: ${allClasses.length}`);
+                // Convertir en structure de classes avec schedules
+                // Pour chaque groupe, on doit trouver le schedule correspondant dans la collection classes
+                allClasses = [];
                 
-                // Sort classes by room number (natural sort - ordre croissant: 104, 156, 345-378, etc.)
+                // Récupérer toutes les classes de Firebase pour trouver les schedules correspondants
+                const classesSnapshot = await db.collection('classes').get();
+                const classesData = {};
+                classesSnapshot.forEach(doc => {
+                    const classData = { id: doc.id, ...doc.data() };
+                    classesData[classData.room] = classData;
+                });
+                
+                // Pour chaque groupe de commandes, créer une classe avec le schedule correspondant
+                for (const [key, group] of Object.entries(classesMap)) {
+                    const classData = classesData[group.room];
+                    
+                    if (classData && classData.schedules && classData.schedules.length > 0) {
+                        // Trouver le schedule qui correspond à l'heure de livraison
+                        let matchingSchedule = null;
+                        for (const schedule of classData.schedules) {
+                            if (schedule.startTime && schedule.endTime) {
+                                const scheduleDeliveryTime = calculateDeliveryTime(schedule.startTime, schedule.endTime);
+                                const scheduleDeliveryTimeStr = formatTime(scheduleDeliveryTime);
+                                
+                                if (scheduleDeliveryTimeStr === group.deliveryTimeStr) {
+                                    matchingSchedule = schedule;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        // Si on a trouvé un schedule correspondant, créer la classe
+                        if (matchingSchedule) {
+                            // Vérifier si la classe existe déjà dans allClasses
+                            let existingClass = allClasses.find(c => c.id === classData.id);
+                            
+                            if (!existingClass) {
+                                existingClass = {
+                                    id: classData.id,
+                                    room: classData.room,
+                                    schedules: []
+                                };
+                                allClasses.push(existingClass);
+                            }
+                            
+                            // Ajouter le schedule s'il n'existe pas déjà
+                            const scheduleExists = existingClass.schedules.some(s => 
+                                s.startTime === matchingSchedule.startTime && 
+                                s.endTime === matchingSchedule.endTime
+                            );
+                            
+                            if (!scheduleExists) {
+                                existingClass.schedules.push(matchingSchedule);
+                            }
+                        }
+                    }
+                }
+                
+                // Trier les schedules de chaque classe
+                allClasses.forEach(cls => {
+                    cls.schedules.sort((a, b) => {
+                        const timeA = a.startTime || '';
+                        const timeB = b.startTime || '';
+                        return timeA.localeCompare(timeB);
+                    });
+                });
+                
+                // Trier les classes par numéro de salle
                 allClasses.sort((a, b) => {
                     const roomA = a.room || '';
                     const roomB = b.room || '';
-                    // Extract numbers for comparison
                     const numA = parseInt(roomA.replace(/\D/g, '')) || 0;
                     const numB = parseInt(roomB.replace(/\D/g, '')) || 0;
                     if (numA !== numB) return numA - numB;
                     return roomA.localeCompare(roomB);
                 });
+                
+                console.log(`Total classes avec commandes: ${allClasses.length}`);
                 
                 displayClasses();
             } catch (error) {
