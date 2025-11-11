@@ -1934,9 +1934,14 @@
                                         ${group.orders.length} commande(s)
                                     </p>
                                 </div>
-                                <button onclick="selectGroupOrders('group_${groupIndex}')" style="background: white; color: #007bff; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
-                                    ✅ Sélectionner tout le groupe
-                                </button>
+                                <div style="display: flex; gap: 10px; align-items: center;">
+                                    <button onclick="selectGroupOrders('group_${groupIndex}')" style="background: white; color: #007bff; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                                        ✅ Sélectionner tout le groupe
+                                    </button>
+                                    <button onclick="deleteGroupOrders('${group.classroom}', '${group.deliveryTime}', ${group.orders.length})" style="background: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                                        🗑️ Supprimer classe
+                                    </button>
+                                </div>
                             </div>
                             <table class="orders-table" style="margin: 0;">
                                 <thead>
@@ -2029,6 +2034,71 @@
                 cb.checked = checked;
             });
             updateBulkActions();
+        }
+        
+        // Supprimer toutes les commandes d'un groupe (classe + horaire)
+        async function deleteGroupOrders(classroom, deliveryTime, orderCount) {
+            if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'member' && currentUser.role !== 'boss')) {
+                showMessage('Seuls les administrateurs, membres et BOSS peuvent supprimer des commandes', 'error');
+                return;
+            }
+            
+            // Confirmation avec détails
+            const confirmMessage = `⚠️ Êtes-vous sûr de vouloir supprimer toutes les commandes de la salle ${classroom} à ${deliveryTime} ?\n\nCette action supprimera ${orderCount} commande(s) de manière définitive.\n\nCette action est irréversible !`;
+            
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+            
+            try {
+                // Récupérer toutes les commandes pour trouver celles qui correspondent
+                const program = getCurrentProgram();
+                let querySnapshot;
+                try {
+                    querySnapshot = await db.collection('orders')
+                        .where('program', '==', program)
+                        .get();
+                } catch (error) {
+                    querySnapshot = await db.collection('orders').get();
+                }
+                
+                // Filtrer les commandes du groupe
+                const ordersToDelete = [];
+                querySnapshot.forEach((doc) => {
+                    const orderData = { id: doc.id, ...doc.data() };
+                    
+                    // Filtrer par programme si nécessaire
+                    if (orderData.program && orderData.program !== program) {
+                        return;
+                    }
+                    
+                    // Vérifier si la commande correspond à la salle et l'horaire
+                    const orderClassroom = orderData.classroom || orderData.classNumber || '';
+                    const orderDeliveryTime = orderData.deliveryTime ? 
+                        (orderData.deliveryTime.toDate ? formatTime(orderData.deliveryTime.toDate()) : formatTime(new Date(orderData.deliveryTime))) : 
+                        null;
+                    
+                    if (orderClassroom.toString() === classroom.toString() && orderDeliveryTime === deliveryTime) {
+                        ordersToDelete.push(doc.id);
+                    }
+                });
+                
+                // Supprimer toutes les commandes
+                const deletePromises = ordersToDelete.map(orderId => 
+                    db.collection('orders').doc(orderId).delete()
+                );
+                
+                await Promise.all(deletePromises);
+                
+                showMessage(`✅ ${ordersToDelete.length} commande(s) supprimée(s) avec succès`, 'success');
+                
+                // Recharger le tableau
+                loadAllOrders();
+                
+            } catch (error) {
+                console.error('Erreur lors de la suppression des commandes:', error);
+                showMessage('❌ Erreur lors de la suppression: ' + error.message, 'error');
+            }
         }
 
         // Fonction pour afficher le dropdown de statut
