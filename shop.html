@@ -2090,10 +2090,59 @@
                 
                 await Promise.all(deletePromises);
                 
+                // Supprimer aussi le schedule correspondant de la classe dans Firebase
+                try {
+                    // Trouver la classe correspondante
+                    const classesSnapshot = await db.collection('classes').where('room', '==', classroom).get();
+                    
+                    for (const classDoc of classesSnapshot.docs) {
+                        const classData = classDoc.data();
+                        if (!classData.schedules || classData.schedules.length === 0) continue;
+                        
+                        // Trouver le schedule qui correspond à l'horaire de livraison
+                        let scheduleToRemoveIndex = -1;
+                        for (let i = 0; i < classData.schedules.length; i++) {
+                            const schedule = classData.schedules[i];
+                            if (schedule.startTime && schedule.endTime) {
+                                const scheduleDeliveryTime = calculateDeliveryTime(schedule.startTime, schedule.endTime);
+                                const scheduleDeliveryTimeStr = formatTime(scheduleDeliveryTime);
+                                
+                                if (scheduleDeliveryTimeStr === deliveryTime) {
+                                    scheduleToRemoveIndex = i;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        // Si on a trouvé le schedule, le supprimer
+                        if (scheduleToRemoveIndex !== -1) {
+                            const updatedSchedules = classData.schedules.filter((_, index) => index !== scheduleToRemoveIndex);
+                            
+                            if (updatedSchedules.length === 0) {
+                                // Si c'était le dernier schedule, supprimer la classe entière
+                                await db.collection('classes').doc(classDoc.id).delete();
+                            } else {
+                                // Sinon, mettre à jour la classe avec les schedules restants
+                                await db.collection('classes').doc(classDoc.id).update({
+                                    schedules: updatedSchedules
+                                });
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error('Erreur lors de la suppression du schedule:', error);
+                    // On continue quand même, les commandes ont été supprimées
+                }
+                
                 showMessage(`✅ ${ordersToDelete.length} commande(s) supprimée(s) avec succès`, 'success');
                 
-                // Recharger le tableau
+                // Recharger le tableau et les classes
                 loadAllOrders();
+                
+                // Recharger les classes dans la modal de commande si elle est ouverte
+                if (document.getElementById('classes-list')) {
+                    loadClasses();
+                }
                 
             } catch (error) {
                 console.error('Erreur lors de la suppression des commandes:', error);
