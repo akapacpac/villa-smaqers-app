@@ -3397,15 +3397,20 @@
                 const now = new Date();
                 const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
                 today.setHours(0, 0, 0, 0);
+                const todayStr = today.toISOString().split('T')[0]; // Format YYYY-MM-DD
                 
                 let allClassesList = [];
                 classesSnapshot.forEach(doc => {
                     const classData = { id: doc.id, ...doc.data() };
-                    console.log('Classe chargée:', classData);
                     
                     // Vérifier si la classe est d'aujourd'hui
                     let isToday = false;
-                    if (classData.createdAt) {
+                    
+                    // Utiliser le champ date si disponible (format YYYY-MM-DD)
+                    if (classData.date) {
+                        isToday = classData.date === todayStr;
+                    } else if (classData.createdAt) {
+                        // Sinon utiliser createdAt
                         const createdDate = classData.createdAt.toDate ? classData.createdAt.toDate() : new Date(classData.createdAt);
                         const createdDay = new Date(createdDate.getFullYear(), createdDate.getMonth(), createdDate.getDate());
                         createdDay.setHours(0, 0, 0, 0);
@@ -3429,7 +3434,6 @@
                     
                     // Ne garder que les classes d'aujourd'hui
                     if (!isToday) {
-                        console.log('Classe ignorée (pas d\'aujourd\'hui):', classData.room);
                         return;
                     }
                     
