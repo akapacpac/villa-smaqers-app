@@ -405,7 +405,8 @@
             font-size: 0.6rem;
             opacity: 0.7;
             display: inline;
-            margin-left: 2px;
+            margin-left: 3px;
+            white-space: nowrap;
         }
         
         .status-dropdown-menu {
@@ -928,10 +929,10 @@
                         
                         <div id="snacksList" style="display: grid; gap: 15px;">
                             <div class="loading">Chargement des snacks...</div>
-                        </div>
-                    </div>
                 </div>
             </div>
+        </div>
+    </div>
 
     <!-- Modal pour la classe -->
     <div id="classModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; overflow-y: auto;">
@@ -1285,9 +1286,11 @@
                     loadCustomFillings();
                     loadCustomSnacks();
                 } else {
-                    document.getElementById('customization').innerHTML = `
-                        <div class="error">Accès refusé. Seuls les administrateurs et BOSS peuvent accéder à cette section.</div>
-                    `;
+                    // Ne pas remplacer tout le contenu, juste afficher un message d'erreur dans le conteneur existant
+                    const fillingsList = document.getElementById('fillingsList');
+                    const snacksList = document.getElementById('snacksList');
+                    if (fillingsList) fillingsList.innerHTML = '<div class="error">Accès refusé. Seuls les administrateurs et BOSS peuvent accéder à cette section.</div>';
+                    if (snacksList) snacksList.innerHTML = '';
                 }
             }
         }
@@ -1945,7 +1948,7 @@
                                 </button>
                                     <button onclick="deleteGroupOrders('${group.classroom}', '${group.deliveryTime}', ${group.orders.length})" style="background: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
                                         🗑️ Supprimer classe
-                                    </button>
+                                </button>
                                 </div>
                             </div>
                             <table class="orders-table" style="margin: 0;">
@@ -2000,8 +2003,8 @@
                                 <td>${product}</td>
                                 <td>${price}</td>
                                 <td>${voteDisplay}</td>
-                                <td style="position: relative; padding: 8px; overflow: visible;">
-                                    <span class="status-badge-clickable ${statusClass}" style="position: relative; z-index: 1;" onclick="showStatusDropdown('${order.id}', event)">
+                                <td style="position: relative; padding: 8px; overflow: visible; min-width: 120px;">
+                                    <span class="status-badge-clickable ${statusClass}" style="position: relative; z-index: 1; white-space: nowrap;" onclick="showStatusDropdown('${order.id}', event)">
                                         ${statusText}
                                     </span>
                                     <div id="statusDropdown_${order.id}" class="status-dropdown-menu" style="display: none !important;">
