@@ -1806,7 +1806,7 @@
                     return dateB - dateA;
                 });
 
-                displayAdminOrders(orders);
+                displayAdminOrders(orders, '');
                 
             } catch (error) {
                 console.error('Erreur lors du chargement des commandes admin:', error);
@@ -2152,7 +2152,7 @@
                     }
                 });
 
-                displayAdminOrders(orders);
+                displayAdminOrders(orders, classFilter);
                 
             } catch (error) {
                 console.error('Erreur lors du chargement des commandes filtrées:', error);
