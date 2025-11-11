@@ -2811,8 +2811,9 @@
         async function cleanupOldClasses() {
             try {
                 const now = new Date();
+                // Créer une date pour aujourd'hui à minuit (00:00:00)
                 const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-                const todayStart = today.toISOString();
+                today.setHours(0, 0, 0, 0);
                 
                 // Récupérer toutes les classes
                 const allClassesSnapshot = await db.collection('classes').get();
@@ -2822,14 +2823,48 @@
                     const classData = doc.data();
                     const createdAt = classData.createdAt;
                     
-                    // Si createdAt existe et est avant aujourd'hui à minuit, supprimer
+                    let shouldDelete = false;
+                    
                     if (createdAt) {
                         const createdDate = new Date(createdAt);
+                        createdDate.setHours(0, 0, 0, 0);
+                        // Si createdAt est strictement avant aujourd'hui, supprimer
                         if (createdDate < today) {
-                            deletePromises.push(db.collection('classes').doc(doc.id).delete());
+                            shouldDelete = true;
                         }
                     } else {
-                        // Si pas de createdAt, supprimer aussi (anciennes classes)
+                        // Si pas de createdAt, supprimer (anciennes classes sans date)
+                        shouldDelete = true;
+                    }
+                    
+                    // Vérifier aussi les horaires individuels - supprimer les schedules expirés
+                    if (!shouldDelete && classData.schedules && Array.isArray(classData.schedules)) {
+                        const validSchedules = [];
+                        classData.schedules.forEach(schedule => {
+                            if (schedule.createdAt) {
+                                const scheduleDate = new Date(schedule.createdAt);
+                                scheduleDate.setHours(0, 0, 0, 0);
+                                if (scheduleDate >= today) {
+                                    validSchedules.push(schedule);
+                                }
+                            } else {
+                                // Si pas de createdAt sur le schedule, le garder (ancien format)
+                                validSchedules.push(schedule);
+                            }
+                        });
+                        
+                        // Si tous les schedules sont expirés, supprimer la classe
+                        if (validSchedules.length === 0) {
+                            shouldDelete = true;
+                        } else if (validSchedules.length < classData.schedules.length) {
+                            // Mettre à jour la classe avec seulement les schedules valides
+                            db.collection('classes').doc(doc.id).update({
+                                schedules: validSchedules
+                            });
+                        }
+                    }
+                    
+                    if (shouldDelete) {
                         deletePromises.push(db.collection('classes').doc(doc.id).delete());
                     }
                 });
@@ -3085,6 +3120,9 @@
             }
             
             try {
+                // Nettoyer les anciennes classes avant de vérifier les doublons
+                await cleanupOldClasses();
+                
                 // Check if class with same room and program already exists
                 const existingClasses = await db.collection('classes').where('room', '==', room).where('program', '==', userProgram).get();
                 
