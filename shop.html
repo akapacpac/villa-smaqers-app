@@ -3389,10 +3389,33 @@
                     // Afficher toutes les classes qui ont des schedules, sans filtrage strict par date
                     // (on garde le filtrage par date pour les schedules, mais on accepte toutes les classes)
                     
-                    // Filtrer les schedules pour ne garder QUE ceux d'aujourd'hui ou récents
-                    if (classData.schedules && classData.schedules.length > 0) {
+                    // Afficher toutes les classes qui ont des schedules
+                    // Si la classe est d'aujourd'hui, afficher tous ses schedules
+                    // Sinon, filtrer les schedules pour ne garder que ceux d'aujourd'hui
+                    
+                    if (!classData.schedules || classData.schedules.length === 0) {
+                        console.log(`Classe ${classData.room}: aucun schedule, ignorée`);
+                        return;
+                    }
+                    
+                    // Vérifier si la classe est d'aujourd'hui
+                    let classIsToday = false;
+                    if (classData.date) {
+                        classIsToday = classData.date === todayStr;
+                    } else if (classData.createdAt) {
+                        const createdDate = classData.createdAt.toDate ? classData.createdAt.toDate() : new Date(classData.createdAt);
+                        const createdDay = new Date(createdDate.getFullYear(), createdDate.getMonth(), createdDate.getDate());
+                        createdDay.setHours(0, 0, 0, 0);
+                        classIsToday = createdDay.getTime() === today.getTime();
+                    }
+                    
+                    // Si la classe est d'aujourd'hui, on garde TOUS ses schedules
+                    if (classIsToday) {
+                        console.log(`Classe ${classData.room}: d'aujourd'hui, on garde tous les ${classData.schedules.length} schedule(s)`);
+                        // Pas de filtrage, on garde tous les schedules
+                    } else {
+                        // Si la classe n'est pas d'aujourd'hui, filtrer les schedules pour ne garder que ceux d'aujourd'hui
                         const validSchedules = classData.schedules.filter(schedule => {
-                            // Si le schedule a un createdAt, vérifier qu'il est d'aujourd'hui
                             if (schedule.createdAt) {
                                 const scheduleDate = schedule.createdAt.toDate ? schedule.createdAt.toDate() : new Date(schedule.createdAt);
                                 const scheduleDay = new Date(scheduleDate.getFullYear(), scheduleDate.getMonth(), scheduleDate.getDate());
@@ -3403,49 +3426,19 @@
                                 }
                                 return isScheduleToday;
                             }
-                            // Si pas de createdAt, on accepte le schedule (peut être une ancienne classe)
-                            // mais on vérifie que la classe elle-même est récente
-                            if (classData.date) {
-                                return classData.date === todayStr;
-                            }
-                            if (classData.createdAt) {
-                                const createdDate = classData.createdAt.toDate ? classData.createdAt.toDate() : new Date(classData.createdAt);
-                                const createdDay = new Date(createdDate.getFullYear(), createdDate.getMonth(), createdDate.getDate());
-                                createdDay.setHours(0, 0, 0, 0);
-                                return createdDay.getTime() === today.getTime();
-                            }
-                            // Si pas de date du tout, on accepte quand même (peut être une classe récente sans date)
-                            return true;
+                            // Si pas de createdAt sur le schedule, on l'ignore
+                            console.log(`Schedule ${schedule.startTime}-${schedule.endTime}: pas de createdAt, ignoré`);
+                            return false;
                         });
                         
-                        // Si on a des schedules valides, les utiliser
                         if (validSchedules.length > 0) {
                             classData.schedules = validSchedules;
+                            console.log(`Classe ${classData.room}: ${validSchedules.length} schedule(s) d'aujourd'hui gardé(s)`);
                         } else {
-                            // Si aucun schedule valide mais que la classe a des schedules, 
-                            // on les garde quand même si la classe est d'aujourd'hui
-                            let classIsToday = false;
-                            if (classData.date) {
-                                classIsToday = classData.date === todayStr;
-                            } else if (classData.createdAt) {
-                                const createdDate = classData.createdAt.toDate ? classData.createdAt.toDate() : new Date(classData.createdAt);
-                                const createdDay = new Date(createdDate.getFullYear(), createdDate.getMonth(), createdDate.getDate());
-                                createdDay.setHours(0, 0, 0, 0);
-                                classIsToday = createdDay.getTime() === today.getTime();
-                            }
-                            
-                            // Si la classe est d'aujourd'hui, on garde tous ses schedules
-                            if (classIsToday) {
-                                console.log(`Classe ${classData.room}: d'aujourd'hui, on garde tous les schedules`);
-                            } else {
-                                console.log(`Classe ${classData.room}: pas d'aujourd'hui et aucun schedule valide, ignorée`);
-                                return;
-                            }
+                            // Aucun schedule valide, on ignore la classe
+                            console.log(`Classe ${classData.room}: pas d'aujourd'hui et aucun schedule valide, ignorée`);
+                            return;
                         }
-                    } else {
-                        // Pas de schedules, on ignore la classe
-                        console.log(`Classe ${classData.room}: aucun schedule, ignorée`);
-                        return;
                     }
                     
                     // Ne garder la classe que si elle a au moins un schedule
