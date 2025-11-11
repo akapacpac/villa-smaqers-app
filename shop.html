@@ -2807,8 +2807,46 @@
         }
         // ========== CLASS MANAGEMENT FUNCTIONS ==========
         
+        // Supprimer toutes les classes de la veille (nettoyage automatique à la fin de la journée)
+        async function cleanupOldClasses() {
+            try {
+                const now = new Date();
+                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                const todayStart = today.toISOString();
+                
+                // Récupérer toutes les classes
+                const allClassesSnapshot = await db.collection('classes').get();
+                
+                const deletePromises = [];
+                allClassesSnapshot.forEach(doc => {
+                    const classData = doc.data();
+                    const createdAt = classData.createdAt;
+                    
+                    // Si createdAt existe et est avant aujourd'hui à minuit, supprimer
+                    if (createdAt) {
+                        const createdDate = new Date(createdAt);
+                        if (createdDate < today) {
+                            deletePromises.push(db.collection('classes').doc(doc.id).delete());
+                        }
+                    } else {
+                        // Si pas de createdAt, supprimer aussi (anciennes classes)
+                        deletePromises.push(db.collection('classes').doc(doc.id).delete());
+                    }
+                });
+                
+                if (deletePromises.length > 0) {
+                    await Promise.all(deletePromises);
+                    console.log(`${deletePromises.length} salle(s) supprimée(s) (nettoyage automatique)`);
+                }
+            } catch (error) {
+                console.error('Erreur lors du nettoyage des salles:', error);
+            }
+        }
+        
         // Load classes from Firebase
         async function loadClasses() {
+            // Nettoyer les anciennes classes avant de charger
+            await cleanupOldClasses();
             try {
                 const userProgram = currentUser?.program || getCurrentProgram();
                 const classesSnapshot = await db.collection('classes').where('program', '==', userProgram).get();
