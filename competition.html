@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compteur de Votes - Liste Rouge vs Liste Verte</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 50px;
+        }
+        
+        .votes-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .vote-card {
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .vote-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .vote-card.red {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+        }
+        
+        .vote-card.green {
+            background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+            color: white;
+        }
+        
+        .vote-card h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+        
+        .vote-count {
+            font-size: 5rem;
+            font-weight: bold;
+            margin: 20px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .vote-label {
+            font-size: 1.5rem;
+            opacity: 0.9;
+        }
+        
+        .total-votes {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            font-size: 1.3rem;
+            color: #333;
+        }
+        
+        .total-votes strong {
+            color: #667eea;
+        }
+        
+        .refresh-info {
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #999;
+        }
+        
+        @media (max-width: 768px) {
+            .votes-container {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .vote-count {
+                font-size: 3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗳️ Compteur de Votes</h1>
+        <p class="subtitle">Liste Rouge vs Liste Verte</p>
+        
+        <div class="votes-container">
+            <div class="vote-card red">
+                <h2>🔴 Liste Rouge</h2>
+                <div class="vote-count" id="red-votes">0</div>
+                <div class="vote-label">votes</div>
+            </div>
+            
+            <div class="vote-card green">
+                <h2>🟢 Liste Verte</h2>
+                <div class="vote-count" id="green-votes">0</div>
+                <div class="vote-label">votes</div>
+            </div>
+        </div>
+        
+        <div class="total-votes">
+            <strong>Total des votes:</strong> <span id="total-votes">0</span>
+        </div>
+        
+        <p class="refresh-info">Mise à jour en temps réel</p>
+    </div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDqCYiGvSYitgoPnGdxMzkautcYl511E3I",
+            authDomain: "villa-smaqers-brises.firebaseapp.com",
+            projectId: "villa-smaqers-brises",
+            storageBucket: "villa-smaqers-brises.firebasestorage.app",
+            messagingSenderId: "387262093007",
+            appId: "1:387262093007:web:76173a1e3cd49d80a249ba",
+            measurementId: "G-TBNFR17E82"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        
+        // Load votes count
+        async function loadVotes() {
+            try {
+                // Get all orders with votes
+                const ordersSnapshot = await db.collection('orders').get();
+                
+                let redVotes = 0;
+                let greenVotes = 0;
+                
+                ordersSnapshot.forEach(doc => {
+                    const orderData = doc.data();
+                    if (orderData.vote === 'red') {
+                        redVotes++;
+                    } else if (orderData.vote === 'green') {
+                        greenVotes++;
+                    }
+                });
+                
+                document.getElementById('red-votes').textContent = redVotes;
+                document.getElementById('green-votes').textContent = greenVotes;
+                document.getElementById('total-votes').textContent = redVotes + greenVotes;
+            } catch (error) {
+                console.error('Erreur lors du chargement des votes:', error);
+            }
+        }
+        
+        // Real-time listener for votes
+        function setupRealtimeListener() {
+            db.collection('orders').onSnapshot((snapshot) => {
+                let redVotes = 0;
+                let greenVotes = 0;
+                
+                snapshot.forEach(doc => {
+                    const orderData = doc.data();
+                    if (orderData.vote === 'red') {
+                        redVotes++;
+                    } else if (orderData.vote === 'green') {
+                        greenVotes++;
+                    }
+                });
+                
+                document.getElementById('red-votes').textContent = redVotes;
+                document.getElementById('green-votes').textContent = greenVotes;
+                document.getElementById('total-votes').textContent = redVotes + greenVotes;
+            });
+        }
+        
+        // Initialize
+        loadVotes();
+        setupRealtimeListener();
+        
+        // Refresh every 5 seconds as backup
+        setInterval(loadVotes, 5000);
+    </script>
+</body>
+</html>
+

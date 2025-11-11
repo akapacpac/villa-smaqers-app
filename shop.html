@@ -1,4 +1,4 @@
-image.png<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -952,6 +952,20 @@ image.png<!DOCTYPE html>
                 <input type="hidden" id="selected-class-schedule-id" value="">
             </div>
             
+            <!-- Vote Section -->
+            <div class="form-group" style="margin-top: 20px;">
+                <label class="form-label">Votez pour votre liste *</label>
+                <div style="display: flex; gap: 15px; margin-top: 10px;">
+                    <button type="button" id="vote-red-btn" class="btn" onclick="selectVote('red')" style="flex: 1; background: #dc3545; color: white; border: 3px solid transparent;">
+                        🔴 Liste Rouge
+                    </button>
+                    <button type="button" id="vote-green-btn" class="btn" onclick="selectVote('green')" style="flex: 1; background: #28a745; color: white; border: 3px solid transparent;">
+                        🟢 Liste Verte
+                    </button>
+                </div>
+                <input type="hidden" id="selected-vote" value="">
+            </div>
+            
             <div id="order-deadline-warning" style="display: none; margin-top: 15px; padding: 15px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px;">
                 <p style="margin: 0; color: #856404;">
                     ⚠️ <strong>Attention:</strong> La deadline de commande est dans <span id="deadline-countdown"></span>
@@ -1288,14 +1302,41 @@ image.png<!DOCTYPE html>
             stopDeadlineWarning();
         }
 
+        // Sélectionner le vote
+        function selectVote(vote) {
+            document.getElementById('selected-vote').value = vote;
+            
+            // Mettre à jour l'apparence des boutons
+            const redBtn = document.getElementById('vote-red-btn');
+            const greenBtn = document.getElementById('vote-green-btn');
+            
+            if (vote === 'red') {
+                redBtn.style.border = '3px solid #fff';
+                redBtn.style.boxShadow = '0 0 10px rgba(220, 53, 69, 0.5)';
+                greenBtn.style.border = '3px solid transparent';
+                greenBtn.style.boxShadow = 'none';
+            } else {
+                greenBtn.style.border = '3px solid #fff';
+                greenBtn.style.boxShadow = '0 0 10px rgba(40, 167, 69, 0.5)';
+                redBtn.style.border = '3px solid transparent';
+                redBtn.style.boxShadow = 'none';
+            }
+        }
+        
         async function confirmOrder() {
             if (!pendingOrder) return;
 
             const classId = document.getElementById('selected-class-id').value;
             const scheduleIndex = parseInt(document.getElementById('selected-class-schedule-id').value);
+            const vote = document.getElementById('selected-vote').value;
 
             if (!classId || isNaN(scheduleIndex)) {
                 showMessage('Veuillez sélectionner une salle et un horaire', 'error');
+                return;
+            }
+            
+            if (!vote) {
+                showMessage('Veuillez voter pour une liste (Rouge ou Verte)', 'error');
                 return;
             }
 
@@ -1345,6 +1386,7 @@ image.png<!DOCTYPE html>
                     deliveryTime: deliveryTime.toISOString(),
                     deadline: deadline.toISOString(),
                     program: program,
+                    vote: vote, // Ajouter le vote
                     status: 'pending',
                     createdAt: new Date(),
                     orderDate: new Date().toLocaleDateString('fr-FR'),
@@ -1774,6 +1816,10 @@ image.png<!DOCTYPE html>
                 const classNumber = order.classroom || order.classNumber || 'N/A';
                 const product = getProductName(order.product) || 'N/A';
                 const price = order.price !== undefined ? (order.price === 0 ? 'FREE' : order.price + '€') : 'N/A';
+                const vote = order.vote || 'N/A';
+                const voteDisplay = vote === 'red' ? '<span style="color: #dc3545; font-weight: bold;">🔴 Rouge</span>' : 
+                                   vote === 'green' ? '<span style="color: #28a745; font-weight: bold;">🟢 Verte</span>' : 
+                                   'N/A';
                 
                 tableHTML += `
                     <tr>
