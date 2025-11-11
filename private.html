@@ -499,8 +499,8 @@
                         <tr>
                             <td>${fullName}</td>
                             <td>${userData.email}</td>
-                            <td style="position: relative; padding: 8px;">
-                                <span class="role-badge" style="background: ${userProgram === 'master' ? '#667eea' : '#28a745'}; color: white;" onclick="showProgramDropdown('${doc.id}', event)">
+                            <td style="position: relative; padding: 8px; overflow: visible;">
+                                <span class="role-badge" style="background: ${userProgram === 'master' ? '#667eea' : '#28a745'}; color: white; position: relative; z-index: 1;" onclick="showProgramDropdown('${doc.id}', event)">
                                     ${programText}
                                 </span>
                                 <div id="programDropdown_${doc.id}" class="dropdown-menu" style="display: none !important;">
@@ -508,8 +508,8 @@
                                     <div class="dropdown-item" onclick="updateUserProgram('${doc.id}', 'master'); event.stopPropagation();">Master</div>
                                 </div>
                             </td>
-                            <td style="position: relative; padding: 8px;">
-                                <span class="role-badge ${getRoleClass(userData.role)}" onclick="showRoleDropdown('${doc.id}', event)">
+                            <td style="position: relative; padding: 8px; overflow: visible;">
+                                <span class="role-badge ${getRoleClass(userData.role)}" style="position: relative; z-index: 1;" onclick="showRoleDropdown('${doc.id}', event)">
                                     ${getRoleText(userData.role)}
                                 </span>
                                 <div id="roleDropdown_${doc.id}" class="dropdown-menu" style="display: none !important;">
