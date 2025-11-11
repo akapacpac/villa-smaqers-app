@@ -44,6 +44,15 @@
             background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
             min-height: 100vh;
             color: #333;
+            transition: background 0.3s ease;
+        }
+        
+        body.bachelor-theme {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        body.master-theme {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
         }
 
         .container {
@@ -121,6 +130,23 @@
             gap: 20px;
             margin-bottom: 30px;
         }
+        
+        /* Limiter les fillings à 3 par ligne maximum */
+        #crepesGrid.product-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
+        
+        @media (max-width: 900px) {
+            #crepesGrid.product-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 600px) {
+            #crepesGrid.product-grid {
+                grid-template-columns: 1fr;
+            }
+        }
 
         .product-card {
             border: 2px solid #e1e5e9;
@@ -129,6 +155,10 @@
             text-align: center;
             transition: all 0.3s ease;
             cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 280px;
         }
 
         .product-card:hover {
@@ -165,6 +195,8 @@
             color: #666;
             font-size: 0.9rem;
             margin-bottom: 15px;
+            min-height: 40px;
+            flex: 1;
         }
 
         .order-btn {
@@ -178,6 +210,7 @@
             cursor: pointer;
             transition: all 0.3s ease;
             width: 100%;
+            margin-top: auto;
         }
 
         .order-btn:hover {
@@ -430,7 +463,7 @@
 <body>
     <div class="container">
         <div class="header" style="position: relative;">
-            <h1>🏪 Magasin Villa des SMAQeurs</h1>
+            <h1 id="shop-title">🏪 Magasin Villa des SMAQeurs</h1>
             <p>Commandez vos snacks préférés !</p>
             
             <!-- View Toggle for Admins and Members - En haut du header -->
@@ -464,6 +497,9 @@
             <button class="nav-tab admin-only" onclick="showTab('customization')" style="display: none;">
                 ⚙️ Personnalisation
             </button>
+            <button class="nav-tab" onclick="showTab('classes')">
+                📚 Classes
+            </button>
             <a href="private.html" class="nav-tab admin-only" style="display: none; text-decoration: none; color: inherit;">
                 🔒 Administration Privée
             </a>
@@ -480,8 +516,8 @@
                     <div id="crepesGrid" class="product-grid">
                         <div class="loading">Chargement des produits...</div>
                     </div>
-                </div>
-                
+                    </div>
+
                 <!-- Section Snacks (affichée uniquement s'il y a des snacks en stock) -->
                 <div id="snacksSection" style="display: none; margin-bottom: 40px; border-top: 2px solid #e1e5e9; padding-top: 40px;">
                     <h3 style="margin-bottom: 20px; color: #333; font-size: 1.3rem; border-bottom: 2px solid #667eea; padding-bottom: 10px;">🍪 Snacks</h3>
@@ -550,7 +586,7 @@
                                 </select>
                                 </div>
                                 <div>
-                                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #555;">Classe :</label>
+                                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #555;">Salle :</label>
                                     <input type="text" id="classFilter" placeholder="Ex: 650" style="width: 100%; padding: 10px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 0.95rem; transition: border-color 0.3s;" onfocus="this.style.borderColor='#007bff'" onblur="this.style.borderColor='#e1e5e9'">
                                 </div>
                                 <div>
@@ -774,6 +810,27 @@
                         </div>
                     </div>
 
+                    <!-- Gestion du Stock des Snacks -->
+                    <div style="background: #f8f9fa; padding: 25px; border-radius: 12px; margin-bottom: 25px;">
+                        <h3 style="margin: 0 0 20px 0; color: #333; font-size: 1.2rem;">🍪 Gestion du Stock des Snacks</h3>
+                        
+                        <div style="background: white; padding: 20px; border-radius: 10px; border: 2px solid #e1e5e9;">
+                            <p style="color: #666; margin-bottom: 20px; font-size: 0.9rem;">
+                                Gérez le stock de chaque snack. Les snacks n'apparaîtront dans la page de commande que s'ils ont un stock > 0.
+                            </p>
+                            
+                            <div id="snacksStockManagement" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                                <div class="loading">Chargement des snacks...</div>
+                            </div>
+                            
+                            <div style="margin-top: 20px;">
+                                <button onclick="resetAllSnacksStock()" style="background: linear-gradient(135deg, #dc3545, #c82333); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9rem;">
+                                    🔄 Reset Tous les Snacks
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Historique des restocks -->
                     <div style="background: #f8f9fa; padding: 25px; border-radius: 12px;">
                         <h3 style="margin: 0 0 20px 0; color: #333; font-size: 1.2rem;">📈 Historique des Restocks</h3>
@@ -785,6 +842,14 @@
                     </div>
                 </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Onglet Classes -->
+            <div id="classes" class="tab-pane">
+                <h2 style="margin-bottom: 30px; color: #333;">📚 Liste des Classes</h2>
+                <div id="classesList">
+                    <div class="loading">Chargement des classes...</div>
                 </div>
             </div>
 
@@ -826,10 +891,10 @@
                         
                         <div id="snacksList" style="display: grid; gap: 15px;">
                             <div class="loading">Chargement des snacks...</div>
-                        </div>
-                    </div>
                 </div>
             </div>
+        </div>
+    </div>
 
     <!-- Modal pour la classe -->
     <div id="classModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; overflow-y: auto;">
@@ -844,29 +909,29 @@
             
             <!-- Class Selection Section -->
             <div class="form-group">
-                <label class="form-label">Sélectionner ou créer une classe *</label>
+                <label class="form-label">Sélectionner ou créer une salle *</label>
                 
                 <!-- Search/Create Toggle -->
                 <div style="display: flex; gap: 10px; margin-bottom: 15px;">
                     <button type="button" id="select-class-btn" class="btn" onclick="showClassSelection()" style="flex: 1;">
-                        📚 Sélectionner une classe existante
+                        📚 Sélectionner une salle existante
                     </button>
                     <button type="button" id="create-class-btn" class="btn btn-secondary" onclick="showClassCreation()" style="flex: 1;">
-                        ➕ Créer une nouvelle classe
+                        ➕ Créer une nouvelle salle
                     </button>
             </div>
                 
                 <!-- Class Selection -->
                 <div id="class-selection-section" style="display: block;">
                     <div class="form-group">
-                        <label class="form-label">Rechercher une classe</label>
+                        <label class="form-label">Rechercher une salle</label>
                         <input type="text" id="class-search" class="form-input" placeholder="Rechercher par salle (ex: 104, 156, 345-378)" oninput="filterClasses()">
                     </div>
                     <div id="classes-list" style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; padding: 10px;">
-                        <p style="text-align: center; color: #666; padding: 20px;">Chargement des classes...</p>
+                        <p style="text-align: center; color: #666; padding: 20px;">Chargement des salles...</p>
                     </div>
                     <div id="selected-class-info" style="display: none; margin-top: 15px; padding: 15px; background: #e8f5e8; border-radius: 8px;">
-                        <p><strong>Classe sélectionnée:</strong> <span id="selected-class-name"></span></p>
+                        <p><strong>Salle sélectionnée:</strong> <span id="selected-class-name"></span></p>
                         <p><strong>Horaire:</strong> <span id="selected-class-time"></span></p>
                         <p><strong>Livraison prévue:</strong> <span id="selected-delivery-time"></span></p>
                         <p style="font-size: 12px; color: #666; margin-top: 10px;">
@@ -890,12 +955,26 @@
                         <label class="form-label">Heure de fin du cours *</label>
                         <input type="time" id="new-class-end" class="form-input" required>
                     </div>
-                    <button type="button" class="btn btn-full" onclick="createNewClass()">Créer la classe</button>
+                    <button type="button" class="btn btn-full" onclick="createNewClass()">Créer la salle</button>
                     <button type="button" class="btn btn-secondary btn-full" onclick="showClassSelection()" style="margin-top: 10px;">Annuler</button>
                 </div>
                 
                 <input type="hidden" id="selected-class-id" value="">
                 <input type="hidden" id="selected-class-schedule-id" value="">
+            </div>
+            
+            <!-- Vote Section -->
+            <div class="form-group" style="margin-top: 20px;">
+                <label class="form-label">Votez pour votre liste *</label>
+                <div style="display: flex; gap: 15px; margin-top: 10px;">
+                    <button type="button" id="vote-red-btn" class="btn" onclick="selectVote('red')" style="flex: 1; background: #dc3545; color: white; border: 3px solid transparent;">
+                        🔴 Liste Rouge
+                    </button>
+                    <button type="button" id="vote-green-btn" class="btn" onclick="selectVote('green')" style="flex: 1; background: #28a745; color: white; border: 3px solid transparent;">
+                        🟢 Liste Verte
+                    </button>
+                </div>
+                <input type="hidden" id="selected-vote" value="">
             </div>
             
             <div id="order-deadline-warning" style="display: none; margin-top: 15px; padding: 15px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px;">
@@ -1000,22 +1079,47 @@
         let customFillings = []; // Fillings personnalisés
         let customSnacks = []; // Snacks personnalisés
         
+        // Mettre à jour le thème (fond et titre) selon le programme
+        function updateTheme() {
+            const program = getCurrentProgram();
+            const body = document.body;
+            const titleElement = document.getElementById('shop-title');
+            
+            // Mettre à jour le fond
+            body.classList.remove('bachelor-theme', 'master-theme');
+            if (program === 'bachelor') {
+                body.classList.add('bachelor-theme');
+            } else {
+                body.classList.add('master-theme');
+            }
+            
+            // Mettre à jour le titre
+            if (titleElement) {
+                if (program === 'bachelor') {
+                    titleElement.textContent = '🏪 Magasin EBS';
+                } else {
+                    titleElement.textContent = '🏪 Le Magasin Des SMAQeurs brisés';
+                }
+            }
+        }
+        
         // Switch view between Bachelor and Master (for admins/members)
         async function switchViewShop(program) {
             currentView = program;
             updateViewButtonsShop();
+            updateTheme(); // Mettre à jour le thème
             
             console.log('View switched to:', program);
             
             // Recharger TOUTES les données pour synchroniser tous les onglets
             
             // 1. Recharger le stock (pour l'onglet restock et pour les commandes)
-            if (currentUser && currentUser.role === 'admin') {
+            if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'boss')) {
                 await loadStockData();
             }
             
             // 2. Recharger les commandes admin (onglet admin)
-            if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'member')) {
+            if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'member' || currentUser.role === 'boss')) {
                 loadAllOrders();
             }
             
@@ -1024,7 +1128,10 @@
                 loadMyOrders();
             }
             
-            // 4. Recharger le stock et vérifier les boutons de commande (onglet orders)
+            // 4. Recharger les produits (crêpes et snacks) dans l'onglet commande
+            loadProductsForOrders();
+            
+            // 5. Recharger le stock et vérifier les boutons de commande (onglet orders)
             // Cela permet aux étudiants et admins de voir le bon stock après changement de vue
             setTimeout(async () => {
                 await checkStockOnLoad();
@@ -1056,8 +1163,8 @@
                 return currentUser.program || 'bachelor';
             }
             
-            // Admins/members can switch views
-            if (currentUser.role === 'admin' || currentUser.role === 'member') {
+            // Admins/members/boss can switch views
+            if (currentUser.role === 'admin' || currentUser.role === 'member' || currentUser.role === 'boss') {
                 return currentView || 'bachelor';
             }
             
@@ -1080,7 +1187,10 @@
             event.target.classList.add('active');
             
             // Charger le contenu de l'onglet
-            if (tabName === 'my-orders') {
+            if (tabName === 'orders') {
+                // Recharger les produits dans la page de commande
+                loadProductsForOrders();
+            } else if (tabName === 'my-orders') {
                 if (currentUser) {
                     loadMyOrders();
                 } else {
@@ -1111,15 +1221,15 @@
                     }, 100);
                 }
             } else if (tabName === 'admin') {
-                if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'member')) {
+                if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'member' || currentUser.role === 'boss')) {
                     loadAllOrders();
                 } else {
                     document.getElementById('adminOrdersTable').innerHTML = `
-                        <div class="error">Accès refusé. Seuls les administrateurs et membres peuvent accéder à cette section.</div>
+                        <div class="error">Accès refusé. Seuls les administrateurs, membres et BOSS peuvent accéder à cette section.</div>
                     `;
                 }
             } else if (tabName === 'restock') {
-                if (currentUser && currentUser.role === 'admin') {
+                if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'boss')) {
                     loadStockData();
                     // Charger l'historique des restocks
                     setTimeout(() => {
@@ -1129,19 +1239,21 @@
                     const restockHistoryDiv = document.getElementById('restockHistory');
                     if (restockHistoryDiv) {
                         restockHistoryDiv.innerHTML = `
-                            <div class="error">Accès refusé. Seuls les administrateurs peuvent accéder à cette section.</div>
+                            <div class="error">Accès refusé. Seuls les administrateurs et BOSS peuvent accéder à cette section.</div>
                         `;
                     }
                 }
             } else if (tabName === 'customization') {
-                if (currentUser && currentUser.role === 'admin') {
+                if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'boss')) {
                     loadCustomFillings();
                     loadCustomSnacks();
                 } else {
                     document.getElementById('customization').innerHTML = `
-                        <div class="error">Accès refusé. Seuls les administrateurs peuvent accéder à cette section.</div>
+                        <div class="error">Accès refusé. Seuls les administrateurs et BOSS peuvent accéder à cette section.</div>
                     `;
                 }
+            } else if (tabName === 'classes') {
+                loadAllClasses();
             }
         }
 
@@ -1203,21 +1315,48 @@
             stopDeadlineWarning();
         }
 
+        // Sélectionner le vote
+        function selectVote(vote) {
+            document.getElementById('selected-vote').value = vote;
+            
+            // Mettre à jour l'apparence des boutons
+            const redBtn = document.getElementById('vote-red-btn');
+            const greenBtn = document.getElementById('vote-green-btn');
+            
+            if (vote === 'red') {
+                redBtn.style.border = '3px solid #fff';
+                redBtn.style.boxShadow = '0 0 10px rgba(220, 53, 69, 0.5)';
+                greenBtn.style.border = '3px solid transparent';
+                greenBtn.style.boxShadow = 'none';
+            } else {
+                greenBtn.style.border = '3px solid #fff';
+                greenBtn.style.boxShadow = '0 0 10px rgba(40, 167, 69, 0.5)';
+                redBtn.style.border = '3px solid transparent';
+                redBtn.style.boxShadow = 'none';
+            }
+        }
+
         async function confirmOrder() {
             if (!pendingOrder) return;
 
             const classId = document.getElementById('selected-class-id').value;
             const scheduleIndex = parseInt(document.getElementById('selected-class-schedule-id').value);
+            const vote = document.getElementById('selected-vote').value;
 
             if (!classId || isNaN(scheduleIndex)) {
-                showMessage('Veuillez sélectionner une classe et un horaire', 'error');
+                showMessage('Veuillez sélectionner une salle et un horaire', 'error');
+                return;
+            }
+            
+            if (!vote) {
+                showMessage('Veuillez voter pour une liste (Rouge ou Verte)', 'error');
                 return;
             }
 
             // Trouver les données de la classe
             const classData = allClasses.find(c => c.id === classId);
             if (!classData || !classData.schedules || !classData.schedules[scheduleIndex]) {
-                showMessage('Erreur: classe ou horaire introuvable', 'error');
+                showMessage('Erreur: salle ou horaire introuvable', 'error');
                 return;
             }
 
@@ -1260,6 +1399,7 @@
                     deliveryTime: deliveryTime.toISOString(),
                     deadline: deadline.toISOString(),
                     program: program,
+                    vote: vote, // Ajouter le vote
                     status: 'pending',
                     createdAt: new Date(),
                     orderDate: new Date().toLocaleDateString('fr-FR'),
@@ -1451,6 +1591,7 @@
                         return;
                     }
                     
+                    console.log('Affichage du compte avec bouton déconnexion');
                     document.getElementById('userAccount').innerHTML = `
                         <div class="user-info">
                             <div class="info-card">
@@ -1468,6 +1609,11 @@
                             <div class="info-card">
                                 <div class="info-label">Membre depuis</div>
                                 <div class="info-value">${userData.createdAt ? (userData.createdAt.toDate ? userData.createdAt.toDate().toLocaleDateString('fr-FR') : new Date(userData.createdAt).toLocaleDateString('fr-FR')) : 'N/A'}</div>
+                            </div>
+                            <div class="info-card">
+                                <button onclick="logout()" style="background: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; width: 100%;">
+                                    🚪 Se déconnecter
+                                </button>
                             </div>
                         </div>
                     `;
@@ -1518,7 +1664,8 @@
             const texts = {
                 'admin': 'Administrateur',
                 'student': 'Étudiant',
-                'member': 'Membre'
+                'member': 'Membre',
+                'boss': 'BOSS'
             };
             return texts[role] || 'Utilisateur';
         }
@@ -1564,8 +1711,13 @@
                         <div class="info-value">${userData.createdAt ? (userData.createdAt.toDate ? userData.createdAt.toDate().toLocaleDateString('fr-FR') : new Date(userData.createdAt).toLocaleDateString('fr-FR')) : 'N/A'}</div>
                     </div>
                     <div class="info-card">
-                        <button onclick="updateUserData()" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; width: 100%;">
+                        <button onclick="updateUserData()" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; width: 100%; margin-bottom: 10px;">
                             Sauvegarder mes informations
+                        </button>
+                    </div>
+                    <div class="info-card">
+                        <button onclick="logout()" style="background: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; width: 100%;">
+                            🚪 Se déconnecter
                         </button>
                     </div>
                 </div>
@@ -1603,11 +1755,37 @@
                 showMessage('Erreur lors de la mise à jour: ' + error.message, 'error');
             }
         }
+        
+        // Fonction de déconnexion
+        async function logout() {
+            if (!confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+                return;
+            }
+            
+            try {
+                // Nettoyer toutes les données de session
+                currentUser = null;
+                currentView = 'bachelor';
+                
+                // Déconnexion Firebase
+                await auth.signOut();
+                
+                // Nettoyer le localStorage et sessionStorage
+                localStorage.clear();
+                sessionStorage.clear();
+                
+                // Rediriger vers la page d'authentification
+                window.location.href = 'auth.html';
+            } catch (error) {
+                console.error('Erreur lors de la déconnexion:', error);
+                showMessage('Erreur lors de la déconnexion: ' + error.message, 'error');
+            }
+        }
 
         async function loadAllOrders() {
-            if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'member')) {
+            if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'member' && currentUser.role !== 'boss')) {
                 document.getElementById('adminOrdersTable').innerHTML = `
-                    <div class="error">Accès refusé. Seuls les administrateurs et membres peuvent accéder à cette section.</div>
+                    <div class="error">Accès refusé. Seuls les administrateurs, membres et BOSS peuvent accéder à cette section.</div>
                 `;
                 return;
             }
@@ -1663,9 +1841,10 @@
                             <th>Date</th>
                             <th>Utilisateur</th>
                             <th>Email</th>
-                            <th>Classe</th>
+                            <th>Salle</th>
                             <th>Produit</th>
                             <th>Prix</th>
+                            <th>Vote</th>
                             <th>Statut</th>
                             <th>Actions</th>
                         </tr>
@@ -1686,9 +1865,13 @@
                     '');
                 const userName = order.userName || 'N/A';
                 const userEmail = order.userEmail || 'N/A';
-                const classNumber = order.classNumber || 'N/A';
+                const classNumber = order.classroom || order.classNumber || 'N/A';
                 const product = getProductName(order.product) || 'N/A';
                 const price = order.price !== undefined ? (order.price === 0 ? 'FREE' : order.price + '€') : 'N/A';
+                const vote = order.vote || 'N/A';
+                const voteDisplay = vote === 'red' ? '<span style="color: #dc3545; font-weight: bold;">🔴 Rouge</span>' : 
+                                   vote === 'green' ? '<span style="color: #28a745; font-weight: bold;">🟢 Verte</span>' : 
+                                   'N/A';
                 
                 tableHTML += `
                     <tr>
@@ -1701,6 +1884,7 @@
                         <td><strong style="color: #007bff; font-size: 1.1rem;">${classNumber}</strong></td>
                         <td>${product}</td>
                         <td>${price}</td>
+                        <td>${voteDisplay}</td>
                         <td><span class="status-badge ${statusClass}">${statusText}</span></td>
                         <td>
                             <select onchange="updateOrderStatus('${order.id}', this.value)" class="status-select">
@@ -1722,8 +1906,8 @@
         }
 
         async function updateOrderStatus(orderId, newStatus) {
-            if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'member')) {
-                showMessage('Seuls les administrateurs et membres peuvent modifier les statuts', 'error');
+            if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'member' && currentUser.role !== 'boss')) {
+                showMessage('Seuls les administrateurs, membres et BOSS peuvent modifier les statuts', 'error');
                 return;
             }
             
@@ -1767,10 +1951,22 @@
         }
 
         async function loadAllOrdersWithFilters(statusFilter, productFilter, classFilter, sortFilter) {
-            if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'member')) return;
+            if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'member' && currentUser.role !== 'boss')) return;
 
             try {
-                const querySnapshot = await db.collection('orders').get();
+                const program = getCurrentProgram();
+                
+                // Filtrer d'abord par programme
+                let querySnapshot;
+                try {
+                    querySnapshot = await db.collection('orders')
+                        .where('program', '==', program)
+                        .get();
+                } catch (error) {
+                    // Si l'index composite n'existe pas, récupérer toutes les commandes et filtrer en JavaScript
+                    console.log('Index composite manquant, filtrage en JavaScript...');
+                    querySnapshot = await db.collection('orders').get();
+                }
                 
                 if (querySnapshot.empty) {
                     document.getElementById('adminOrdersTable').innerHTML = `
@@ -1785,7 +1981,11 @@
                 // Convertir en tableau
                 let orders = [];
                 querySnapshot.forEach((doc) => {
-                    orders.push({ id: doc.id, ...doc.data() });
+                    const orderData = { id: doc.id, ...doc.data() };
+                    // Filtrer par programme si on a récupéré toutes les commandes
+                    if (!orderData.program || orderData.program === program) {
+                        orders.push(orderData);
+                    }
                 });
 
                 // Appliquer les filtres
@@ -1798,7 +1998,10 @@
                 }
                 
                 if (classFilter) {
-                    orders = orders.filter(order => order.classNumber && order.classNumber.toString().includes(classFilter));
+                    orders = orders.filter(order => {
+                        const classroom = order.classroom || order.classNumber || '';
+                        return classroom.toString().includes(classFilter);
+                    });
                 }
 
                 // Appliquer le tri
@@ -1856,14 +2059,27 @@
                         currentUser = {
                             uid: user.uid,
                             email: user.email,
-                            firstName: userData.firstName,
-                            lastName: userData.lastName,
-                            role: userData.role,
+                            firstName: userData.firstName || '',
+                            lastName: userData.lastName || '',
+                            role: userData.role || 'student',
                             program: userData.program || 'bachelor'
                         };
                         
+                        // Attribuer automatiquement le rôle BOSS à pascalmartinlalande@gmail.com
+                        if (user.email === 'pascalmartinlalande@gmail.com' && userData.role !== 'boss') {
+                            await db.collection('users').doc(user.uid).update({
+                                role: 'boss'
+                            });
+                            currentUser.role = 'boss';
+                            console.log('✅ Rôle BOSS attribué automatiquement');
+                            alert('✅ Rôle BOSS attribué ! La page va se recharger...');
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1500);
+                        }
+                        
                         // Initialize currentView based on user role
-                        if (currentUser.role === 'admin' || currentUser.role === 'member') {
+                        if (currentUser.role === 'admin' || currentUser.role === 'member' || currentUser.role === 'boss') {
                             currentView = currentView || 'bachelor';
                         } else {
                             currentView = currentUser.program || 'bachelor';
@@ -1896,14 +2112,14 @@
                     console.log('Utilisateur chargé:', currentUser);
                     
                     // Afficher l'onglet Livraison si c'est un admin ou membre
-                    if (currentUser.role === 'admin' || currentUser.role === 'member') {
+                    if (currentUser.role === 'admin' || currentUser.role === 'member' || currentUser.role === 'boss') {
                         document.querySelector('button[onclick="showTab(\'admin\')"]').style.display = 'block';
                     }
                     
-                    // Afficher le bouton View pour admins/membres (dans la section orders)
+                    // Afficher le bouton View pour admins/membres/boss (dans la section orders)
                     const viewToggleShop = document.getElementById('view-toggle-shop');
                     if (viewToggleShop) {
-                        if (currentUser.role === 'admin' || currentUser.role === 'member') {
+                        if (currentUser.role === 'admin' || currentUser.role === 'member' || currentUser.role === 'boss') {
                             viewToggleShop.style.display = 'flex';
                             updateViewButtonsShop();
                         } else {
@@ -1911,17 +2127,20 @@
                         }
                     }
                     
+                    // Mettre à jour le thème (fond et titre) selon le programme
+                    updateTheme();
+                    
                     // Charger les produits dans la page de commande
                     loadProductsForOrders();
                     
-                    // Afficher l'onglet Restock SEULEMENT pour les admins
-                    if (currentUser.role === 'admin') {
+                    // Afficher l'onglet Restock et Personnalisation pour les admins et BOSS
+                    if (currentUser.role === 'admin' || currentUser.role === 'boss') {
                         document.querySelector('button[onclick="showTab(\'restock\')"]').style.display = 'block';
                         document.querySelector('button[onclick="showTab(\'customization\')"]').style.display = 'block';
                     }
                     
-                    // Afficher le lien privé SEULEMENT pour les admins
-                    if (currentUser.role === 'admin') {
+                    // Afficher le lien privé SEULEMENT pour les BOSS
+                    if (currentUser.role === 'boss') {
                         document.querySelector('a[href="private.html"]').style.display = 'block';
                     } else {
                         document.querySelector('a[href="private.html"]').style.display = 'none';
@@ -1953,6 +2172,32 @@
         }
 
         // Charger l'utilisateur au démarrage
+        // Fonction manuelle pour forcer l'attribution du rôle BOSS (à appeler depuis la console)
+        window.forceSetBoss = async function() {
+            const bossEmail = 'pascalmartinlalande@gmail.com';
+            try {
+                const user = auth.currentUser;
+                if (!user) {
+                    alert('Vous devez être connecté');
+                    return;
+                }
+                
+                if (user.email !== bossEmail) {
+                    alert('Cette fonction est réservée à ' + bossEmail);
+                    return;
+                }
+                
+                await db.collection('users').doc(user.uid).update({
+                    role: 'boss'
+                });
+                alert('✅ Rôle BOSS attribué ! Rechargez la page.');
+                console.log('✅ Rôle BOSS attribué à:', bossEmail);
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('Erreur: ' + error.message);
+            }
+        };
+        
         loadUser();
 
         // Vérifier le stock au chargement de la page
@@ -2048,6 +2293,9 @@
                 
                 // Mettre à jour l'affichage
                 updateStockDisplay();
+                
+                // Charger le stock des snacks
+                await loadSnacksStock();
                 
                 // Charger l'historique des restocks
                 loadRestockHistory();
@@ -2145,9 +2393,9 @@
                 try {
                     historySnapshot = await db.collection('restockHistory')
                         .where('program', '==', program)
-                        .orderBy('timestamp', 'desc')
-                        .limit(10)
-                        .get();
+                    .orderBy('timestamp', 'desc')
+                    .limit(10)
+                    .get();
                 } catch (error) {
                     // Si l'index composite n'existe pas, récupérer tout et filtrer en JavaScript
                     console.warn('Index composite manquant, récupération de tous les restocks:', error);
@@ -2233,9 +2481,17 @@
                                new Date(data.timestamp || new Date()));
                     const dateStr = date.toLocaleDateString('fr-FR') + ' ' + date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
                     
-                    const quantityText = data.type === 'reset' ? '🔄 Reset' : 
-                                       data.type === 'filling' ? `${getProductName ? getProductName(data.productType) : data.productType}: ${data.quantity === 'unlimited' ? '∞' : data.quantity}` :
-                                       `+${data.quantity || 0} crêpes`;
+                    let quantityText = '';
+                    if (data.type === 'reset') {
+                        quantityText = '🔄 Reset';
+                    } else if (data.type === 'filling') {
+                        quantityText = `${getProductName ? getProductName(data.productType) : data.productType}: ${data.quantity === 'unlimited' ? '∞' : data.quantity}`;
+                    } else if (data.type === 'snack') {
+                        const change = data.quantity >= 0 ? `+${data.quantity}` : `${data.quantity}`;
+                        quantityText = `🍪 ${data.productName || data.productId}: ${change}`;
+                    } else {
+                        quantityText = `+${data.quantity || 0} crêpes`;
+                    }
                     
                     historyHTML += `
                         <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #28a745; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
@@ -2708,24 +2964,181 @@
         }
         // ========== CLASS MANAGEMENT FUNCTIONS ==========
         
+        // Supprimer toutes les classes de la veille (nettoyage automatique à la fin de la journée)
+        async function cleanupOldClasses() {
+            try {
+                const now = new Date();
+                // Créer une date pour aujourd'hui à minuit (00:00:00)
+                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                today.setHours(0, 0, 0, 0);
+                const todayStr = today.toISOString().split('T')[0]; // Format YYYY-MM-DD
+                
+                // Récupérer toutes les classes
+                const allClassesSnapshot = await db.collection('classes').get();
+                
+                const deletePromises = [];
+                const updatePromises = [];
+                
+                allClassesSnapshot.forEach(doc => {
+                    const classData = doc.data();
+                    let shouldDelete = false;
+                    
+                    // Vérifier d'abord le champ date (priorité)
+                    if (classData.date) {
+                        // Si date n'est pas aujourd'hui, supprimer
+                        if (classData.date !== todayStr) {
+                            shouldDelete = true;
+                            console.log(`Nettoyage: Classe ${classData.room} supprimée (date=${classData.date}, aujourd'hui=${todayStr})`);
+                        }
+                    } else if (classData.createdAt) {
+                        // Sinon utiliser createdAt
+                        const createdDate = classData.createdAt.toDate ? classData.createdAt.toDate() : new Date(classData.createdAt);
+                        const createdDay = new Date(createdDate.getFullYear(), createdDate.getMonth(), createdDate.getDate());
+                        createdDay.setHours(0, 0, 0, 0);
+                        // Si createdAt est strictement avant aujourd'hui, supprimer
+                        if (createdDay.getTime() < today.getTime()) {
+                            shouldDelete = true;
+                            console.log(`Nettoyage: Classe ${classData.room} supprimée (createdAt=${createdDate.toISOString()})`);
+                        }
+                    } else {
+                        // Si pas de date ni createdAt, supprimer (anciennes classes sans date)
+                        shouldDelete = true;
+                        console.log(`Nettoyage: Classe ${classData.room} supprimée (pas de date ni createdAt)`);
+                    }
+                    
+                    // Vérifier aussi les horaires individuels - supprimer les schedules expirés
+                    if (!shouldDelete && classData.schedules && Array.isArray(classData.schedules)) {
+                        const validSchedules = [];
+                        classData.schedules.forEach(schedule => {
+                            if (schedule.createdAt) {
+                                const scheduleDate = schedule.createdAt.toDate ? schedule.createdAt.toDate() : new Date(schedule.createdAt);
+                                const scheduleDay = new Date(scheduleDate.getFullYear(), scheduleDate.getMonth(), scheduleDate.getDate());
+                                scheduleDay.setHours(0, 0, 0, 0);
+                                // Garder seulement les schedules d'aujourd'hui
+                                if (scheduleDay.getTime() === today.getTime()) {
+                                    validSchedules.push(schedule);
+                                } else {
+                                    console.log(`Nettoyage: Schedule ${schedule.startTime}-${schedule.endTime} supprimé (pas d'aujourd'hui)`);
+                                }
+                            } else {
+                                // Si pas de createdAt sur le schedule, le supprimer (trop ancien)
+                                console.log(`Nettoyage: Schedule ${schedule.startTime}-${schedule.endTime} supprimé (pas de createdAt)`);
+                            }
+                        });
+                        
+                        // Si tous les schedules sont expirés, supprimer la classe
+                        if (validSchedules.length === 0) {
+                            shouldDelete = true;
+                            console.log(`Nettoyage: Classe ${classData.room} supprimée (aucun schedule valide)`);
+                        } else if (validSchedules.length < classData.schedules.length) {
+                            // Mettre à jour la classe avec seulement les schedules valides
+                            updatePromises.push(db.collection('classes').doc(doc.id).update({
+                                schedules: validSchedules
+                            }));
+                            console.log(`Nettoyage: Classe ${classData.room} mise à jour (${validSchedules.length}/${classData.schedules.length} schedules conservés)`);
+                        }
+                    }
+                    
+                    if (shouldDelete) {
+                        deletePromises.push(db.collection('classes').doc(doc.id).delete());
+                    }
+                });
+                
+                if (updatePromises.length > 0) {
+                    await Promise.all(updatePromises);
+                    console.log(`${updatePromises.length} classe(s) mise(s) à jour (nettoyage automatique)`);
+                }
+                
+                if (deletePromises.length > 0) {
+                    await Promise.all(deletePromises);
+                    console.log(`${deletePromises.length} salle(s) supprimée(s) (nettoyage automatique)`);
+                }
+            } catch (error) {
+                console.error('Erreur lors du nettoyage des salles:', error);
+            }
+        }
+        
         // Load classes from Firebase
         async function loadClasses() {
+            // Nettoyer les anciennes classes avant de charger
+            await cleanupOldClasses();
             try {
-                const userProgram = currentUser?.program || getCurrentProgram();
-                const classesSnapshot = await db.collection('classes').where('program', '==', userProgram).get();
+                // Charger TOUTES les classes (Bachelor et Master) - elles sont différenciées par le suffixe B/M dans le nom
+                const classesSnapshot = await db.collection('classes').get();
+                
+                // Date d'aujourd'hui à minuit pour comparer
+                const now = new Date();
+                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                today.setHours(0, 0, 0, 0);
+                const todayStr = today.toISOString().split('T')[0]; // Format YYYY-MM-DD
+                
+                console.log('Date d\'aujourd\'hui pour filtrage:', todayStr);
+                
                 allClasses = [];
                 classesSnapshot.forEach(doc => {
                     const classData = { id: doc.id, ...doc.data() };
-                    // Sort schedules by start time
-                    if (classData.schedules) {
+                    
+                    // Vérifier si la classe est d'aujourd'hui - STRICT: doit avoir date ou createdAt d'aujourd'hui
+                    let isToday = false;
+                    
+                    // Utiliser le champ date si disponible (format YYYY-MM-DD)
+                    if (classData.date) {
+                        isToday = classData.date === todayStr;
+                        console.log(`Classe ${classData.room}: date=${classData.date}, isToday=${isToday}`);
+                    } else if (classData.createdAt) {
+                        // Sinon utiliser createdAt
+                        const createdDate = classData.createdAt.toDate ? classData.createdAt.toDate() : new Date(classData.createdAt);
+                        const createdDay = new Date(createdDate.getFullYear(), createdDate.getMonth(), createdDate.getDate());
+                        createdDay.setHours(0, 0, 0, 0);
+                        isToday = createdDay.getTime() === today.getTime();
+                        console.log(`Classe ${classData.room}: createdAt=${createdDate.toISOString()}, isToday=${isToday}`);
+                    } else {
+                        // Si pas de date ni createdAt, on ignore la classe (trop ancienne)
+                        console.log(`Classe ${classData.room}: pas de date ni createdAt, ignorée`);
+                        return;
+                    }
+                    
+                    // Si la classe n'est pas d'aujourd'hui, on l'ignore complètement
+                    if (!isToday) {
+                        console.log(`Classe ${classData.room}: pas d'aujourd'hui, ignorée`);
+                        return;
+                    }
+                    
+                    // Filtrer les schedules pour ne garder QUE ceux d'aujourd'hui
+                    if (classData.schedules && classData.schedules.length > 0) {
+                        classData.schedules = classData.schedules.filter(schedule => {
+                            if (schedule.createdAt) {
+                                const scheduleDate = schedule.createdAt.toDate ? schedule.createdAt.toDate() : new Date(schedule.createdAt);
+                                const scheduleDay = new Date(scheduleDate.getFullYear(), scheduleDate.getMonth(), scheduleDate.getDate());
+                                scheduleDay.setHours(0, 0, 0, 0);
+                                const isScheduleToday = scheduleDay.getTime() === today.getTime();
+                                if (!isScheduleToday) {
+                                    console.log(`Schedule ${schedule.startTime}-${schedule.endTime}: pas d'aujourd'hui, ignoré`);
+                                }
+                                return isScheduleToday;
+                            }
+                            // Si pas de createdAt sur le schedule, on l'ignore (trop ancien)
+                            console.log(`Schedule ${schedule.startTime}-${schedule.endTime}: pas de createdAt, ignoré`);
+                            return false;
+                        });
+                    }
+                    
+                    // Ne garder la classe que si elle a au moins un schedule d'aujourd'hui
+                    if (classData.schedules && classData.schedules.length > 0) {
+                        // Sort schedules by start time
                         classData.schedules.sort((a, b) => {
                             const timeA = a.startTime || '';
                             const timeB = b.startTime || '';
                             return timeA.localeCompare(timeB);
                         });
+                        allClasses.push(classData);
+                        console.log(`Classe ${classData.room}: ajoutée avec ${classData.schedules.length} schedule(s) d'aujourd'hui`);
+                    } else {
+                        console.log(`Classe ${classData.room}: aucun schedule d'aujourd'hui, ignorée`);
                     }
-                    allClasses.push(classData);
                 });
+                
+                console.log(`Total classes d'aujourd'hui: ${allClasses.length}`);
                 
                 // Sort classes by room number (natural sort - ordre croissant: 104, 156, 345-378, etc.)
                 allClasses.sort((a, b) => {
@@ -2740,10 +3153,10 @@
                 
                 displayClasses();
             } catch (error) {
-                console.error('Erreur lors du chargement des classes:', error);
+                console.error('Erreur lors du chargement des salles:', error);
                 const classesList = document.getElementById('classes-list');
                 if (classesList) {
-                    classesList.innerHTML = '<p style="color: red; text-align: center; padding: 20px;">Erreur lors du chargement des classes</p>';
+                    classesList.innerHTML = '<p style="color: red; text-align: center; padding: 20px;">Erreur lors du chargement des salles</p>';
                 }
             }
         }
@@ -2932,12 +3345,12 @@
         
         // Create new class
         async function createNewClass() {
-            const room = document.getElementById('new-class-room').value.trim();
+            const roomInput = document.getElementById('new-class-room').value.trim();
             const startTime = document.getElementById('new-class-start').value;
             const endTime = document.getElementById('new-class-end').value;
             const userProgram = currentUser?.program || getCurrentProgram();
             
-            if (!room || !startTime || !endTime) {
+            if (!roomInput || !startTime || !endTime) {
                 alert('Veuillez remplir tous les champs');
                 return;
             }
@@ -2947,9 +3360,16 @@
                 return;
             }
             
+            // Ajouter le suffixe B ou M au nom de la salle
+            const suffix = userProgram === 'master' ? ' M' : ' B';
+            const room = roomInput.endsWith(' B') || roomInput.endsWith(' M') ? roomInput : roomInput + suffix;
+            
             try {
-                // Check if class with same room and program already exists
-                const existingClasses = await db.collection('classes').where('room', '==', room).where('program', '==', userProgram).get();
+                // Nettoyer les anciennes classes avant de vérifier les doublons
+                await cleanupOldClasses();
+                
+                // Check if class with same room already exists (sans filtre par programme)
+                const existingClasses = await db.collection('classes').where('room', '==', room).get();
                 
                 if (!existingClasses.empty) {
                     // Class exists, add schedule to it
@@ -2964,29 +3384,36 @@
                         return;
                     }
                     
-                    // Add new schedule
+                    // Add new schedule avec date d'aujourd'hui
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    
                     schedules.push({
                         startTime,
                         endTime,
-                        createdAt: new Date().toISOString()
+                        createdAt: today.toISOString()
                     });
                     
                     await db.collection('classes').doc(existingClass.id).update({
                         schedules
                     });
                     
-                    alert('Horaire ajouté à la classe existante !');
+                    alert('Horaire ajouté à la salle existante !');
                 } else {
                     // Create new class
+                    // Date d'aujourd'hui (juste le jour, sans l'heure)
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    
                     const newClass = {
-                        room,
-                        program: userProgram,
+                        room, // Le nom de la salle inclut déjà le suffixe B ou M
                         schedules: [{
                             startTime,
                             endTime,
-                            createdAt: new Date().toISOString()
+                            createdAt: today.toISOString()
                         }],
-                        createdAt: new Date().toISOString()
+                        createdAt: today.toISOString(),
+                        date: today.toISOString().split('T')[0] // Format YYYY-MM-DD pour faciliter le filtrage
                     };
                     
                     await db.collection('classes').add(newClass);
@@ -3045,6 +3472,84 @@
             const hours = String(date.getHours()).padStart(2, '0');
             const minutes = String(date.getMinutes()).padStart(2, '0');
             return `${hours}:${minutes}`;
+        }
+        
+        // Load all classes for the classes tab
+        async function loadAllClasses() {
+            try {
+                // Recharger les classes avec loadClasses() pour avoir les données à jour
+                await loadClasses();
+                
+                // Créer une liste plate de tous les horaires avec leur classe (comme dans displayClasses)
+                const allSchedules = [];
+                allClasses.forEach(cls => {
+                    if (cls.schedules && cls.schedules.length > 0) {
+                        cls.schedules.forEach((schedule, idx) => {
+                            const startTime = schedule.startTime || '';
+                            const endTime = schedule.endTime || '';
+                            if (startTime && endTime) {
+                                const deliveryTime = calculateDeliveryTime(startTime, endTime);
+                                allSchedules.push({
+                                    classId: cls.id,
+                                    scheduleIndex: idx,
+                                    room: cls.room || '',
+                                    startTime: startTime,
+                                    endTime: endTime,
+                                    deliveryTime: deliveryTime
+                                });
+                            }
+                        });
+                    }
+                });
+                
+                // Trier par numéro de salle (ordre croissant), puis par heure de début
+                allSchedules.sort((a, b) => {
+                    // Extraire le numéro de la salle
+                    const numA = parseInt(a.room.replace(/\D/g, '')) || 0;
+                    const numB = parseInt(b.room.replace(/\D/g, '')) || 0;
+                    
+                    if (numA !== numB) {
+                        return numA - numB; // Ordre croissant: 1 en haut, 900 en bas
+                    }
+                    
+                    // Si même salle, trier par heure de début
+                    return a.startTime.localeCompare(b.startTime);
+                });
+                
+                // Afficher les classes
+                const classesListDiv = document.getElementById('classesList');
+                if (allSchedules.length === 0) {
+                    classesListDiv.innerHTML = '<div class="error">Aucune classe trouvée pour aujourd\'hui</div>';
+                    return;
+                }
+                
+                let html = '<table style="width: 100%; border-collapse: collapse; margin-top: 20px;">';
+                html += '<thead><tr style="background: #f8f9fa; border-bottom: 2px solid #ddd;">';
+                html += '<th style="padding: 12px; text-align: left; font-weight: 600;">Salle</th>';
+                html += '<th style="padding: 12px; text-align: left; font-weight: 600;">Heure début</th>';
+                html += '<th style="padding: 12px; text-align: left; font-weight: 600;">Heure fin</th>';
+                html += '<th style="padding: 12px; text-align: left; font-weight: 600;">Heure livraison</th>';
+                html += '</tr></thead><tbody>';
+                
+                allSchedules.forEach((classItem, index) => {
+                    const rowColor = index % 2 === 0 ? '#fff' : '#f8f9fa';
+                    html += `<tr style="background: ${rowColor}; border-bottom: 1px solid #e1e5e9;">`;
+                    html += `<td style="padding: 12px;">${classItem.room}</td>`;
+                    html += `<td style="padding: 12px;">${classItem.startTime}</td>`;
+                    html += `<td style="padding: 12px;">${classItem.endTime}</td>`;
+                    html += `<td style="padding: 12px; font-weight: 600; color: #28a745;">${formatTime(classItem.deliveryTime)}</td>`;
+                    html += '</tr>';
+                });
+                
+                html += '</tbody></table>';
+                classesListDiv.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Erreur lors du chargement des classes:', error);
+                document.getElementById('classesList').innerHTML = `
+                    <div class="error">Erreur lors du chargement des classes: ${error.message}</div>
+                `;
+            }
         }
         
         // Update deadline warning
@@ -3106,12 +3611,34 @@
                 fillingsSnapshot.forEach(doc => {
                     customFillings.push({ id: doc.id, ...doc.data() });
                 });
+                
+                // Si aucun filling n'existe, créer les fillings par défaut
+                if (customFillings.length === 0) {
+                    const defaultFillings = [
+                        { name: 'Crêpes Sucre', emoji: '🥞', description: 'Crêpes avec sucre et beurre', productId: 'crepes-sucre', order: 1 },
+                        { name: 'Crêpes Nutella', emoji: '🍫', description: 'Crêpes avec Nutella', productId: 'crepes-nutella', order: 2 },
+                        { name: 'Crêpes Confiture', emoji: '🍓', description: 'Crêpes avec confiture', productId: 'crepes-confiture', order: 3 }
+                    ];
+                    
+                    for (const filling of defaultFillings) {
+                        const docRef = await db.collection('customFillings').add({
+                            ...filling,
+                            createdAt: new Date(),
+                            updatedAt: new Date()
+                        });
+                        customFillings.push({ id: docRef.id, ...filling });
+                    }
+                }
+                
                 displayFillings();
             } catch (error) {
                 console.error('Erreur lors du chargement des fillings:', error);
-                document.getElementById('fillingsList').innerHTML = `
-                    <div class="error">Erreur lors du chargement des fillings: ${error.message}</div>
-                `;
+                const fillingsList = document.getElementById('fillingsList');
+                if (fillingsList) {
+                    fillingsList.innerHTML = `
+                        <div class="error">Erreur lors du chargement des fillings: ${error.message}</div>
+                    `;
+                }
             }
         }
         
@@ -3146,27 +3673,31 @@
                 return;
             }
             
-            fillingsList.innerHTML = customFillings.map((filling, index) => `
-                <div style="background: white; padding: 20px; border-radius: 12px; border: 2px solid #e1e5e9; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <div style="display: flex; align-items: center; gap: 15px;">
-                            <span style="font-size: 2rem;">${filling.emoji || '🥞'}</span>
-                            <div>
-                                <h4 style="margin: 0; color: #333; font-size: 1.2rem;">${filling.name}</h4>
-                                <p style="margin: 5px 0 0 0; color: #666; font-size: 0.9rem;">${filling.description || ''}</p>
+            // Trier par ordre
+            const sortedFillings = [...customFillings].sort((a, b) => (a.order || 999) - (b.order || 999));
+            
+            fillingsList.innerHTML = sortedFillings.map((filling, index) => `
+                <div style="background: white; padding: 20px; border-radius: 12px; border: 2px solid #e1e5e9; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 20px;">
+                        <div style="display: flex; align-items: flex-start; gap: 15px; flex: 1;">
+                            <span style="font-size: 2.5rem; line-height: 1;">${filling.emoji || '🥞'}</span>
+                            <div style="flex: 1;">
+                                <h4 style="margin: 0 0 8px 0; color: #333; font-size: 1.3rem; font-weight: 600;">${filling.name || 'Sans nom'}</h4>
+                                <p style="margin: 0 0 10px 0; color: #666; font-size: 0.95rem; line-height: 1.4;">${filling.description || 'Aucune description'}</p>
+                                <div style="font-size: 0.85rem; color: #999; display: flex; gap: 15px; flex-wrap: wrap;">
+                                    <span><strong>ID:</strong> <code style="background: #f0f0f0; padding: 2px 6px; border-radius: 3px;">${filling.productId || 'N/A'}</code></span>
+                                    <span><strong>Ordre:</strong> ${filling.order || index + 1}</span>
+                                </div>
                             </div>
                         </div>
-                        <div style="display: flex; gap: 10px;">
-                            <button onclick="editFilling('${filling.id}')" style="background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">
+                        <div style="display: flex; gap: 10px; flex-shrink: 0;">
+                            <button onclick="editFilling('${filling.id}')" style="background: #007bff; color: white; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600; white-space: nowrap; transition: all 0.2s;" onmouseover="this.style.background='#0056b3'" onmouseout="this.style.background='#007bff'">
                                 ✏️ Modifier
                             </button>
-                            <button onclick="deleteFilling('${filling.id}')" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">
+                            <button onclick="deleteFilling('${filling.id}')" style="background: #dc3545; color: white; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600; white-space: nowrap; transition: all 0.2s;" onmouseover="this.style.background='#c82333'" onmouseout="this.style.background='#dc3545'">
                                 🗑️ Supprimer
                             </button>
                         </div>
-                    </div>
-                    <div style="font-size: 0.85rem; color: #999;">
-                        ID: ${filling.productId || 'N/A'} | Ordre: ${filling.order || index + 1}
                     </div>
                 </div>
             `).join('');
@@ -3187,27 +3718,27 @@
             }
             
             snacksList.innerHTML = customSnacks.map(snack => `
-                <div style="background: white; padding: 20px; border-radius: 12px; border: 2px solid #e1e5e9; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <div style="display: flex; align-items: center; gap: 15px;">
-                            <span style="font-size: 2rem;">${snack.emoji || '🍪'}</span>
-                            <div>
-                                <h4 style="margin: 0; color: #333; font-size: 1.2rem;">${snack.name}</h4>
-                                <p style="margin: 5px 0 0 0; color: #666; font-size: 0.9rem;">${snack.description || ''}</p>
-                                <p style="margin: 5px 0 0 0; color: #28a745; font-weight: 600;">Prix: ${snack.price || 0}€</p>
+                <div style="background: white; padding: 20px; border-radius: 12px; border: 2px solid #e1e5e9; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 20px;">
+                        <div style="display: flex; align-items: flex-start; gap: 15px; flex: 1;">
+                            <span style="font-size: 2.5rem; line-height: 1;">${snack.emoji || '🍪'}</span>
+                            <div style="flex: 1;">
+                                <h4 style="margin: 0 0 8px 0; color: #333; font-size: 1.3rem; font-weight: 600;">${snack.name || 'Sans nom'}</h4>
+                                <p style="margin: 0 0 10px 0; color: #666; font-size: 0.95rem; line-height: 1.4;">${snack.description || 'Aucune description'}</p>
+                                <div style="font-size: 0.85rem; color: #999; display: flex; gap: 15px; flex-wrap: wrap;">
+                                    <span><strong>Prix:</strong> <span style="color: #28a745; font-weight: 600; font-size: 1rem;">${snack.price || 0}€</span></span>
+                                    <span><strong>ID:</strong> <code style="background: #f0f0f0; padding: 2px 6px; border-radius: 3px;">${snack.productId || 'N/A'}</code></span>
+                                </div>
                             </div>
                         </div>
-                        <div style="display: flex; gap: 10px;">
-                            <button onclick="editSnack('${snack.id}')" style="background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">
+                        <div style="display: flex; gap: 10px; flex-shrink: 0;">
+                            <button onclick="editSnack('${snack.id}')" style="background: #007bff; color: white; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600; white-space: nowrap; transition: all 0.2s;" onmouseover="this.style.background='#0056b3'" onmouseout="this.style.background='#007bff'">
                                 ✏️ Modifier
                             </button>
-                            <button onclick="deleteSnack('${snack.id}')" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">
+                            <button onclick="deleteSnack('${snack.id}')" style="background: #dc3545; color: white; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600; white-space: nowrap; transition: all 0.2s;" onmouseover="this.style.background='#c82333'" onmouseout="this.style.background='#dc3545'">
                                 🗑️ Supprimer
                             </button>
                         </div>
-                    </div>
-                    <div style="font-size: 0.85rem; color: #999;">
-                        ID: ${snack.productId || 'N/A'}
                     </div>
                 </div>
             `).join('');
@@ -3286,8 +3817,10 @@
                 
                 document.getElementById('fillingModal').style.display = 'none';
                 await loadCustomFillings();
-                // Recharger les produits dans la page de commande
-                loadProductsForOrders();
+                // Recharger les produits dans la page de commande avec un petit délai pour s'assurer que les données sont bien sauvegardées
+                setTimeout(() => {
+                    loadProductsForOrders();
+                }, 300);
             } catch (error) {
                 console.error('Erreur lors de la sauvegarde du filling:', error);
                 showMessage('❌ Erreur: ' + error.message, 'error');
@@ -3378,8 +3911,10 @@
                 
                 document.getElementById('snackModal').style.display = 'none';
                 await loadCustomSnacks();
-                // Recharger les produits dans la page de commande
-                loadProductsForOrders();
+                // Recharger les produits dans la page de commande avec un petit délai pour s'assurer que les données sont bien sauvegardées
+                setTimeout(() => {
+                    loadProductsForOrders();
+                }, 300);
             } catch (error) {
                 console.error('Erreur lors de la sauvegarde du snack:', error);
                 showMessage('❌ Erreur: ' + error.message, 'error');
@@ -3394,10 +3929,177 @@
                 await db.collection('customSnacks').doc(snackId).delete();
                 showMessage('✅ Snack supprimé avec succès !', 'success');
                 await loadCustomSnacks();
-                // Recharger les produits dans la page de commande
-                loadProductsForOrders();
+                // Recharger les produits dans la page de commande avec un petit délai
+                setTimeout(() => {
+                    loadProductsForOrders();
+                }, 300);
             } catch (error) {
                 console.error('Erreur lors de la suppression du snack:', error);
+                showMessage('❌ Erreur: ' + error.message, 'error');
+            }
+        }
+        
+        // Charger et afficher le stock des snacks dans l'onglet Restock
+        async function loadSnacksStock() {
+            try {
+                const program = getCurrentProgram();
+                const snacksStockManagement = document.getElementById('snacksStockManagement');
+                if (!snacksStockManagement) return;
+                
+                // Charger les snacks personnalisés
+                const snacksSnapshot = await db.collection('customSnacks').orderBy('name', 'asc').get();
+                const snacks = [];
+                snacksSnapshot.forEach(doc => {
+                    snacks.push({ id: doc.id, ...doc.data() });
+                });
+                
+                if (snacks.length === 0) {
+                    snacksStockManagement.innerHTML = `
+                        <div style="text-align: center; padding: 20px; color: #666; background: #f8f9fa; border-radius: 8px; grid-column: 1 / -1;">
+                            Aucun snack configuré. Ajoutez des snacks dans l'onglet "Personnalisation".
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Charger le stock actuel des snacks
+                const snackStockDoc = await db.collection('snackStock').doc(program).get();
+                const snackStock = snackStockDoc.exists ? snackStockDoc.data() : {};
+                
+                // Afficher chaque snack avec son stock
+                snacksStockManagement.innerHTML = snacks.map(snack => {
+                    const currentStock = snackStock[snack.productId] || 0;
+                    return `
+                        <div style="padding: 15px; border: 1px solid #e1e5e9; border-radius: 8px;">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                                <span style="font-size: 1.5rem;">${snack.emoji || '🍪'}</span>
+                                <div style="flex: 1;">
+                                    <h4 style="margin: 0; color: #333;">${snack.name}</h4>
+                                    <p style="margin: 5px 0 0 0; color: #666; font-size: 0.85rem;">${snack.description || ''}</p>
+                                </div>
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #555;">Stock actuel :</label>
+                                <div style="font-size: 1.1rem; font-weight: bold; color: #007bff;" id="snackStock_${snack.productId}">${currentStock}</div>
+                            </div>
+                            <div style="display: flex; gap: 10px; align-items: end;">
+                                <div style="flex: 1;">
+                                    <input type="number" id="snackQty_${snack.productId}" min="0" max="10000" placeholder="Quantité" 
+                                           style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem;">
+                                </div>
+                                <button onclick="updateSnackStock('${snack.productId}', '${snack.name}')" 
+                                        style="background: #007bff; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">
+                                    Mettre à jour
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Erreur lors du chargement du stock des snacks:', error);
+                const snacksStockManagement = document.getElementById('snacksStockManagement');
+                if (snacksStockManagement) {
+                    snacksStockManagement.innerHTML = `
+                        <div class="error">Erreur lors du chargement: ${error.message}</div>
+                    `;
+                }
+            }
+        }
+        
+        // Mettre à jour le stock d'un snack
+        async function updateSnackStock(productId, snackName) {
+            try {
+                const program = getCurrentProgram();
+                const qtyInput = document.getElementById(`snackQty_${productId}`);
+                if (!qtyInput) return;
+                
+                const quantity = parseInt(qtyInput.value);
+                if (isNaN(quantity) || quantity < 0) {
+                    showMessage('❌ Veuillez entrer une quantité valide (≥ 0)', 'error');
+                    return;
+                }
+                
+                // Charger le stock actuel
+                const snackStockDoc = await db.collection('snackStock').doc(program).get();
+                const snackStock = snackStockDoc.exists ? snackStockDoc.data() : {};
+                const previousStock = snackStock[productId] || 0;
+                
+                // Mettre à jour le stock
+                snackStock[productId] = quantity;
+                await db.collection('snackStock').doc(program).set({
+                    ...snackStock,
+                    program: program,
+                    lastUpdated: new Date()
+                });
+                
+                // Mettre à jour l'affichage
+                const stockDisplay = document.getElementById(`snackStock_${productId}`);
+                if (stockDisplay) {
+                    stockDisplay.textContent = quantity;
+                }
+                
+                // Enregistrer dans l'historique
+                const adminName = currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : 'Admin';
+                await db.collection('restockHistory').add({
+                    type: 'snack',
+                    productId: productId,
+                    productName: snackName,
+                    quantity: quantity - previousStock,
+                    previousStock: previousStock,
+                    newStock: quantity,
+                    program: program,
+                    adminName: adminName,
+                    timestamp: new Date()
+                });
+                
+                showMessage(`✅ Stock de ${snackName} mis à jour: ${previousStock} → ${quantity}`, 'success');
+                
+                // Vider le champ
+                qtyInput.value = '';
+                
+                // Recharger l'historique
+                loadRestockHistory();
+                
+                // Recharger les produits dans la page de commande pour mettre à jour l'affichage
+                loadProductsForOrders();
+                
+            } catch (error) {
+                console.error('Erreur lors de la mise à jour du stock:', error);
+                showMessage('❌ Erreur: ' + error.message, 'error');
+            }
+        }
+        
+        // Réinitialiser tous les snacks à 0
+        async function resetAllSnacksStock() {
+            if (!confirm('Êtes-vous sûr de vouloir réinitialiser le stock de TOUS les snacks à 0 ?')) return;
+            
+            try {
+                const program = getCurrentProgram();
+                
+                // Charger tous les snacks
+                const snacksSnapshot = await db.collection('customSnacks').get();
+                const snackStock = {};
+                snacksSnapshot.forEach(doc => {
+                    const snack = doc.data();
+                    snackStock[snack.productId] = 0;
+                });
+                
+                await db.collection('snackStock').doc(program).set({
+                    ...snackStock,
+                    program: program,
+                    lastUpdated: new Date()
+                });
+                
+                showMessage('✅ Stock de tous les snacks réinitialisé à 0', 'success');
+                
+                // Recharger l'affichage
+                await loadSnacksStock();
+                
+                // Recharger les produits dans la page de commande
+                loadProductsForOrders();
+                
+            } catch (error) {
+                console.error('Erreur lors de la réinitialisation:', error);
                 showMessage('❌ Erreur: ' + error.message, 'error');
             }
         }
@@ -3406,18 +4108,38 @@
         async function loadProductsForOrders() {
             try {
                 // Charger les fillings
-                const fillingsSnapshot = await db.collection('customFillings').orderBy('order', 'asc').get();
-                const fillings = [];
-                fillingsSnapshot.forEach(doc => {
-                    fillings.push({ id: doc.id, ...doc.data() });
-                });
+                let fillings = [];
+                try {
+                    const fillingsSnapshot = await db.collection('customFillings').orderBy('order', 'asc').get();
+                    fillingsSnapshot.forEach(doc => {
+                        fillings.push({ id: doc.id, ...doc.data() });
+                    });
+                } catch (error) {
+                    // Si l'index n'existe pas, charger sans tri et trier en JavaScript
+                    console.warn('Index manquant pour order, chargement sans tri:', error);
+                    const fillingsSnapshot = await db.collection('customFillings').get();
+                    fillingsSnapshot.forEach(doc => {
+                        fillings.push({ id: doc.id, ...doc.data() });
+                    });
+                    fillings.sort((a, b) => (a.order || 999) - (b.order || 999));
+                }
                 
                 // Charger les snacks
-                const snacksSnapshot = await db.collection('customSnacks').orderBy('name', 'asc').get();
-                const snacks = [];
-                snacksSnapshot.forEach(doc => {
-                    snacks.push({ id: doc.id, ...doc.data() });
-                });
+                let snacks = [];
+                try {
+                    const snacksSnapshot = await db.collection('customSnacks').orderBy('name', 'asc').get();
+                    snacksSnapshot.forEach(doc => {
+                        snacks.push({ id: doc.id, ...doc.data() });
+                    });
+                } catch (error) {
+                    // Si l'index n'existe pas, charger sans tri et trier en JavaScript
+                    console.warn('Index manquant pour name, chargement sans tri:', error);
+                    const snacksSnapshot = await db.collection('customSnacks').get();
+                    snacksSnapshot.forEach(doc => {
+                        snacks.push({ id: doc.id, ...doc.data() });
+                    });
+                    snacks.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+                }
                 
                 // Afficher les fillings (crêpes)
                 const crepesGrid = document.getElementById('crepesGrid');
@@ -3434,14 +4156,14 @@
                                 <div class="product-icon">${filling.emoji || '🥞'}</div>
                                 <div class="product-name">${filling.name}</div>
                                 <div class="product-price">FREE</div>
-                                <div class="product-description">${filling.description || ''}</div>
+                                <div class="product-description">${filling.description || '&nbsp;'}</div>
                                 <button class="order-btn" onclick="showClassModal('${filling.productId}', 0)">Commander</button>
                             </div>
                         `).join('');
                     }
                 }
                 
-                // Afficher les snacks (uniquement s'il y en a en stock)
+                // Afficher les snacks (afficher tous les snacks, mais désactiver si stock = 0)
                 const snacksGrid = document.getElementById('snacksGrid');
                 const snacksSection = document.getElementById('snacksSection');
                 if (snacksGrid && snacksSection) {
@@ -3450,34 +4172,36 @@
                     } else {
                         // Vérifier le stock des snacks
                         const program = getCurrentProgram();
+                        console.log('Loading snacks for program:', program, 'Current user:', currentUser?.role, 'Current view:', currentView);
+                        
                         const snackStockDoc = await db.collection('snackStock').doc(program).get();
                         const snackStock = snackStockDoc.exists ? snackStockDoc.data() : {};
+                        console.log('Snack stock data:', snackStock);
                         
-                        // Filtrer les snacks qui ont du stock
-                        const availableSnacks = snacks.filter(snack => {
+                        // Afficher tous les snacks, mais indiquer le stock et désactiver si stock = 0
+                        snacksSection.style.display = 'block';
+                        snacksGrid.innerHTML = snacks.map(snack => {
                             const stock = snackStock[snack.productId] || 0;
-                            return stock > 0;
-                        });
-                        
-                        if (availableSnacks.length === 0) {
-                            snacksSection.style.display = 'none';
-                        } else {
-                            snacksSection.style.display = 'block';
-                            snacksGrid.innerHTML = availableSnacks.map(snack => {
-                                const stock = snackStock[snack.productId] || 0;
-                                return `
-                                    <div class="product-card" onclick="selectProduct('${snack.productId}')">
-                                        <div class="product-icon">${snack.emoji || '🍪'}</div>
-                                        <div class="product-name">${snack.name}</div>
-                                        <div class="product-price">${snack.price || 0}€</div>
-                                        <div class="product-description">${snack.description || ''}</div>
-                                        <div style="font-size: 0.85rem; color: #28a745; margin-bottom: 10px;">Stock: ${stock}</div>
-                                        <button class="order-btn" onclick="showClassModal('${snack.productId}', ${snack.price || 0})">Commander</button>
+                            const isAvailable = stock > 0;
+                            const priceDisplay = (snack.price && snack.price > 0) ? `${snack.price}€` : 'FREE';
+                            return `
+                                <div class="product-card" style="${!isAvailable ? 'opacity: 0.6;' : ''}" onclick="${isAvailable ? `selectProduct('${snack.productId}')` : ''}">
+                                    <div class="product-icon">${snack.emoji || '🍪'}</div>
+                                    <div class="product-name">${snack.name}</div>
+                                    <div class="product-price">${priceDisplay}</div>
+                                    <div class="product-description">${snack.description || '&nbsp;'}</div>
+                                    <div style="font-size: 0.85rem; margin-bottom: 10px; ${isAvailable ? 'color: #28a745;' : 'color: #dc3545;'}">
+                                        ${isAvailable ? `Stock: ${stock}` : 'Stock: 0 (Indisponible)'}
                                     </div>
-                                `;
-                            }).join('');
-                        }
+                                    <button class="order-btn" ${!isAvailable ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''} onclick="${isAvailable ? `showClassModal('${snack.productId}', ${snack.price || 0})` : 'return false;'}">
+                                        ${isAvailable ? 'Commander' : 'Indisponible'}
+                                    </button>
+                                </div>
+                            `;
+                        }).join('');
                     }
+                } else {
+                    console.error('snacksGrid or snacksSection not found!', { snacksGrid, snacksSection });
                 }
             } catch (error) {
                 console.error('Erreur lors du chargement des produits:', error);
