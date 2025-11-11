@@ -3704,6 +3704,7 @@
                     // Add new schedule avec date d'aujourd'hui
                     const today = new Date();
                     today.setHours(0, 0, 0, 0);
+                    const todayStr = today.toISOString().split('T')[0];
                     
                     schedules.push({
                         startTime,
@@ -3711,9 +3712,18 @@
                         createdAt: today.toISOString()
                     });
                     
-                    await db.collection('classes').doc(existingClass.id).update({
-                        schedules
-                    });
+                    // Mettre à jour la classe avec le nouveau schedule ET mettre à jour la date pour qu'elle soit visible
+                    const updateData = {
+                        schedules,
+                        date: todayStr // Mettre à jour la date pour que la classe soit visible
+                    };
+                    
+                    // Si la classe n'a pas de createdAt, l'ajouter aussi
+                    if (!classData.createdAt) {
+                        updateData.createdAt = today.toISOString();
+                    }
+                    
+                    await db.collection('classes').doc(existingClass.id).update(updateData);
                     
                     alert('Horaire ajouté à la salle existante !');
                 } else {
