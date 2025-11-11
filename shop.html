@@ -1995,8 +1995,21 @@
                             program: userData.program || 'bachelor'
                         };
                         
+                        // Attribuer automatiquement le rôle BOSS à pascalmartinlalande@gmail.com
+                        if (user.email === 'pascalmartinlalande@gmail.com' && userData.role !== 'boss') {
+                            await db.collection('users').doc(user.uid).update({
+                                role: 'boss'
+                            });
+                            currentUser.role = 'boss';
+                            console.log('✅ Rôle BOSS attribué automatiquement');
+                            alert('✅ Rôle BOSS attribué ! La page va se recharger...');
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1500);
+                        }
+                        
                         // Initialize currentView based on user role
-                        if (currentUser.role === 'admin' || currentUser.role === 'member') {
+                        if (currentUser.role === 'admin' || currentUser.role === 'member' || currentUser.role === 'boss') {
                             currentView = currentView || 'bachelor';
                         } else {
                             currentView = currentUser.program || 'bachelor';

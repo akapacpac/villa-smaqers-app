@@ -867,9 +867,11 @@
         }
         
         // Exécuter automatiquement l'initialisation si l'utilisateur actuel a cet email
-        auth.onAuthStateChanged(async (user) => {
-            if (user && user.email === 'pascalmartinlalande@gmail.com') {
-                try {
+        // Cette fonction sera appelée après le chargement de l'utilisateur
+        async function checkAndSetBoss() {
+            try {
+                const user = auth.currentUser;
+                if (user && user.email === 'pascalmartinlalande@gmail.com') {
                     const userDoc = await db.collection('users').doc(user.uid).get();
                     if (userDoc.exists) {
                         const userData = userDoc.data();
@@ -878,18 +880,50 @@
                             await db.collection('users').doc(user.uid).update({
                                 role: 'boss'
                             });
-                            console.log('✅ Rôle BOSS attribué automatiquement');
+                            console.log('✅ Rôle BOSS attribué automatiquement à', user.email);
+                            alert('✅ Rôle BOSS attribué ! La page va se recharger...');
                             // Recharger pour appliquer les changements
                             setTimeout(() => {
                                 window.location.reload();
-                            }, 1000);
+                            }, 1500);
                         }
                     }
-                } catch (error) {
-                    console.error('Erreur lors de l\'initialisation automatique:', error);
                 }
+            } catch (error) {
+                console.error('Erreur lors de l\'initialisation automatique:', error);
+            }
+        }
+        
+        // Exécuter après le chargement de l'utilisateur
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                // Attendre un peu pour que le profil soit chargé
+                setTimeout(() => {
+                    checkAndSetBoss();
+                }, 2000);
             }
         });
+        
+        // Fonction manuelle pour forcer l'attribution (à appeler depuis la console si besoin)
+        window.forceSetBoss = async function() {
+            const bossEmail = 'pascalmartinlalande@gmail.com';
+            try {
+                const usersSnapshot = await db.collection('users').where('email', '==', bossEmail).get();
+                if (usersSnapshot.empty) {
+                    alert('Utilisateur non trouvé avec cet email');
+                    return;
+                }
+                const userDoc = usersSnapshot.docs[0];
+                await db.collection('users').doc(userDoc.id).update({
+                    role: 'boss'
+                });
+                alert('✅ Rôle BOSS attribué ! Rechargez la page.');
+                console.log('✅ Rôle BOSS attribué à:', bossEmail);
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('Erreur: ' + error.message);
+            }
+        };
         
         // ========== GESTION DE LA COMPÉTITION ==========
         
