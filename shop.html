@@ -2091,9 +2091,12 @@
                 await Promise.all(deletePromises);
                 
                 // Supprimer aussi le schedule correspondant de la classe dans Firebase
+                let scheduleDeleted = false;
                 try {
-                    // Trouver la classe correspondante
+                    // Trouver toutes les classes correspondantes (peut y en avoir plusieurs si différents programmes)
                     const classesSnapshot = await db.collection('classes').where('room', '==', classroom).get();
+                    
+                    console.log(`Recherche de classes pour salle ${classroom}, trouvé ${classesSnapshot.size} classe(s)`);
                     
                     for (const classDoc of classesSnapshot.docs) {
                         const classData = classDoc.data();
@@ -2107,8 +2110,11 @@
                                 const scheduleDeliveryTime = calculateDeliveryTime(schedule.startTime, schedule.endTime);
                                 const scheduleDeliveryTimeStr = formatTime(scheduleDeliveryTime);
                                 
+                                console.log(`Schedule ${i}: ${schedule.startTime}-${schedule.endTime} -> livraison: ${scheduleDeliveryTimeStr}, cherché: ${deliveryTime}`);
+                                
                                 if (scheduleDeliveryTimeStr === deliveryTime) {
                                     scheduleToRemoveIndex = i;
+                                    console.log(`Schedule trouvé à l'index ${i}`);
                                     break;
                                 }
                             }
@@ -2121,28 +2127,44 @@
                             if (updatedSchedules.length === 0) {
                                 // Si c'était le dernier schedule, supprimer la classe entière
                                 await db.collection('classes').doc(classDoc.id).delete();
+                                console.log(`Classe ${classDoc.id} supprimée (dernier schedule)`);
+                                scheduleDeleted = true;
                             } else {
                                 // Sinon, mettre à jour la classe avec les schedules restants
                                 await db.collection('classes').doc(classDoc.id).update({
                                     schedules: updatedSchedules
                                 });
+                                console.log(`Schedule supprimé de la classe ${classDoc.id}, ${updatedSchedules.length} schedule(s) restant(s)`);
+                                scheduleDeleted = true;
                             }
                         }
                     }
+                    
+                    // Si on n'a pas trouvé de schedule correspondant, supprimer toutes les classes avec cette salle
+                    // (au cas où il y aurait un problème de correspondance)
+                    if (!scheduleDeleted && classesSnapshot.size > 0) {
+                        console.warn('Aucun schedule correspondant trouvé, suppression de toutes les classes avec cette salle');
+                        const deleteClassPromises = classesSnapshot.docs.map(doc => doc.ref.delete());
+                        await Promise.all(deleteClassPromises);
+                        scheduleDeleted = true;
+                    }
                 } catch (error) {
                     console.error('Erreur lors de la suppression du schedule:', error);
-                    // On continue quand même, les commandes ont été supprimées
+                    showMessage('⚠️ Les commandes ont été supprimées mais erreur lors de la suppression de la classe: ' + error.message, 'error');
                 }
                 
-                showMessage(`✅ ${ordersToDelete.length} commande(s) supprimée(s) avec succès`, 'success');
+                if (scheduleDeleted) {
+                    showMessage(`✅ ${ordersToDelete.length} commande(s) et la classe supprimée(s) avec succès`, 'success');
+                } else {
+                    showMessage(`✅ ${ordersToDelete.length} commande(s) supprimée(s) avec succès`, 'success');
+                }
                 
                 // Recharger le tableau et les classes
                 loadAllOrders();
                 
-                // Recharger les classes dans la modal de commande si elle est ouverte
-                if (document.getElementById('classes-list')) {
-                    loadClasses();
-                }
+                // Toujours recharger les classes (même si la modal n'est pas ouverte)
+                // Cela met à jour allClasses pour la prochaine ouverture de la modal
+                await loadClasses();
                 
             } catch (error) {
                 console.error('Erreur lors de la suppression des commandes:', error);
