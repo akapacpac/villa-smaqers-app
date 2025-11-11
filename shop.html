@@ -3042,18 +3042,75 @@
             try {
                 const userProgram = currentUser?.program || getCurrentProgram();
                 const classesSnapshot = await db.collection('classes').where('program', '==', userProgram).get();
+                
+                // Date d'aujourd'hui à minuit pour comparer
+                const now = new Date();
+                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                today.setHours(0, 0, 0, 0);
+                const todayStr = today.toISOString().split('T')[0]; // Format YYYY-MM-DD
+                
                 allClasses = [];
                 classesSnapshot.forEach(doc => {
                     const classData = { id: doc.id, ...doc.data() };
-                    // Sort schedules by start time
-                    if (classData.schedules) {
+                    
+                    // Vérifier si la classe est d'aujourd'hui
+                    let isToday = false;
+                    
+                    // Utiliser le champ date si disponible (format YYYY-MM-DD)
+                    if (classData.date) {
+                        isToday = classData.date === todayStr;
+                    } else if (classData.createdAt) {
+                        // Sinon utiliser createdAt
+                        const createdDate = classData.createdAt.toDate ? classData.createdAt.toDate() : new Date(classData.createdAt);
+                        const createdDay = new Date(createdDate.getFullYear(), createdDate.getMonth(), createdDate.getDate());
+                        createdDay.setHours(0, 0, 0, 0);
+                        isToday = createdDay.getTime() === today.getTime();
+                    }
+                    
+                    // Si la classe n'a pas de createdAt, vérifier les schedules
+                    if (!isToday && classData.schedules && classData.schedules.length > 0) {
+                        // Vérifier si au moins un schedule est d'aujourd'hui
+                        const hasTodaySchedule = classData.schedules.some(schedule => {
+                            if (schedule.createdAt) {
+                                const scheduleDate = schedule.createdAt.toDate ? schedule.createdAt.toDate() : new Date(schedule.createdAt);
+                                const scheduleDay = new Date(scheduleDate.getFullYear(), scheduleDate.getMonth(), scheduleDate.getDate());
+                                scheduleDay.setHours(0, 0, 0, 0);
+                                return scheduleDay.getTime() === today.getTime();
+                            }
+                            return false;
+                        });
+                        isToday = hasTodaySchedule;
+                    }
+                    
+                    // Ne garder que les classes d'aujourd'hui
+                    if (!isToday) {
+                        return;
+                    }
+                    
+                    // Filtrer les schedules pour ne garder que ceux d'aujourd'hui
+                    if (classData.schedules && classData.schedules.length > 0) {
+                        classData.schedules = classData.schedules.filter(schedule => {
+                            if (schedule.createdAt) {
+                                const scheduleDate = schedule.createdAt.toDate ? schedule.createdAt.toDate() : new Date(schedule.createdAt);
+                                const scheduleDay = new Date(scheduleDate.getFullYear(), scheduleDate.getMonth(), scheduleDate.getDate());
+                                scheduleDay.setHours(0, 0, 0, 0);
+                                return scheduleDay.getTime() === today.getTime();
+                            }
+                            // Si pas de createdAt, garder le schedule (ancien format)
+                            return true;
+                        });
+                    }
+                    
+                    // Ne garder la classe que si elle a au moins un schedule d'aujourd'hui
+                    if (classData.schedules && classData.schedules.length > 0) {
+                        // Sort schedules by start time
                         classData.schedules.sort((a, b) => {
                             const timeA = a.startTime || '';
                             const timeB = b.startTime || '';
                             return timeA.localeCompare(timeB);
                         });
+                        allClasses.push(classData);
                     }
-                    allClasses.push(classData);
                 });
                 
                 // Sort classes by room number (natural sort - ordre croissant: 104, 156, 345-378, etc.)
