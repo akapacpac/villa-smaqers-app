@@ -497,6 +497,9 @@
             <button class="nav-tab admin-only" onclick="showTab('customization')" style="display: none;">
                 ⚙️ Personnalisation
             </button>
+            <button class="nav-tab" onclick="showTab('classes')">
+                📚 Classes
+            </button>
             <a href="private.html" class="nav-tab admin-only" style="display: none; text-decoration: none; color: inherit;">
                 🔒 Administration Privée
             </a>
@@ -839,6 +842,14 @@
                     </div>
                 </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Onglet Classes -->
+            <div id="classes" class="tab-pane">
+                <h2 style="margin-bottom: 30px; color: #333;">📚 Liste des Classes</h2>
+                <div id="classesList">
+                    <div class="loading">Chargement des classes...</div>
                 </div>
             </div>
 
@@ -1241,6 +1252,8 @@
                         <div class="error">Accès refusé. Seuls les administrateurs et BOSS peuvent accéder à cette section.</div>
                     `;
                 }
+            } else if (tabName === 'classes') {
+                loadAllClasses();
             }
         }
 
@@ -3345,6 +3358,84 @@
             const hours = String(date.getHours()).padStart(2, '0');
             const minutes = String(date.getMinutes()).padStart(2, '0');
             return `${hours}:${minutes}`;
+        }
+        
+        // Load all classes for the classes tab
+        async function loadAllClasses() {
+            try {
+                const program = getCurrentProgram();
+                const classesSnapshot = await db.collection('classes').where('program', '==', program).get();
+                
+                let allClassesList = [];
+                classesSnapshot.forEach(doc => {
+                    const classData = { id: doc.id, ...doc.data() };
+                    if (classData.schedules && classData.schedules.length > 0) {
+                        // Pour chaque schedule, créer une entrée
+                        classData.schedules.forEach((schedule, index) => {
+                            const startTime = schedule.startTime || '';
+                            const endTime = schedule.endTime || '';
+                            const deliveryTime = calculateDeliveryTime(startTime, endTime);
+                            
+                            allClassesList.push({
+                                classId: classData.id,
+                                room: classData.room || '',
+                                startTime: startTime,
+                                endTime: endTime,
+                                deliveryTime: deliveryTime,
+                                scheduleIndex: index
+                            });
+                        });
+                    }
+                });
+                
+                // Trier par numéro de salle (ordre croissant), puis par heure de début
+                allClassesList.sort((a, b) => {
+                    // Extraire le numéro de la salle
+                    const numA = parseInt(a.room.replace(/\D/g, '')) || 0;
+                    const numB = parseInt(b.room.replace(/\D/g, '')) || 0;
+                    
+                    if (numA !== numB) {
+                        return numA - numB; // Ordre croissant: 1 en haut, 900 en bas
+                    }
+                    
+                    // Si même salle, trier par heure de début
+                    return a.startTime.localeCompare(b.startTime);
+                });
+                
+                // Afficher les classes
+                const classesListDiv = document.getElementById('classesList');
+                if (allClassesList.length === 0) {
+                    classesListDiv.innerHTML = '<div class="error">Aucune classe trouvée</div>';
+                    return;
+                }
+                
+                let html = '<table style="width: 100%; border-collapse: collapse; margin-top: 20px;">';
+                html += '<thead><tr style="background: #f8f9fa; border-bottom: 2px solid #ddd;">';
+                html += '<th style="padding: 12px; text-align: left; font-weight: 600;">Salle</th>';
+                html += '<th style="padding: 12px; text-align: left; font-weight: 600;">Heure début</th>';
+                html += '<th style="padding: 12px; text-align: left; font-weight: 600;">Heure fin</th>';
+                html += '<th style="padding: 12px; text-align: left; font-weight: 600;">Heure livraison</th>';
+                html += '</tr></thead><tbody>';
+                
+                allClassesList.forEach((classItem, index) => {
+                    const rowColor = index % 2 === 0 ? '#fff' : '#f8f9fa';
+                    html += `<tr style="background: ${rowColor}; border-bottom: 1px solid #e1e5e9;">`;
+                    html += `<td style="padding: 12px;">${classItem.room}</td>`;
+                    html += `<td style="padding: 12px;">${classItem.startTime}</td>`;
+                    html += `<td style="padding: 12px;">${classItem.endTime}</td>`;
+                    html += `<td style="padding: 12px; font-weight: 600; color: #28a745;">${formatTime(classItem.deliveryTime)}</td>`;
+                    html += '</tr>';
+                });
+                
+                html += '</tbody></table>';
+                classesListDiv.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Erreur lors du chargement des classes:', error);
+                document.getElementById('classesList').innerHTML = `
+                    <div class="error">Erreur lors du chargement des classes: ${error.message}</div>
+                `;
+            }
         }
         
         // Update deadline warning

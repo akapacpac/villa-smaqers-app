@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Livraisons - Villa des Smaqers Brisés</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <script>
+        // Configuration Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDqCYiGvSYitgoPnGdxMzkautcYl511E3I",
+            authDomain: "villa-smaqers-brises.firebaseapp.com",
+            projectId: "villa-smaqers-brises",
+            storageBucket: "villa-smaqers-brises.firebasestorage.app",
+            messagingSenderId: "387262093007",
+            appId: "1:387262093007:web:76173a1e3cd49d80a249ba",
+            measurementId: "G-TBNFR17E82"
+        };
+        
+        // Initialiser Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+    </script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #333;
+            text-align: center;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        thead {
+            background: #667eea;
+            color: white;
+        }
+        
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #5568d3;
+        }
+        
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e1e5e9;
+        }
+        
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+        
+        tbody tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        .room-cell {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .time-cell {
+            font-weight: 600;
+            color: #28a745;
+        }
+        
+        .filling-item {
+            display: inline-block;
+            background: #e3f2fd;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin: 2px;
+            font-size: 0.9rem;
+        }
+        
+        .snack-item {
+            display: inline-block;
+            background: #fff3e0;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin: 2px;
+            font-size: 0.9rem;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 1.1rem;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚚 Planification des Livraisons</h1>
+        <p class="subtitle">Classes triées par heure de livraison</p>
+        
+        <div id="deliveriesList">
+            <div class="loading">Chargement des livraisons...</div>
+        </div>
+    </div>
+
+    <script>
+        // Calculate delivery time (middle of class)
+        function calculateDeliveryTime(startTime, endTime) {
+            const [startHour, startMin] = startTime.split(':').map(Number);
+            const [endHour, endMin] = endTime.split(':').map(Number);
+            
+            const now = new Date();
+            const startDate = new Date(now);
+            startDate.setHours(startHour, startMin, 0, 0);
+            
+            const endDate = new Date(now);
+            endDate.setHours(endHour, endMin, 0, 0);
+            
+            // Si l'heure de fin est avant l'heure de début (ex: 23:00 - 01:00), ajouter un jour
+            if (endHour < startHour || (endHour === startHour && endMin < startMin)) {
+                endDate.setDate(endDate.getDate() + 1);
+            }
+            
+            // Middle time
+            const middleTime = new Date((startDate.getTime() + endDate.getTime()) / 2);
+            
+            return middleTime;
+        }
+        
+        // Format time to HH:MM
+        function formatTime(date) {
+            if (!(date instanceof Date)) {
+                date = new Date(date);
+            }
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            return `${hours}:${minutes}`;
+        }
+        
+        // Load deliveries
+        async function loadDeliveries() {
+            try {
+                // Récupérer toutes les classes (Bachelor et Master)
+                const classesSnapshot = await db.collection('classes').get();
+                
+                let deliveriesList = [];
+                
+                classesSnapshot.forEach(doc => {
+                    const classData = { id: doc.id, ...doc.data() };
+                    if (classData.schedules && classData.schedules.length > 0) {
+                        classData.schedules.forEach((schedule, index) => {
+                            const startTime = schedule.startTime || '';
+                            const endTime = schedule.endTime || '';
+                            const deliveryTime = calculateDeliveryTime(startTime, endTime);
+                            
+                            deliveriesList.push({
+                                classId: classData.id,
+                                room: classData.room || '',
+                                startTime: startTime,
+                                endTime: endTime,
+                                deliveryTime: deliveryTime,
+                                deliveryTimeStr: formatTime(deliveryTime),
+                                scheduleIndex: index,
+                                program: classData.program || 'bachelor'
+                            });
+                        });
+                    }
+                });
+                
+                // Trier par heure de livraison, puis par numéro de salle si même heure
+                deliveriesList.sort((a, b) => {
+                    // Trier par heure de livraison
+                    const timeA = a.deliveryTime.getTime();
+                    const timeB = b.deliveryTime.getTime();
+                    
+                    if (timeA !== timeB) {
+                        return timeA - timeB; // Ordre croissant des heures
+                    }
+                    
+                    // Si même heure de livraison, trier par numéro de salle (plus petit en haut)
+                    const numA = parseInt(a.room.replace(/\D/g, '')) || 0;
+                    const numB = parseInt(b.room.replace(/\D/g, '')) || 0;
+                    return numA - numB;
+                });
+                
+                // Récupérer toutes les commandes
+                const ordersSnapshot = await db.collection('orders').get();
+                const orders = [];
+                ordersSnapshot.forEach(doc => {
+                    orders.push({ id: doc.id, ...doc.data() });
+                });
+                
+                // Grouper les commandes par classe et calculer les totaux
+                const deliveriesWithOrders = deliveriesList.map(delivery => {
+                    // Trouver les commandes pour cette classe
+                    const classOrders = orders.filter(order => {
+                        return order.classroom === delivery.room && 
+                               order.deliveryTime && 
+                               formatTime(new Date(order.deliveryTime)) === delivery.deliveryTimeStr;
+                    });
+                    
+                    // Calculer les totaux par filling
+                    const fillingsCount = {};
+                    const snacksCount = {};
+                    
+                    classOrders.forEach(order => {
+                        if (order.product) {
+                            // Vérifier si c'est un filling ou un snack
+                            if (order.product.startsWith('crepes-')) {
+                                const filling = order.product;
+                                fillingsCount[filling] = (fillingsCount[filling] || 0) + (order.quantity || 1);
+                            } else {
+                                // C'est un snack
+                                const snack = order.product;
+                                snacksCount[snack] = (snacksCount[snack] || 0) + (order.quantity || 1);
+                            }
+                        }
+                    });
+                    
+                    return {
+                        ...delivery,
+                        orders: classOrders,
+                        fillingsCount: fillingsCount,
+                        snacksCount: snacksCount
+                    };
+                });
+                
+                // Afficher les livraisons
+                const deliveriesListDiv = document.getElementById('deliveriesList');
+                if (deliveriesWithOrders.length === 0) {
+                    deliveriesListDiv.innerHTML = '<div class="error">Aucune livraison prévue</div>';
+                    return;
+                }
+                
+                let html = '<table>';
+                html += '<thead><tr>';
+                html += '<th>Salle</th>';
+                html += '<th>Heure livraison</th>';
+                html += '<th>Crêpes (Fillings)</th>';
+                html += '<th>Snacks</th>';
+                html += '</tr></thead><tbody>';
+                
+                deliveriesWithOrders.forEach((delivery, index) => {
+                    const rowColor = index % 2 === 0 ? '#fff' : '#f8f9fa';
+                    html += `<tr style="background: ${rowColor};">`;
+                    html += `<td class="room-cell">${delivery.room}</td>`;
+                    html += `<td class="time-cell">${delivery.deliveryTimeStr}</td>`;
+                    
+                    // Afficher les fillings
+                    html += '<td>';
+                    const fillings = Object.keys(delivery.fillingsCount);
+                    if (fillings.length === 0) {
+                        html += '<span style="color: #999;">Aucune</span>';
+                    } else {
+                        fillings.forEach(filling => {
+                            const fillingName = filling.replace('crepes-', '').charAt(0).toUpperCase() + filling.replace('crepes-', '').slice(1);
+                            html += `<span class="filling-item">${fillingName}: ${delivery.fillingsCount[filling]}</span>`;
+                        });
+                    }
+                    html += '</td>';
+                    
+                    // Afficher les snacks
+                    html += '<td>';
+                    const snacks = Object.keys(delivery.snacksCount);
+                    if (snacks.length === 0) {
+                        html += '<span style="color: #999;">Aucun</span>';
+                    } else {
+                        snacks.forEach(snack => {
+                            html += `<span class="snack-item">${snack}: ${delivery.snacksCount[snack]}</span>`;
+                        });
+                    }
+                    html += '</td>';
+                    
+                    html += '</tr>';
+                });
+                
+                html += '</tbody></table>';
+                deliveriesListDiv.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Erreur lors du chargement des livraisons:', error);
+                document.getElementById('deliveriesList').innerHTML = `
+                    <div class="error">Erreur lors du chargement des livraisons: ${error.message}</div>
+                `;
+            }
+        }
+        
+        // Charger les livraisons au démarrage
+        loadDeliveries();
+        
+        // Recharger toutes les 30 secondes
+        setInterval(loadDeliveries, 30000);
+    </script>
+</body>
+</html>
+
