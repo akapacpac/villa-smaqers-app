@@ -191,6 +191,25 @@
             return words.map(word => word.charAt(0).toUpperCase()).join('');
         }
         
+        // Fonction pour déterminer le programme actuel (comme dans shop.html)
+        function getCurrentProgram() {
+            // Vérifier dans l'URL ou le localStorage
+            const urlParams = new URLSearchParams(window.location.search);
+            const programParam = urlParams.get('program');
+            if (programParam === 'master' || programParam === 'bachelor') {
+                return programParam;
+            }
+            
+            // Sinon, vérifier le localStorage
+            const savedProgram = localStorage.getItem('userProgram');
+            if (savedProgram === 'master' || savedProgram === 'bachelor') {
+                return savedProgram;
+            }
+            
+            // Par défaut, retourner 'bachelor'
+            return 'bachelor';
+        }
+        
         // Load deliveries
         async function loadDeliveries() {
             try {
@@ -210,11 +229,27 @@
                     snacksMap[snack.productId || doc.id] = snack.name || snack.productId;
                 });
                 
-                // Récupérer toutes les commandes
-                const ordersSnapshot = await db.collection('orders').get();
+                // Récupérer les commandes filtrées par programme (comme dans shop.html)
+                const program = getCurrentProgram();
+                let ordersSnapshot;
+                try {
+                    ordersSnapshot = await db.collection('orders')
+                        .where('program', '==', program)
+                        .get();
+                } catch (error) {
+                    // Si l'index n'existe pas, charger toutes les commandes et filtrer en JavaScript
+                    console.warn('Index manquant pour program, chargement sans filtre:', error);
+                    ordersSnapshot = await db.collection('orders').get();
+                }
+                
                 const orders = [];
-                ordersSnapshot.forEach(doc => {
-                    orders.push({ id: doc.id, ...doc.data() });
+                ordersSnapshot.forEach((doc) => {
+                    const orderData = { id: doc.id, ...doc.data() };
+                    // Filtrer par programme si nécessaire (si on a chargé toutes les commandes)
+                    if (orderData.program && orderData.program !== program) {
+                        return;
+                    }
+                    orders.push(orderData);
                 });
                 
                 // Grouper les commandes par salle ET par heure de livraison
