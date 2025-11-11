@@ -1793,6 +1793,7 @@
                             <th>Salle</th>
                             <th>Produit</th>
                             <th>Prix</th>
+                            <th>Vote</th>
                             <th>Statut</th>
                             <th>Actions</th>
                         </tr>
@@ -1832,6 +1833,7 @@
                         <td><strong style="color: #007bff; font-size: 1.1rem;">${classNumber}</strong></td>
                         <td>${product}</td>
                         <td>${price}</td>
+                        <td>${voteDisplay}</td>
                         <td><span class="status-badge ${statusClass}">${statusText}</span></td>
                         <td>
                             <select onchange="updateOrderStatus('${order.id}', this.value)" class="status-select">
