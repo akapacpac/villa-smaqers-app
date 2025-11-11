@@ -406,12 +406,7 @@
         }
         
         .status-badge-clickable::after {
-            content: ' ▼';
-            font-size: 0.6rem;
-            opacity: 0.7;
-            display: inline;
-            margin-left: 3px;
-            white-space: nowrap;
+            content: '';
         }
         
         .status-dropdown-menu {
@@ -2008,9 +2003,9 @@
                                 <td>${product}</td>
                                 <td>${price}</td>
                                 <td>${voteDisplay}</td>
-                                <td style="position: relative; padding: 8px; overflow: visible; min-width: 120px;">
-                                    <span class="status-badge-clickable ${statusClass}" style="position: relative; z-index: 1; white-space: nowrap;" onclick="showStatusDropdown('${order.id}', event)">
-                                        ${statusText}
+                                <td style="position: relative; padding: 8px; overflow: visible; min-width: 140px; white-space: nowrap;">
+                                    <span class="status-badge-clickable ${statusClass}" style="position: relative; z-index: 1; white-space: nowrap !important; display: inline-block;" onclick="showStatusDropdown('${order.id}', event)">
+                                        ${statusText}<span style="font-size: 0.6rem; opacity: 0.7; margin-left: 3px;">▼</span>
                                     </span>
                                     <div id="statusDropdown_${order.id}" class="status-dropdown-menu" style="display: none !important;">
                                         <div class="status-dropdown-item" onclick="updateOrderStatus('${order.id}', 'pending'); event.stopPropagation();">En attente</div>
@@ -2196,6 +2191,7 @@
 
         // Fonction pour afficher le dropdown de statut
         function showStatusDropdown(orderId, event) {
+            console.log('showStatusDropdown called for order:', orderId);
             if (event) {
                 event.stopPropagation();
                 event.preventDefault();
@@ -2205,23 +2201,34 @@
             document.querySelectorAll('.status-dropdown-menu').forEach(menu => {
                 if (menu.id !== `statusDropdown_${orderId}`) {
                     menu.classList.remove('show');
+                    menu.style.display = 'none';
+                    menu.style.opacity = '0';
+                    menu.style.pointerEvents = 'none';
                 }
             });
             
             // Toggle le dropdown actuel
             const dropdown = document.getElementById(`statusDropdown_${orderId}`);
+            console.log('Dropdown element:', dropdown);
             if (dropdown) {
-                dropdown.classList.toggle('show');
-                // Forcer l'affichage
-                if (dropdown.classList.contains('show')) {
-                    dropdown.style.display = 'block';
-                    dropdown.style.opacity = '1';
-                    dropdown.style.pointerEvents = 'auto';
-                } else {
+                const isOpen = dropdown.classList.contains('show');
+                console.log('Current state - isOpen:', isOpen);
+                
+                if (isOpen) {
+                    // Fermer
+                    dropdown.classList.remove('show');
                     dropdown.style.display = 'none';
                     dropdown.style.opacity = '0';
                     dropdown.style.pointerEvents = 'none';
+                } else {
+                    // Ouvrir
+                    dropdown.classList.add('show');
+                    dropdown.style.display = 'block';
+                    dropdown.style.opacity = '1';
+                    dropdown.style.pointerEvents = 'auto';
                 }
+            } else {
+                console.error('Dropdown not found for order:', orderId);
             }
         }
         
