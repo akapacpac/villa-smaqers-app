@@ -833,6 +833,64 @@
             }
         }
 
+        // ========== INITIALISATION BOSS ==========
+        // Fonction pour définir le premier BOSS (à exécuter une seule fois)
+        async function initializeBoss() {
+            const bossEmail = 'pascalmartinlalande@gmail.com';
+            
+            try {
+                // Trouver l'utilisateur par email
+                const usersSnapshot = await db.collection('users').where('email', '==', bossEmail).get();
+                
+                if (usersSnapshot.empty) {
+                    console.error('Utilisateur non trouvé avec cet email:', bossEmail);
+                    alert('Utilisateur non trouvé. Assurez-vous que cet utilisateur s\'est inscrit.');
+                    return;
+                }
+                
+                const userDoc = usersSnapshot.docs[0];
+                await db.collection('users').doc(userDoc.id).update({
+                    role: 'boss'
+                });
+                
+                console.log('✅ Rôle BOSS attribué à:', bossEmail);
+                alert('✅ Rôle BOSS attribué avec succès à ' + bossEmail + '!\n\nVous pouvez maintenant vous reconnecter pour accéder à l\'Administration Privée.');
+                
+                // Recharger la page après 2 secondes
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            } catch (error) {
+                console.error('Erreur lors de l\'attribution du rôle BOSS:', error);
+                alert('Erreur: ' + error.message);
+            }
+        }
+        
+        // Exécuter automatiquement l'initialisation si l'utilisateur actuel a cet email
+        auth.onAuthStateChanged(async (user) => {
+            if (user && user.email === 'pascalmartinlalande@gmail.com') {
+                try {
+                    const userDoc = await db.collection('users').doc(user.uid).get();
+                    if (userDoc.exists) {
+                        const userData = userDoc.data();
+                        // Si l'utilisateur n'est pas encore BOSS, le définir automatiquement
+                        if (userData.role !== 'boss') {
+                            await db.collection('users').doc(user.uid).update({
+                                role: 'boss'
+                            });
+                            console.log('✅ Rôle BOSS attribué automatiquement');
+                            // Recharger pour appliquer les changements
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1000);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Erreur lors de l\'initialisation automatique:', error);
+                }
+            }
+        });
+        
         // ========== GESTION DE LA COMPÉTITION ==========
         
         // Charger les compteurs de votes
