@@ -205,26 +205,79 @@
                 // Récupérer toutes les classes (Bachelor et Master)
                 const classesSnapshot = await db.collection('classes').get();
                 
+                // Date d'aujourd'hui à minuit pour comparer
+                const now = new Date();
+                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                today.setHours(0, 0, 0, 0);
+                const todayStr = today.toISOString().split('T')[0]; // Format YYYY-MM-DD
+                
                 let deliveriesList = [];
                 
                 classesSnapshot.forEach(doc => {
                     const classData = { id: doc.id, ...doc.data() };
+                    
+                    // Vérifier si la classe est d'aujourd'hui
+                    let isToday = false;
+                    
+                    // Utiliser le champ date si disponible (format YYYY-MM-DD)
+                    if (classData.date) {
+                        isToday = classData.date === todayStr;
+                    } else if (classData.createdAt) {
+                        // Sinon utiliser createdAt
+                        const createdDate = classData.createdAt.toDate ? classData.createdAt.toDate() : new Date(classData.createdAt);
+                        const createdDay = new Date(createdDate.getFullYear(), createdDate.getMonth(), createdDate.getDate());
+                        createdDay.setHours(0, 0, 0, 0);
+                        isToday = createdDay.getTime() === today.getTime();
+                    }
+                    
+                    // Si la classe n'a pas de createdAt, vérifier les schedules
+                    if (!isToday && classData.schedules && classData.schedules.length > 0) {
+                        // Vérifier si au moins un schedule est d'aujourd'hui
+                        const hasTodaySchedule = classData.schedules.some(schedule => {
+                            if (schedule.createdAt) {
+                                const scheduleDate = schedule.createdAt.toDate ? schedule.createdAt.toDate() : new Date(schedule.createdAt);
+                                const scheduleDay = new Date(scheduleDate.getFullYear(), scheduleDate.getMonth(), scheduleDate.getDate());
+                                scheduleDay.setHours(0, 0, 0, 0);
+                                return scheduleDay.getTime() === today.getTime();
+                            }
+                            return false;
+                        });
+                        isToday = hasTodaySchedule;
+                    }
+                    
+                    // Ne garder que les classes d'aujourd'hui
+                    if (!isToday) {
+                        return;
+                    }
+                    
                     if (classData.schedules && classData.schedules.length > 0) {
                         classData.schedules.forEach((schedule, index) => {
                             const startTime = schedule.startTime || '';
                             const endTime = schedule.endTime || '';
-                            const deliveryTime = calculateDeliveryTime(startTime, endTime);
                             
-                            deliveriesList.push({
-                                classId: classData.id,
-                                room: classData.room || '',
-                                startTime: startTime,
-                                endTime: endTime,
-                                deliveryTime: deliveryTime,
-                                deliveryTimeStr: formatTime(deliveryTime),
-                                scheduleIndex: index,
-                                program: classData.program || 'bachelor'
-                            });
+                            // Vérifier si le schedule est d'aujourd'hui
+                            let isScheduleToday = true;
+                            if (schedule.createdAt) {
+                                const scheduleDate = schedule.createdAt.toDate ? schedule.createdAt.toDate() : new Date(schedule.createdAt);
+                                const scheduleDay = new Date(scheduleDate.getFullYear(), scheduleDate.getMonth(), scheduleDate.getDate());
+                                scheduleDay.setHours(0, 0, 0, 0);
+                                isScheduleToday = scheduleDay.getTime() === today.getTime();
+                            }
+                            
+                            if (startTime && endTime && isScheduleToday) {
+                                const deliveryTime = calculateDeliveryTime(startTime, endTime);
+                                
+                                deliveriesList.push({
+                                    classId: classData.id,
+                                    room: classData.room || '',
+                                    startTime: startTime,
+                                    endTime: endTime,
+                                    deliveryTime: deliveryTime,
+                                    deliveryTimeStr: formatTime(deliveryTime),
+                                    scheduleIndex: index,
+                                    program: classData.program || 'bachelor'
+                                });
+                            }
                         });
                     }
                 });

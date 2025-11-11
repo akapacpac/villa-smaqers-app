@@ -3296,11 +3296,14 @@
                         return;
                     }
                     
-                    // Add new schedule
+                    // Add new schedule avec date d'aujourd'hui
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    
                     schedules.push({
                         startTime,
                         endTime,
-                        createdAt: new Date().toISOString()
+                        createdAt: today.toISOString()
                     });
                     
                     await db.collection('classes').doc(existingClass.id).update({
@@ -3310,15 +3313,20 @@
                     alert('Horaire ajouté à la salle existante !');
                 } else {
                     // Create new class
+                    // Date d'aujourd'hui (juste le jour, sans l'heure)
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    
                     const newClass = {
                         room,
                         program: userProgram,
                         schedules: [{
                             startTime,
                             endTime,
-                            createdAt: new Date().toISOString()
+                            createdAt: today.toISOString()
                         }],
-                        createdAt: new Date().toISOString()
+                        createdAt: today.toISOString(),
+                        date: today.toISOString().split('T')[0] // Format YYYY-MM-DD pour faciliter le filtrage
                     };
                     
                     await db.collection('classes').add(newClass);
