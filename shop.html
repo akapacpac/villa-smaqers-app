@@ -1103,7 +1103,10 @@
                 loadMyOrders();
             }
             
-            // 4. Recharger le stock et vérifier les boutons de commande (onglet orders)
+            // 4. Recharger les produits (crêpes et snacks) dans l'onglet commande
+            loadProductsForOrders();
+            
+            // 5. Recharger le stock et vérifier les boutons de commande (onglet orders)
             // Cela permet aux étudiants et admins de voir le bon stock après changement de vue
             setTimeout(async () => {
                 await checkStockOnLoad();
