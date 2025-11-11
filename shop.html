@@ -3040,8 +3040,8 @@
             // Nettoyer les anciennes classes avant de charger
             await cleanupOldClasses();
             try {
-                const userProgram = currentUser?.program || getCurrentProgram();
-                const classesSnapshot = await db.collection('classes').where('program', '==', userProgram).get();
+                // Charger TOUTES les classes (Bachelor et Master) - elles sont différenciées par le suffixe B/M dans le nom
+                const classesSnapshot = await db.collection('classes').get();
                 
                 // Date d'aujourd'hui à minuit pour comparer
                 const now = new Date();
@@ -3318,12 +3318,12 @@
         
         // Create new class
         async function createNewClass() {
-            const room = document.getElementById('new-class-room').value.trim();
+            const roomInput = document.getElementById('new-class-room').value.trim();
             const startTime = document.getElementById('new-class-start').value;
             const endTime = document.getElementById('new-class-end').value;
             const userProgram = currentUser?.program || getCurrentProgram();
             
-            if (!room || !startTime || !endTime) {
+            if (!roomInput || !startTime || !endTime) {
                 alert('Veuillez remplir tous les champs');
                 return;
             }
@@ -3333,12 +3333,16 @@
                 return;
             }
             
+            // Ajouter le suffixe B ou M au nom de la salle
+            const suffix = userProgram === 'master' ? ' M' : ' B';
+            const room = roomInput.endsWith(' B') || roomInput.endsWith(' M') ? roomInput : roomInput + suffix;
+            
             try {
                 // Nettoyer les anciennes classes avant de vérifier les doublons
                 await cleanupOldClasses();
                 
-                // Check if class with same room and program already exists
-                const existingClasses = await db.collection('classes').where('room', '==', room).where('program', '==', userProgram).get();
+                // Check if class with same room already exists (sans filtre par programme)
+                const existingClasses = await db.collection('classes').where('room', '==', room).get();
                 
                 if (!existingClasses.empty) {
                     // Class exists, add schedule to it
@@ -3375,8 +3379,7 @@
                     today.setHours(0, 0, 0, 0);
                     
                     const newClass = {
-                        room,
-                        program: userProgram,
+                        room, // Le nom de la salle inclut déjà le suffixe B ou M
                         schedules: [{
                             startTime,
                             endTime,
@@ -3447,7 +3450,11 @@
         // Load all classes for the classes tab
         async function loadAllClasses() {
             try {
-                // Charger TOUTES les classes (Bachelor et Master) pour l'onglet Classes
+                // Utiliser la même source que loadClasses() - charger TOUTES les classes d'aujourd'hui
+                // Nettoyer les anciennes classes avant de charger
+                await cleanupOldClasses();
+                
+                // Charger TOUTES les classes (Bachelor et Master) - elles sont différenciées par le suffixe B/M dans le nom
                 const classesSnapshot = await db.collection('classes').get();
                 
                 // Date d'aujourd'hui à minuit pour comparer
