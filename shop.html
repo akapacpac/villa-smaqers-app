@@ -3363,30 +3363,38 @@
         // Load all classes for the classes tab
         async function loadAllClasses() {
             try {
-                const program = getCurrentProgram();
-                const classesSnapshot = await db.collection('classes').where('program', '==', program).get();
+                // Charger TOUTES les classes (Bachelor et Master) pour l'onglet Classes
+                const classesSnapshot = await db.collection('classes').get();
                 
                 let allClassesList = [];
                 classesSnapshot.forEach(doc => {
                     const classData = { id: doc.id, ...doc.data() };
+                    console.log('Classe chargée:', classData);
                     if (classData.schedules && classData.schedules.length > 0) {
                         // Pour chaque schedule, créer une entrée
                         classData.schedules.forEach((schedule, index) => {
                             const startTime = schedule.startTime || '';
                             const endTime = schedule.endTime || '';
-                            const deliveryTime = calculateDeliveryTime(startTime, endTime);
                             
-                            allClassesList.push({
-                                classId: classData.id,
-                                room: classData.room || '',
-                                startTime: startTime,
-                                endTime: endTime,
-                                deliveryTime: deliveryTime,
-                                scheduleIndex: index
-                            });
+                            if (startTime && endTime) {
+                                const deliveryTime = calculateDeliveryTime(startTime, endTime);
+                                
+                                allClassesList.push({
+                                    classId: classData.id,
+                                    room: classData.room || '',
+                                    startTime: startTime,
+                                    endTime: endTime,
+                                    deliveryTime: deliveryTime,
+                                    scheduleIndex: index
+                                });
+                            }
                         });
+                    } else {
+                        console.log('Classe sans schedules:', classData);
                     }
                 });
+                
+                console.log('Total classes trouvées:', allClassesList.length);
                 
                 // Trier par numéro de salle (ordre croissant), puis par heure de début
                 allClassesList.sort((a, b) => {
