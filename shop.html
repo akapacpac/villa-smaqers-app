@@ -1982,7 +1982,10 @@
                 }
                 
                 if (classFilter) {
-                    orders = orders.filter(order => order.classNumber && order.classNumber.toString().includes(classFilter));
+                    orders = orders.filter(order => {
+                        const classroom = order.classroom || order.classNumber || '';
+                        return classroom.toString().includes(classFilter);
+                    });
                 }
 
                 // Appliquer le tri
