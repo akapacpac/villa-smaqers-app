@@ -213,6 +213,22 @@
     </div>
 
     <script>
+        // Déconnecter automatiquement l'utilisateur actuel au chargement de la page
+        // pour éviter les problèmes de cache
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                try {
+                    await auth.signOut();
+                    console.log('Utilisateur précédent déconnecté pour éviter les conflits de cache');
+                    // Nettoyer le localStorage
+                    localStorage.clear();
+                    sessionStorage.clear();
+                } catch (error) {
+                    console.error('Erreur lors de la déconnexion automatique:', error);
+                }
+            }
+        });
+        
         // Select program (Bachelor/Master)
         function selectProgram(program) {
             document.getElementById('signupProgram').value = program;
@@ -264,6 +280,18 @@
             const password = document.getElementById('loginPassword').value;
             
             try {
+                // Déconnecter d'abord l'utilisateur actuel s'il existe
+                const currentUser = auth.currentUser;
+                if (currentUser) {
+                    await auth.signOut();
+                    // Nettoyer le localStorage
+                    localStorage.clear();
+                    sessionStorage.clear();
+                }
+                
+                // Attendre un peu pour que la déconnexion soit complète
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
                 const userCredential = await auth.signInWithEmailAndPassword(email, password);
                 const user = userCredential.user;
                 

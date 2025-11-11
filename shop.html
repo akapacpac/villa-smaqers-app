@@ -1691,8 +1691,13 @@
                         <div class="info-value">${userData.createdAt ? (userData.createdAt.toDate ? userData.createdAt.toDate().toLocaleDateString('fr-FR') : new Date(userData.createdAt).toLocaleDateString('fr-FR')) : 'N/A'}</div>
                     </div>
                     <div class="info-card">
-                        <button onclick="updateUserData()" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; width: 100%;">
+                        <button onclick="updateUserData()" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; width: 100%; margin-bottom: 10px;">
                             Sauvegarder mes informations
+                        </button>
+                    </div>
+                    <div class="info-card">
+                        <button onclick="logout()" style="background: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; width: 100%;">
+                            🚪 Se déconnecter
                         </button>
                     </div>
                 </div>
@@ -1728,6 +1733,32 @@
             } catch (error) {
                 console.error('Erreur lors de la mise à jour:', error);
                 showMessage('Erreur lors de la mise à jour: ' + error.message, 'error');
+            }
+        }
+        
+        // Fonction de déconnexion
+        async function logout() {
+            if (!confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+                return;
+            }
+            
+            try {
+                // Nettoyer toutes les données de session
+                currentUser = null;
+                currentView = 'bachelor';
+                
+                // Déconnexion Firebase
+                await auth.signOut();
+                
+                // Nettoyer le localStorage et sessionStorage
+                localStorage.clear();
+                sessionStorage.clear();
+                
+                // Rediriger vers la page d'authentification
+                window.location.href = 'auth.html';
+            } catch (error) {
+                console.error('Erreur lors de la déconnexion:', error);
+                showMessage('Erreur lors de la déconnexion: ' + error.message, 'error');
             }
         }
 
