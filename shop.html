@@ -3543,6 +3543,9 @@
                 return;
             }
             
+            // Vérifier si l'utilisateur est admin ou boss
+            const isAdminOrBoss = currentUser && (currentUser.role === 'admin' || currentUser.role === 'boss');
+            
             // Afficher chaque horaire sur une ligne compacte (seulement les non-expirés)
             classesList.innerHTML = validSchedules.map(item => {
                 const deliveryTime = calculateDeliveryTime(item.startTime, item.endTime);
@@ -3550,7 +3553,7 @@
                 
                 return `
                     <div class="schedule-line" 
-                         onclick="selectClassSchedule('${item.classId}', ${item.scheduleIndex})"
+                         onclick="if (!event.target.closest('.delete-class-btn')) selectClassSchedule('${item.classId}', ${item.scheduleIndex})"
                          style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; margin: 3px 0; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; background: white; transition: all 0.2s;"
                          onmouseover="this.style.background='#f0f4ff'"
                          onmouseout="this.style.background='white'">
@@ -3565,6 +3568,15 @@
                                 Livraison: ${formatTime(deliveryTime)} | Deadline: ${formatTime(deadline)}
                             </div>
                         </div>
+                        ${isAdminOrBoss ? `
+                            <button class="delete-class-btn" 
+                                    onclick="event.stopPropagation(); deleteClass('${item.classId}', '${item.room}', '${item.startTime}', '${item.endTime}')"
+                                    style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600; margin-left: 10px; transition: all 0.2s;"
+                                    onmouseover="this.style.background='#c82333'; this.style.transform='scale(1.05)'"
+                                    onmouseout="this.style.background='#dc3545'; this.style.transform='scale(1)'">
+                                🗑️ Supprimer
+                            </button>
+                        ` : ''}
                     </div>
                 `;
             }).join('');
@@ -3576,6 +3588,63 @@
             if (!searchInput) return;
             const searchTerm = searchInput.value;
             displayClasses(searchTerm);
+        }
+        
+        // Supprimer une classe complètement de Firebase
+        async function deleteClass(classId, room, startTime, endTime) {
+            if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'boss')) {
+                showMessage('Seuls les administrateurs et BOSS peuvent supprimer des classes', 'error');
+                return;
+            }
+            
+            // Confirmation
+            const confirmMessage = `⚠️ Êtes-vous sûr de vouloir supprimer complètement la classe ?\n\nSalle: ${room}\nHoraire: ${startTime} - ${endTime}\n\nCette action supprimera la classe de manière définitive de la base de données.\n\nCette action est irréversible !`;
+            
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+            
+            try {
+                // Récupérer la classe pour voir combien de schedules elle a
+                const classDoc = await db.collection('classes').doc(classId).get();
+                if (!classDoc.exists) {
+                    showMessage('Classe introuvable', 'error');
+                    return;
+                }
+                
+                const classData = classDoc.data();
+                const schedules = classData.schedules || [];
+                
+                // Si la classe n'a qu'un seul schedule, supprimer la classe entière
+                if (schedules.length === 1) {
+                    await db.collection('classes').doc(classId).delete();
+                    showMessage(`✅ Classe ${room} supprimée avec succès`, 'success');
+                } else {
+                    // Sinon, supprimer uniquement le schedule correspondant
+                    const updatedSchedules = schedules.filter(s => 
+                        !(s.startTime === startTime && s.endTime === endTime)
+                    );
+                    
+                    if (updatedSchedules.length === 0) {
+                        // Si plus aucun schedule, supprimer la classe
+                        await db.collection('classes').doc(classId).delete();
+                        showMessage(`✅ Classe ${room} supprimée avec succès`, 'success');
+                    } else {
+                        // Mettre à jour la classe avec les schedules restants
+                        await db.collection('classes').doc(classId).update({
+                            schedules: updatedSchedules
+                        });
+                        showMessage(`✅ Horaire ${startTime} - ${endTime} supprimé de la classe ${room}`, 'success');
+                    }
+                }
+                
+                // Recharger les classes
+                await loadClasses();
+                
+            } catch (error) {
+                console.error('Erreur lors de la suppression de la classe:', error);
+                showMessage('❌ Erreur lors de la suppression: ' + error.message, 'error');
+            }
         }
         
         // Show class selection
