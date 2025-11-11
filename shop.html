@@ -2225,6 +2225,9 @@
             if (!event.target.closest('.status-badge-clickable') && !event.target.closest('.status-dropdown-menu')) {
                 document.querySelectorAll('.status-dropdown-menu').forEach(menu => {
                     menu.classList.remove('show');
+                    menu.style.display = 'none';
+                    menu.style.opacity = '0';
+                    menu.style.pointerEvents = 'none';
                 });
             }
         });
