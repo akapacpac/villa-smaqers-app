@@ -381,22 +381,68 @@
             border: 1px solid #17a2b8;
         }
 
-        .status-select {
-            padding: 6px 10px;
-            border: 2px solid #e1e5e9;
-            border-radius: 6px;
-            font-size: 0.85rem;
+        .status-badge-clickable {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
             font-weight: 600;
-            background: white;
             cursor: pointer;
-            transition: all 0.2s ease;
-            min-width: 120px;
+            position: relative;
+            display: inline-block;
+            transition: all 0.2s;
+            user-select: none;
         }
-
-        .status-select:focus {
-            border-color: #007bff;
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+        
+        .status-badge-clickable:hover {
+            opacity: 0.8;
+            transform: scale(1.05);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .status-badge-clickable::after {
+            content: ' ▼';
+            font-size: 0.6rem;
+            opacity: 0.7;
+            display: inline-block;
+        }
+        
+        .status-dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10000;
+            min-width: 150px;
+            display: none !important;
+            margin-top: 5px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+        
+        .status-dropdown-menu.show {
+            display: block !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+        
+        .status-dropdown-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .status-dropdown-item:last-child {
+            border-bottom: none;
+        }
+        
+        .status-dropdown-item:hover {
+            background: #f8f9fa;
         }
 
         .user-info {
@@ -1906,7 +1952,6 @@
                                         <th>Prix</th>
                                         <th>Vote</th>
                                         <th>Statut</th>
-                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1945,13 +1990,15 @@
                                 <td>${product}</td>
                                 <td>${price}</td>
                                 <td>${voteDisplay}</td>
-                                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-                                <td>
-                                    <select onchange="updateOrderStatus('${order.id}', this.value)" class="status-select">
-                                        <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>En attente</option>
-                                        <option value="confirmed" ${order.status === 'confirmed' ? 'selected' : ''}>Confirmée</option>
-                                        <option value="delivered" ${order.status === 'delivered' ? 'selected' : ''}>Livrée</option>
-                                    </select>
+                                <td style="position: relative; padding: 8px; overflow: visible;">
+                                    <span class="status-badge-clickable ${statusClass}" style="position: relative; z-index: 1;" onclick="showStatusDropdown('${order.id}', event)">
+                                        ${statusText}
+                                    </span>
+                                    <div id="statusDropdown_${order.id}" class="status-dropdown-menu" style="display: none !important;">
+                                        <div class="status-dropdown-item" onclick="updateOrderStatus('${order.id}', 'pending'); event.stopPropagation();">En attente</div>
+                                        <div class="status-dropdown-item" onclick="updateOrderStatus('${order.id}', 'confirmed'); event.stopPropagation();">Confirmée</div>
+                                        <div class="status-dropdown-item" onclick="updateOrderStatus('${order.id}', 'delivered'); event.stopPropagation();">Livrée</div>
+                                    </div>
                                 </td>
                             </tr>
                         `;
@@ -1984,6 +2031,33 @@
             updateBulkActions();
         }
 
+        // Fonction pour afficher le dropdown de statut
+        function showStatusDropdown(orderId, event) {
+            event.stopPropagation();
+            
+            // Fermer tous les autres dropdowns
+            document.querySelectorAll('.status-dropdown-menu').forEach(menu => {
+                if (menu.id !== `statusDropdown_${orderId}`) {
+                    menu.classList.remove('show');
+                }
+            });
+            
+            // Toggle le dropdown actuel
+            const dropdown = document.getElementById(`statusDropdown_${orderId}`);
+            if (dropdown) {
+                dropdown.classList.toggle('show');
+            }
+        }
+        
+        // Fermer les dropdowns quand on clique ailleurs
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.status-badge-clickable') && !event.target.closest('.status-dropdown-menu')) {
+                document.querySelectorAll('.status-dropdown-menu').forEach(menu => {
+                    menu.classList.remove('show');
+                });
+            }
+        });
+        
         async function updateOrderStatus(orderId, newStatus) {
             if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'member' && currentUser.role !== 'boss')) {
                 showMessage('Seuls les administrateurs, membres et BOSS peuvent modifier les statuts', 'error');
@@ -1996,6 +2070,12 @@
                 });
                 
                 showMessage(`Statut de la commande mis à jour: ${getStatusText(newStatus)}`, 'success');
+                
+                // Fermer le dropdown
+                const dropdown = document.getElementById(`statusDropdown_${orderId}`);
+                if (dropdown) {
+                    dropdown.classList.remove('show');
+                }
                 
                 // Recharger le tableau
                 loadAllOrders();
@@ -3138,7 +3218,7 @@
             // Nettoyer les anciennes classes avant de charger
             await cleanupOldClasses();
             try {
-                // Charger TOUTES les classes (Bachelor et Master) - elles sont différenciées par le suffixe B/M dans le nom
+                // Charger TOUTES les classes (Bachelor et Master)
                 const classesSnapshot = await db.collection('classes').get();
                 
                 // Date d'aujourd'hui à minuit pour comparer
@@ -3435,9 +3515,8 @@
                 return;
             }
             
-            // Ajouter le suffixe B ou M au nom de la salle
-            const suffix = userProgram === 'master' ? ' M' : ' B';
-            const room = roomInput.endsWith(' B') || roomInput.endsWith(' M') ? roomInput : roomInput + suffix;
+            // Utiliser le nom de la salle tel quel (sans suffixe)
+            const room = roomInput;
             
             try {
                 // Nettoyer les anciennes classes avant de vérifier les doublons
@@ -3481,7 +3560,7 @@
                     today.setHours(0, 0, 0, 0);
                     
                     const newClass = {
-                        room, // Le nom de la salle inclut déjà le suffixe B ou M
+                        room, // Le nom de la salle (sans suffixe)
                         schedules: [{
                             startTime,
                             endTime,

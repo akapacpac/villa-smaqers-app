@@ -183,6 +183,14 @@
             return `${hours}:${minutes}`;
         }
         
+        // Fonction pour obtenir les initiales d'un nom de produit
+        function getProductInitials(productName) {
+            if (!productName) return '';
+            // Enlever "Crêpes" si présent et prendre les initiales des mots restants
+            const words = productName.replace(/Crêpes\s*/i, '').split(/\s+/);
+            return words.map(word => word.charAt(0).toUpperCase()).join('');
+        }
+        
         // Load deliveries
         async function loadDeliveries() {
             try {
@@ -202,198 +210,170 @@
                     snacksMap[snack.productId || doc.id] = snack.name || snack.productId;
                 });
                 
-                // Récupérer TOUTES les classes (Bachelor et Master) - elles sont différenciées par le suffixe B/M dans le nom
-                const classesSnapshot = await db.collection('classes').get();
-                
-                // Date d'aujourd'hui à minuit pour comparer
-                const now = new Date();
-                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-                today.setHours(0, 0, 0, 0);
-                const todayStr = today.toISOString().split('T')[0]; // Format YYYY-MM-DD
-                
-                let deliveriesList = [];
-                
-                classesSnapshot.forEach(doc => {
-                    const classData = { id: doc.id, ...doc.data() };
-                    
-                    // Vérifier si la classe est d'aujourd'hui
-                    let isToday = false;
-                    
-                    // Utiliser le champ date si disponible (format YYYY-MM-DD)
-                    if (classData.date) {
-                        isToday = classData.date === todayStr;
-                    } else if (classData.createdAt) {
-                        // Sinon utiliser createdAt
-                        const createdDate = classData.createdAt.toDate ? classData.createdAt.toDate() : new Date(classData.createdAt);
-                        const createdDay = new Date(createdDate.getFullYear(), createdDate.getMonth(), createdDate.getDate());
-                        createdDay.setHours(0, 0, 0, 0);
-                        isToday = createdDay.getTime() === today.getTime();
-                    }
-                    
-                    // Si la classe n'a pas de createdAt, vérifier les schedules
-                    if (!isToday && classData.schedules && classData.schedules.length > 0) {
-                        // Vérifier si au moins un schedule est d'aujourd'hui
-                        const hasTodaySchedule = classData.schedules.some(schedule => {
-                            if (schedule.createdAt) {
-                                const scheduleDate = schedule.createdAt.toDate ? schedule.createdAt.toDate() : new Date(schedule.createdAt);
-                                const scheduleDay = new Date(scheduleDate.getFullYear(), scheduleDate.getMonth(), scheduleDate.getDate());
-                                scheduleDay.setHours(0, 0, 0, 0);
-                                return scheduleDay.getTime() === today.getTime();
-                            }
-                            return false;
-                        });
-                        isToday = hasTodaySchedule;
-                    }
-                    
-                    // Ne garder que les classes d'aujourd'hui
-                    if (!isToday) {
-                        return;
-                    }
-                    
-                    if (classData.schedules && classData.schedules.length > 0) {
-                        classData.schedules.forEach((schedule, index) => {
-                            const startTime = schedule.startTime || '';
-                            const endTime = schedule.endTime || '';
-                            
-                            // Vérifier si le schedule est d'aujourd'hui
-                            let isScheduleToday = true;
-                            if (schedule.createdAt) {
-                                const scheduleDate = schedule.createdAt.toDate ? schedule.createdAt.toDate() : new Date(schedule.createdAt);
-                                const scheduleDay = new Date(scheduleDate.getFullYear(), scheduleDate.getMonth(), scheduleDate.getDate());
-                                scheduleDay.setHours(0, 0, 0, 0);
-                                isScheduleToday = scheduleDay.getTime() === today.getTime();
-                            }
-                            
-                            if (startTime && endTime && isScheduleToday) {
-                                const deliveryTime = calculateDeliveryTime(startTime, endTime);
-                                
-                                deliveriesList.push({
-                                    classId: classData.id,
-                                    room: classData.room || '',
-                                    startTime: startTime,
-                                    endTime: endTime,
-                                    deliveryTime: deliveryTime,
-                                    deliveryTimeStr: formatTime(deliveryTime),
-                                    scheduleIndex: index,
-                                    program: classData.program || 'bachelor'
-                                });
-                            }
-                        });
-                    }
-                });
-                
-                // Trier par heure de livraison, puis par numéro de salle si même heure
-                deliveriesList.sort((a, b) => {
-                    // Trier par heure de livraison
-                    const timeA = a.deliveryTime.getTime();
-                    const timeB = b.deliveryTime.getTime();
-                    
-                    if (timeA !== timeB) {
-                        return timeA - timeB; // Ordre croissant des heures
-                    }
-                    
-                    // Si même heure de livraison, trier par numéro de salle (plus petit en haut)
-                    const numA = parseInt(a.room.replace(/\D/g, '')) || 0;
-                    const numB = parseInt(b.room.replace(/\D/g, '')) || 0;
-                    return numA - numB;
-                });
-                
-                // Récupérer toutes les commandes (filtrées par programme dans le code si nécessaire)
+                // Récupérer toutes les commandes
                 const ordersSnapshot = await db.collection('orders').get();
                 const orders = [];
                 ordersSnapshot.forEach(doc => {
                     orders.push({ id: doc.id, ...doc.data() });
                 });
                 
-                // Grouper les commandes par classe et calculer les totaux
-                const deliveriesWithOrders = deliveriesList.map(delivery => {
-                    // Trouver les commandes pour cette classe
-                    const classOrders = orders.filter(order => {
-                        return order.classroom === delivery.room && 
-                               order.deliveryTime && 
-                               formatTime(new Date(order.deliveryTime)) === delivery.deliveryTimeStr;
-                    });
+                // Grouper les commandes par salle ET par heure de livraison
+                const groups = {};
+                orders.forEach((order) => {
+                    const classroom = order.classroom || order.classNumber || 'N/A';
+                    const deliveryTime = order.deliveryTime ? 
+                        (order.deliveryTime.toDate ? order.deliveryTime.toDate() : new Date(order.deliveryTime)) : 
+                        null;
                     
-                    // Calculer les totaux par filling
-                    const fillingsCount = {};
-                    const snacksCount = {};
+                    if (!deliveryTime) return;
                     
-                    classOrders.forEach(order => {
+                    const deliveryTimeStr = formatTime(deliveryTime);
+                    const groupKey = `${classroom}_${deliveryTimeStr}`;
+                    
+                    if (!groups[groupKey]) {
+                        groups[groupKey] = {
+                            classroom: classroom,
+                                    deliveryTime: deliveryTime,
+                            deliveryTimeStr: deliveryTimeStr,
+                            orders: []
+                        };
+                    }
+                    groups[groupKey].orders.push(order);
+                });
+                
+                // Convertir en tableau et trier par heure de livraison (croissant)
+                const sortedGroups = Object.values(groups).sort((a, b) => {
+                    const timeA = a.deliveryTime.getTime();
+                    const timeB = b.deliveryTime.getTime();
+                    if (timeA !== timeB) {
+                        return timeA - timeB; // Ordre croissant (plus proche en haut)
+                    }
+                    // Si même heure, trier par salle
+                    const numA = parseInt(a.classroom.toString().replace(/\D/g, '')) || 0;
+                    const numB = parseInt(b.classroom.toString().replace(/\D/g, '')) || 0;
+                    return numA - numB;
+                });
+                
+                // Calculer les compteurs de produits pour chaque groupe
+                const deliveriesWithCounts = sortedGroups.map(group => {
+                    const productsCount = {};
+                    
+                    group.orders.forEach(order => {
                         if (order.product) {
-                            // Vérifier si c'est un filling ou un snack
+                            // Obtenir le nom du produit
+                            let productName = '';
                             if (order.product.startsWith('crepes-')) {
-                                const filling = order.product;
-                                fillingsCount[filling] = (fillingsCount[filling] || 0) + (order.quantity || 1);
+                                productName = fillingsMap[order.product] || 
+                                    (order.product.replace('crepes-', '').charAt(0).toUpperCase() + 
+                                     order.product.replace('crepes-', '').slice(1));
                             } else {
-                                // C'est un snack
-                                const snack = order.product;
-                                snacksCount[snack] = (snacksCount[snack] || 0) + (order.quantity || 1);
+                                productName = snacksMap[order.product] || order.product;
+                            }
+                            
+                            const initials = getProductInitials(productName);
+                            const quantity = order.quantity || 1;
+                            
+                            if (initials) {
+                                productsCount[initials] = (productsCount[initials] || 0) + quantity;
                             }
                         }
                     });
                     
                     return {
-                        ...delivery,
-                        orders: classOrders,
-                        fillingsCount: fillingsCount,
-                        snacksCount: snacksCount
+                        ...group,
+                        productsCount: productsCount
                     };
                 });
                 
                 // Afficher les livraisons
                 const deliveriesListDiv = document.getElementById('deliveriesList');
-                if (deliveriesWithOrders.length === 0) {
+                if (deliveriesWithCounts.length === 0) {
                     deliveriesListDiv.innerHTML = '<div class="error">Aucune livraison prévue</div>';
                     return;
                 }
                 
-                let html = '<table>';
-                html += '<thead><tr>';
-                html += '<th>Salle</th>';
-                html += '<th>Heure livraison</th>';
-                html += '<th>Crêpes (Fillings)</th>';
-                html += '<th>Snacks</th>';
-                html += '</tr></thead><tbody>';
+                let html = '';
                 
-                deliveriesWithOrders.forEach((delivery, index) => {
-                    const rowColor = index % 2 === 0 ? '#fff' : '#f8f9fa';
-                    html += `<tr style="background: ${rowColor};">`;
-                    html += `<td class="room-cell">${delivery.room}</td>`;
-                    html += `<td class="time-cell">${delivery.deliveryTimeStr}</td>`;
+                deliveriesWithCounts.forEach((delivery, groupIndex) => {
+                    // Créer le texte des compteurs de produits
+                    const countTexts = Object.entries(delivery.productsCount)
+                        .map(([initials, count]) => `${initials}: ${count}`)
+                        .join(', ');
                     
-                    // Afficher les fillings
-                    html += '<td>';
-                    const fillings = Object.keys(delivery.fillingsCount);
-                    if (fillings.length === 0) {
-                        html += '<span style="color: #999;">Aucune</span>';
+                    html += `
+                        <div style="margin-bottom: 30px; border: 2px solid #007bff; border-radius: 10px; overflow: hidden;">
+                            <div style="background: linear-gradient(135deg, #007bff, #0056b3); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <h3 style="margin: 0; font-size: 1.3rem; font-weight: bold;">
+                                        📍 Salle ${delivery.classroom} - 🕐 Livraison: ${delivery.deliveryTimeStr}
+                                        ${countTexts ? `<span style="margin-left: 20px; font-size: 1rem; opacity: 0.9;">${countTexts}</span>` : ''}
+                                    </h3>
+                                    <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 0.9rem;">
+                                        ${delivery.orders.length} commande(s)
+                                    </p>
+                                </div>
+                            </div>
+                            <table style="width: 100%; margin: 0;">
+                                <thead>
+                                    <tr>
+                                        <th style="background: #f8f9fa; padding: 12px;">Date</th>
+                                        <th style="background: #f8f9fa; padding: 12px;">Utilisateur</th>
+                                        <th style="background: #f8f9fa; padding: 12px;">Email</th>
+                                        <th style="background: #f8f9fa; padding: 12px;">Produit</th>
+                                        <th style="background: #f8f9fa; padding: 12px;">Prix</th>
+                                        <th style="background: #f8f9fa; padding: 12px;">Vote</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+                    
+                    delivery.orders.forEach((order, index) => {
+                        const orderDate = order.orderDate || (order.createdAt ? 
+                            (order.createdAt.toDate ? order.createdAt.toDate().toLocaleDateString() : new Date(order.createdAt).toLocaleDateString()) : 
+                            'N/A');
+                        const orderTime = order.orderTime || (order.createdAt ? 
+                            (order.createdAt.toDate ? order.createdAt.toDate().toLocaleTimeString() : new Date(order.createdAt).toLocaleTimeString()) : 
+                            '');
+                        const userName = order.userName || 'N/A';
+                        const userEmail = order.userEmail || 'N/A';
+                        
+                        let productName = 'N/A';
+                        if (order.product) {
+                            if (order.product.startsWith('crepes-')) {
+                                productName = fillingsMap[order.product] || 
+                                    (order.product.replace('crepes-', '').charAt(0).toUpperCase() + 
+                                     order.product.replace('crepes-', '').slice(1));
                     } else {
-                        fillings.forEach(filling => {
-                            // Utiliser le nom personnalisé ou le nom par défaut
-                            const fillingName = fillingsMap[filling] || 
-                                (filling.replace('crepes-', '').charAt(0).toUpperCase() + filling.replace('crepes-', '').slice(1));
-                            html += `<span class="filling-item">${fillingName}: ${delivery.fillingsCount[filling]}</span>`;
-                        });
-                    }
-                    html += '</td>';
+                                productName = snacksMap[order.product] || order.product;
+                            }
+                        }
+                        
+                        const price = order.price !== undefined ? (order.price === 0 ? 'FREE' : order.price + '€') : 'N/A';
+                        const vote = order.vote || 'N/A';
+                        const voteDisplay = vote === 'red' ? '<span style="color: #dc3545; font-weight: bold;">🔴 Rouge</span>' : 
+                                           vote === 'green' ? '<span style="color: #28a745; font-weight: bold;">🟢 Verte</span>' : 
+                                           'N/A';
+                        
+                        const rowColor = index % 2 === 0 ? '#fff' : '#f8f9fa';
+                        html += `
+                            <tr style="background: ${rowColor};">
+                                <td style="padding: 12px;">${orderDate} ${orderTime}</td>
+                                <td style="padding: 12px;">${userName}</td>
+                                <td style="padding: 12px;">${userEmail}</td>
+                                <td style="padding: 12px;">${productName}</td>
+                                <td style="padding: 12px;">${price}</td>
+                                <td style="padding: 12px;">${voteDisplay}</td>
+                            </tr>
+                        `;
+                    });
                     
-                    // Afficher les snacks
-                    html += '<td>';
-                    const snacks = Object.keys(delivery.snacksCount);
-                    if (snacks.length === 0) {
-                        html += '<span style="color: #999;">Aucun</span>';
-                    } else {
-                        snacks.forEach(snack => {
-                            // Utiliser le nom personnalisé ou le nom par défaut
-                            const snackName = snacksMap[snack] || snack;
-                            html += `<span class="snack-item">${snackName}: ${delivery.snacksCount[snack]}</span>`;
-                        });
-                    }
-                    html += '</td>';
-                    
-                    html += '</tr>';
+                    html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
                 });
                 
-                html += '</tbody></table>';
                 deliveriesListDiv.innerHTML = html;
                 
             } catch (error) {
