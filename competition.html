@@ -169,9 +169,13 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         
-        // Load votes count
+        // Load votes count (including adjustments)
         async function loadVotes() {
             try {
+                // Get vote adjustments
+                const adjustmentsDoc = await db.collection('voteAdjustments').doc('current').get();
+                const adjustments = adjustmentsDoc.exists ? adjustmentsDoc.data() : { red: 0, green: 0 };
+                
                 // Get all orders with votes
                 const ordersSnapshot = await db.collection('orders').get();
                 
@@ -187,9 +191,13 @@
                     }
                 });
                 
-                document.getElementById('red-votes').textContent = redVotes;
-                document.getElementById('green-votes').textContent = greenVotes;
-                document.getElementById('total-votes').textContent = redVotes + greenVotes;
+                // Add adjustments
+                const totalRed = redVotes + (adjustments.red || 0);
+                const totalGreen = greenVotes + (adjustments.green || 0);
+                
+                document.getElementById('red-votes').textContent = totalRed;
+                document.getElementById('green-votes').textContent = totalGreen;
+                document.getElementById('total-votes').textContent = totalRed + totalGreen;
             } catch (error) {
                 console.error('Erreur lors du chargement des votes:', error);
             }
@@ -197,11 +205,31 @@
         
         // Real-time listener for votes
         function setupRealtimeListener() {
+            // Listen to orders
             db.collection('orders').onSnapshot((snapshot) => {
+                updateVotes();
+            });
+            
+            // Listen to adjustments
+            db.collection('voteAdjustments').doc('current').onSnapshot((doc) => {
+                updateVotes();
+            });
+        }
+        
+        // Update votes display
+        async function updateVotes() {
+            try {
+                // Get vote adjustments
+                const adjustmentsDoc = await db.collection('voteAdjustments').doc('current').get();
+                const adjustments = adjustmentsDoc.exists ? adjustmentsDoc.data() : { red: 0, green: 0 };
+                
+                // Get all orders with votes
+                const ordersSnapshot = await db.collection('orders').get();
+                
                 let redVotes = 0;
                 let greenVotes = 0;
                 
-                snapshot.forEach(doc => {
+                ordersSnapshot.forEach(doc => {
                     const orderData = doc.data();
                     if (orderData.vote === 'red') {
                         redVotes++;
@@ -210,10 +238,16 @@
                     }
                 });
                 
-                document.getElementById('red-votes').textContent = redVotes;
-                document.getElementById('green-votes').textContent = greenVotes;
-                document.getElementById('total-votes').textContent = redVotes + greenVotes;
-            });
+                // Add adjustments
+                const totalRed = redVotes + (adjustments.red || 0);
+                const totalGreen = greenVotes + (adjustments.green || 0);
+                
+                document.getElementById('red-votes').textContent = totalRed;
+                document.getElementById('green-votes').textContent = totalGreen;
+                document.getElementById('total-votes').textContent = totalRed + totalGreen;
+            } catch (error) {
+                console.error('Erreur lors de la mise à jour des votes:', error);
+            }
         }
         
         // Initialize

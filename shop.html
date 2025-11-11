@@ -2056,8 +2056,8 @@
                         document.querySelector('button[onclick="showTab(\'customization\')"]').style.display = 'block';
                     }
                     
-                    // Afficher le lien privé SEULEMENT pour les admins
-                    if (currentUser.role === 'admin') {
+                    // Afficher le lien privé SEULEMENT pour les BOSS
+                    if (currentUser.role === 'boss') {
                         document.querySelector('a[href="private.html"]').style.display = 'block';
                     } else {
                         document.querySelector('a[href="private.html"]').style.display = 'none';
