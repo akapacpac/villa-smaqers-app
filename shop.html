@@ -2102,6 +2102,32 @@
         }
 
         // Charger l'utilisateur au démarrage
+        // Fonction manuelle pour forcer l'attribution du rôle BOSS (à appeler depuis la console)
+        window.forceSetBoss = async function() {
+            const bossEmail = 'pascalmartinlalande@gmail.com';
+            try {
+                const user = auth.currentUser;
+                if (!user) {
+                    alert('Vous devez être connecté');
+                    return;
+                }
+                
+                if (user.email !== bossEmail) {
+                    alert('Cette fonction est réservée à ' + bossEmail);
+                    return;
+                }
+                
+                await db.collection('users').doc(user.uid).update({
+                    role: 'boss'
+                });
+                alert('✅ Rôle BOSS attribué ! Rechargez la page.');
+                console.log('✅ Rôle BOSS attribué à:', bossEmail);
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('Erreur: ' + error.message);
+            }
+        };
+        
         loadUser();
 
         // Vérifier le stock au chargement de la page
