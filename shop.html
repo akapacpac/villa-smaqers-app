@@ -3227,14 +3227,20 @@
                 
                 showMessage(`${selectedOrders.size} commande(s) marquée(s) comme livrées`, 'success');
                 selectedOrders.clear();
-                deselectAll();
                 
                 // Recharger les commandes
-                const statusFilter = document.getElementById('statusFilter').value;
-                const productFilter = document.getElementById('productFilter').value;
-                const classFilter = document.getElementById('classFilter').value;
-                const sortFilter = document.getElementById('sortFilter').value;
-                loadAllOrdersWithFilters(statusFilter, productFilter, classFilter, sortFilter);
+                const statusFilter = document.getElementById('statusFilter')?.value || '';
+                const productFilter = document.getElementById('productFilter')?.value || '';
+                const classFilter = document.getElementById('classFilter')?.value || '';
+                const sortFilter = document.getElementById('sortFilter')?.value || '';
+                
+                // Recharger d'abord, puis désélectionner après que le DOM soit mis à jour
+                await loadAllOrdersWithFilters(statusFilter, productFilter, classFilter, sortFilter);
+                
+                // Désélectionner après un court délai pour éviter les erreurs
+                setTimeout(() => {
+                    deselectAll();
+                }, 100);
                 
             } catch (error) {
                 console.error('Erreur lors de la mise à jour:', error);
