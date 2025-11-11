@@ -497,9 +497,6 @@
             <button class="nav-tab admin-only" onclick="showTab('customization')" style="display: none;">
                 ⚙️ Personnalisation
             </button>
-            <button class="nav-tab" onclick="showTab('classes')">
-                📚 Classes
-            </button>
             <a href="private.html" class="nav-tab admin-only" style="display: none; text-decoration: none; color: inherit;">
                 🔒 Administration Privée
             </a>
@@ -842,14 +839,6 @@
                     </div>
                 </div>
                     </div>
-                </div>
-            </div>
-
-            <!-- Onglet Classes -->
-            <div id="classes" class="tab-pane">
-                <h2 style="margin-bottom: 30px; color: #333;">📚 Liste des Classes</h2>
-                <div id="classesList">
-                    <div class="loading">Chargement des classes...</div>
                 </div>
             </div>
 
@@ -1252,9 +1241,6 @@
                         <div class="error">Accès refusé. Seuls les administrateurs et BOSS peuvent accéder à cette section.</div>
                     `;
                 }
-            } else if (tabName === 'classes') {
-                loadAllClasses();
-            }
         }
 
         function selectProduct(productName) {
@@ -1830,7 +1816,131 @@
             }
         }
 
-        function displayAdminOrders(orders) {
+        function displayAdminOrders(orders, classFilter = '') {
+            // Si un filtre de classe est appliqué, grouper par classe ET par heure de livraison
+            if (classFilter && classFilter.trim() !== '') {
+                // Grouper les commandes par classe et heure de livraison
+                const groups = {};
+                orders.forEach((order) => {
+                    const classroom = order.classroom || order.classNumber || 'N/A';
+                    const deliveryTime = order.deliveryTime ? 
+                        (order.deliveryTime.toDate ? order.deliveryTime.toDate() : new Date(order.deliveryTime)) : 
+                        null;
+                    const deliveryTimeStr = deliveryTime ? formatTime(deliveryTime) : 'N/A';
+                    const groupKey = `${classroom}_${deliveryTimeStr}`;
+                    
+                    if (!groups[groupKey]) {
+                        groups[groupKey] = {
+                            classroom: classroom,
+                            deliveryTime: deliveryTimeStr,
+                            orders: []
+                        };
+                    }
+                    groups[groupKey].orders.push(order);
+                });
+                
+                // Trier les groupes par heure de livraison
+                const sortedGroups = Object.values(groups).sort((a, b) => {
+                    if (a.deliveryTime === 'N/A' && b.deliveryTime === 'N/A') return 0;
+                    if (a.deliveryTime === 'N/A') return 1;
+                    if (b.deliveryTime === 'N/A') return -1;
+                    return a.deliveryTime.localeCompare(b.deliveryTime);
+                });
+                
+                let tableHTML = '';
+                
+                sortedGroups.forEach((group, groupIndex) => {
+                    // En-tête du groupe
+                    tableHTML += `
+                        <div style="margin-bottom: 30px; border: 2px solid #007bff; border-radius: 10px; overflow: hidden;">
+                            <div style="background: linear-gradient(135deg, #007bff, #0056b3); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <h3 style="margin: 0; font-size: 1.3rem; font-weight: bold;">
+                                        📍 Salle ${group.classroom} - 🕐 Livraison: ${group.deliveryTime}
+                                    </h3>
+                                    <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 0.9rem;">
+                                        ${group.orders.length} commande(s)
+                                    </p>
+                                </div>
+                                <button onclick="selectGroupOrders('group_${groupIndex}')" style="background: white; color: #007bff; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                                    ✅ Sélectionner tout le groupe
+                                </button>
+                            </div>
+                            <table class="orders-table" style="margin: 0;">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 40px; text-align: center;">
+                                            <input type="checkbox" class="group-checkbox" data-group="group_${groupIndex}" onchange="toggleGroup('group_${groupIndex}', this.checked)">
+                                        </th>
+                                        <th>Date</th>
+                                        <th>Utilisateur</th>
+                                        <th>Email</th>
+                                        <th>Salle</th>
+                                        <th>Produit</th>
+                                        <th>Prix</th>
+                                        <th>Vote</th>
+                                        <th>Statut</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+                    
+                    // Commandes du groupe
+                    group.orders.forEach((order) => {
+                        const statusClass = getStatusClass(order.status);
+                        const statusText = getStatusText(order.status);
+                        
+                        const orderDate = order.orderDate || (order.createdAt ? 
+                            (order.createdAt.toDate ? order.createdAt.toDate().toLocaleDateString() : new Date(order.createdAt).toLocaleDateString()) : 
+                            'N/A');
+                        const orderTime = order.orderTime || (order.createdAt ? 
+                            (order.createdAt.toDate ? order.createdAt.toDate().toLocaleTimeString() : new Date(order.createdAt).toLocaleTimeString()) : 
+                            '');
+                        const userName = order.userName || 'N/A';
+                        const userEmail = order.userEmail || 'N/A';
+                        const classNumber = order.classroom || order.classNumber || 'N/A';
+                        const product = getProductName(order.product) || 'N/A';
+                        const price = order.price !== undefined ? (order.price === 0 ? 'FREE' : order.price + '€') : 'N/A';
+                        const vote = order.vote || 'N/A';
+                        const voteDisplay = vote === 'red' ? '<span style="color: #dc3545; font-weight: bold;">🔴 Rouge</span>' : 
+                                           vote === 'green' ? '<span style="color: #28a745; font-weight: bold;">🟢 Verte</span>' : 
+                                           'N/A';
+                        
+                        tableHTML += `
+                            <tr>
+                                <td style="text-align: center;">
+                                    <input type="checkbox" class="order-checkbox group_${groupIndex}" data-order-id="${order.id}" onchange="updateBulkActions()">
+                                </td>
+                                <td>${orderDate} ${orderTime}</td>
+                                <td>${userName}</td>
+                                <td>${userEmail}</td>
+                                <td><strong style="color: #007bff; font-size: 1.1rem;">${classNumber}</strong></td>
+                                <td>${product}</td>
+                                <td>${price}</td>
+                                <td>${voteDisplay}</td>
+                                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                                <td>
+                                    <select onchange="updateOrderStatus('${order.id}', this.value)" class="status-select">
+                                        <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>En attente</option>
+                                        <option value="confirmed" ${order.status === 'confirmed' ? 'selected' : ''}>Confirmée</option>
+                                        <option value="delivered" ${order.status === 'delivered' ? 'selected' : ''}>Livrée</option>
+                                    </select>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    
+                    tableHTML += `
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                });
+                
+                document.getElementById('adminOrdersTable').innerHTML = tableHTML;
+            } else {
+                // Affichage normal sans groupement
             let tableHTML = `
                 <table class="orders-table">
                     <thead>
@@ -1841,10 +1951,10 @@
                             <th>Date</th>
                             <th>Utilisateur</th>
                             <th>Email</th>
-                            <th>Salle</th>
+                                <th>Salle</th>
                             <th>Produit</th>
                             <th>Prix</th>
-                            <th>Vote</th>
+                                <th>Vote</th>
                             <th>Statut</th>
                             <th>Actions</th>
                         </tr>
@@ -1856,7 +1966,6 @@
                 const statusClass = getStatusClass(order.status);
                 const statusText = getStatusText(order.status);
                 
-                // Gérer les données manquantes ou undefined
                 const orderDate = order.orderDate || (order.createdAt ? 
                     (order.createdAt.toDate ? order.createdAt.toDate().toLocaleDateString() : new Date(order.createdAt).toLocaleDateString()) : 
                     'N/A');
@@ -1865,13 +1974,13 @@
                     '');
                 const userName = order.userName || 'N/A';
                 const userEmail = order.userEmail || 'N/A';
-                const classNumber = order.classroom || order.classNumber || 'N/A';
+                    const classNumber = order.classroom || order.classNumber || 'N/A';
                 const product = getProductName(order.product) || 'N/A';
                 const price = order.price !== undefined ? (order.price === 0 ? 'FREE' : order.price + '€') : 'N/A';
-                const vote = order.vote || 'N/A';
-                const voteDisplay = vote === 'red' ? '<span style="color: #dc3545; font-weight: bold;">🔴 Rouge</span>' : 
-                                   vote === 'green' ? '<span style="color: #28a745; font-weight: bold;">🟢 Verte</span>' : 
-                                   'N/A';
+                    const vote = order.vote || 'N/A';
+                    const voteDisplay = vote === 'red' ? '<span style="color: #dc3545; font-weight: bold;">🔴 Rouge</span>' : 
+                                       vote === 'green' ? '<span style="color: #28a745; font-weight: bold;">🟢 Verte</span>' : 
+                                       'N/A';
                 
                 tableHTML += `
                     <tr>
@@ -1884,7 +1993,7 @@
                         <td><strong style="color: #007bff; font-size: 1.1rem;">${classNumber}</strong></td>
                         <td>${product}</td>
                         <td>${price}</td>
-                        <td>${voteDisplay}</td>
+                            <td>${voteDisplay}</td>
                         <td><span class="status-badge ${statusClass}">${statusText}</span></td>
                         <td>
                             <select onchange="updateOrderStatus('${order.id}', this.value)" class="status-select">
@@ -1903,6 +2012,23 @@
             `;
 
             document.getElementById('adminOrdersTable').innerHTML = tableHTML;
+            }
+        }
+        
+        function selectGroupOrders(groupId) {
+            const checkboxes = document.querySelectorAll(`.order-checkbox.${groupId}`);
+            checkboxes.forEach(cb => {
+                cb.checked = true;
+            });
+            updateBulkActions();
+        }
+        
+        function toggleGroup(groupId, checked) {
+            const checkboxes = document.querySelectorAll(`.order-checkbox.${groupId}`);
+            checkboxes.forEach(cb => {
+                cb.checked = checked;
+            });
+            updateBulkActions();
         }
 
         async function updateOrderStatus(orderId, newStatus) {
