@@ -1330,6 +1330,9 @@
             // Afficher la modal d'abord
             document.getElementById('classModal').classList.add('show');
             
+            // Recharger les classes à chaque ouverture de la modal pour avoir les données à jour
+            await loadClasses();
+            
             // Afficher la section de sélection par défaut après un court délai
             // pour s'assurer que la modal est bien rendue
             setTimeout(() => {
@@ -2165,6 +2168,15 @@
                 // Toujours recharger les classes (même si la modal n'est pas ouverte)
                 // Cela met à jour allClasses pour la prochaine ouverture de la modal
                 await loadClasses();
+                
+                // Si la modal de commande est ouverte, forcer le rechargement de l'affichage
+                const classModal = document.getElementById('classModal');
+                if (classModal && classModal.classList.contains('show')) {
+                    const classesList = document.getElementById('classes-list');
+                    if (classesList) {
+                        displayClasses();
+                    }
+                }
                 
             } catch (error) {
                 console.error('Erreur lors de la suppression des commandes:', error);
