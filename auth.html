@@ -213,18 +213,25 @@
     </div>
 
     <script>
+        // Variable pour suivre si on est en train de se connecter
+        let isLoggingIn = false;
+        
         // Déconnecter automatiquement l'utilisateur actuel au chargement de la page
-        // pour éviter les problèmes de cache
+        // pour éviter les problèmes de cache (seulement si on n'est pas en train de se connecter)
         auth.onAuthStateChanged(async (user) => {
-            if (user) {
-                try {
-                    await auth.signOut();
-                    console.log('Utilisateur précédent déconnecté pour éviter les conflits de cache');
-                    // Nettoyer le localStorage
-                    localStorage.clear();
-                    sessionStorage.clear();
-                } catch (error) {
-                    console.error('Erreur lors de la déconnexion automatique:', error);
+            if (user && !isLoggingIn) {
+                // Seulement déconnecter si on vient d'arriver sur la page (pas pendant une connexion)
+                const pageJustLoaded = !sessionStorage.getItem('authPageLoaded');
+                if (pageJustLoaded) {
+                    sessionStorage.setItem('authPageLoaded', 'true');
+                    try {
+                        await auth.signOut();
+                        console.log('Utilisateur précédent déconnecté pour éviter les conflits de cache');
+                        // Nettoyer le localStorage
+                        localStorage.clear();
+                    } catch (error) {
+                        console.error('Erreur lors de la déconnexion automatique:', error);
+                    }
                 }
             }
         });
@@ -280,6 +287,8 @@
             const password = document.getElementById('loginPassword').value;
             
             try {
+                isLoggingIn = true;
+                
                 // Déconnecter d'abord l'utilisateur actuel s'il existe
                 const currentUser = auth.currentUser;
                 if (currentUser) {
@@ -334,12 +343,16 @@
                 }
 
                 showSuccess('Connexion réussie ! Redirection...');
+                // Nettoyer le flag de chargement de page pour la prochaine fois
+                sessionStorage.removeItem('authPageLoaded');
                 setTimeout(() => {
+                    isLoggingIn = false;
                     window.location.href = 'shop.html';
                 }, 1000);
                 
             } catch (error) {
                 console.error('Erreur de connexion:', error);
+                isLoggingIn = false;
                 showError('Erreur de connexion: ' + error.message);
             }
         });
