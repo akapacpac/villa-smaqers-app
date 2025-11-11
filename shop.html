@@ -583,7 +583,7 @@
                                 </select>
                                 </div>
                                 <div>
-                                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #555;">Classe :</label>
+                                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #555;">Salle :</label>
                                     <input type="text" id="classFilter" placeholder="Ex: 650" style="width: 100%; padding: 10px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 0.95rem; transition: border-color 0.3s;" onfocus="this.style.borderColor='#007bff'" onblur="this.style.borderColor='#e1e5e9'">
                                 </div>
                                 <div>
@@ -880,10 +880,10 @@
                         
                         <div id="snacksList" style="display: grid; gap: 15px;">
                             <div class="loading">Chargement des snacks...</div>
-                        </div>
-                    </div>
                 </div>
             </div>
+        </div>
+    </div>
 
     <!-- Modal pour la classe -->
     <div id="classModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; overflow-y: auto;">
@@ -898,29 +898,29 @@
             
             <!-- Class Selection Section -->
             <div class="form-group">
-                <label class="form-label">Sélectionner ou créer une classe *</label>
+                <label class="form-label">Sélectionner ou créer une salle *</label>
                 
                 <!-- Search/Create Toggle -->
                 <div style="display: flex; gap: 10px; margin-bottom: 15px;">
                     <button type="button" id="select-class-btn" class="btn" onclick="showClassSelection()" style="flex: 1;">
-                        📚 Sélectionner une classe existante
+                        📚 Sélectionner une salle existante
                     </button>
                     <button type="button" id="create-class-btn" class="btn btn-secondary" onclick="showClassCreation()" style="flex: 1;">
-                        ➕ Créer une nouvelle classe
+                        ➕ Créer une nouvelle salle
                     </button>
             </div>
                 
                 <!-- Class Selection -->
                 <div id="class-selection-section" style="display: block;">
                     <div class="form-group">
-                        <label class="form-label">Rechercher une classe</label>
+                        <label class="form-label">Rechercher une salle</label>
                         <input type="text" id="class-search" class="form-input" placeholder="Rechercher par salle (ex: 104, 156, 345-378)" oninput="filterClasses()">
                     </div>
                     <div id="classes-list" style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; padding: 10px;">
-                        <p style="text-align: center; color: #666; padding: 20px;">Chargement des classes...</p>
+                        <p style="text-align: center; color: #666; padding: 20px;">Chargement des salles...</p>
                     </div>
                     <div id="selected-class-info" style="display: none; margin-top: 15px; padding: 15px; background: #e8f5e8; border-radius: 8px;">
-                        <p><strong>Classe sélectionnée:</strong> <span id="selected-class-name"></span></p>
+                        <p><strong>Salle sélectionnée:</strong> <span id="selected-class-name"></span></p>
                         <p><strong>Horaire:</strong> <span id="selected-class-time"></span></p>
                         <p><strong>Livraison prévue:</strong> <span id="selected-delivery-time"></span></p>
                         <p style="font-size: 12px; color: #666; margin-top: 10px;">
@@ -944,7 +944,7 @@
                         <label class="form-label">Heure de fin du cours *</label>
                         <input type="time" id="new-class-end" class="form-input" required>
                     </div>
-                    <button type="button" class="btn btn-full" onclick="createNewClass()">Créer la classe</button>
+                    <button type="button" class="btn btn-full" onclick="createNewClass()">Créer la salle</button>
                     <button type="button" class="btn btn-secondary btn-full" onclick="showClassSelection()" style="margin-top: 10px;">Annuler</button>
                 </div>
                 
@@ -1295,14 +1295,14 @@
             const scheduleIndex = parseInt(document.getElementById('selected-class-schedule-id').value);
 
             if (!classId || isNaN(scheduleIndex)) {
-                showMessage('Veuillez sélectionner une classe et un horaire', 'error');
+                showMessage('Veuillez sélectionner une salle et un horaire', 'error');
                 return;
             }
 
             // Trouver les données de la classe
             const classData = allClasses.find(c => c.id === classId);
             if (!classData || !classData.schedules || !classData.schedules[scheduleIndex]) {
-                showMessage('Erreur: classe ou horaire introuvable', 'error');
+                showMessage('Erreur: salle ou horaire introuvable', 'error');
                 return;
             }
 
@@ -1748,7 +1748,7 @@
                             <th>Date</th>
                             <th>Utilisateur</th>
                             <th>Email</th>
-                            <th>Classe</th>
+                            <th>Salle</th>
                             <th>Produit</th>
                             <th>Prix</th>
                             <th>Statut</th>
@@ -2839,10 +2839,10 @@
                 
                 displayClasses();
             } catch (error) {
-                console.error('Erreur lors du chargement des classes:', error);
+                console.error('Erreur lors du chargement des salles:', error);
                 const classesList = document.getElementById('classes-list');
                 if (classesList) {
-                    classesList.innerHTML = '<p style="color: red; text-align: center; padding: 20px;">Erreur lors du chargement des classes</p>';
+                    classesList.innerHTML = '<p style="color: red; text-align: center; padding: 20px;">Erreur lors du chargement des salles</p>';
                 }
             }
         }
@@ -3074,7 +3074,7 @@
                         schedules
                     });
                     
-                    alert('Horaire ajouté à la classe existante !');
+                    alert('Horaire ajouté à la salle existante !');
                 } else {
                     // Create new class
                     const newClass = {
