@@ -1856,7 +1856,7 @@
 
         async function updateOrderStatus(orderId, newStatus) {
             if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'member' && currentUser.role !== 'boss')) {
-                showMessage('Seuls les administrateurs et membres peuvent modifier les statuts', 'error');
+                showMessage('Seuls les administrateurs, membres et BOSS peuvent modifier les statuts', 'error');
                 return;
             }
             
