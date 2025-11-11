@@ -3141,6 +3141,8 @@
         // Fonctions pour la sélection multiple
         function toggleSelectAll() {
             const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            if (!selectAllCheckbox) return;
+            
             const checkboxes = document.querySelectorAll('.order-checkbox');
             
             checkboxes.forEach(checkbox => {
@@ -3161,7 +3163,10 @@
                 checkbox.checked = true;
                 selectedOrders.add(checkbox.dataset.orderId);
             });
-            document.getElementById('selectAllCheckbox').checked = true;
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            if (selectAllCheckbox) {
+                selectAllCheckbox.checked = true;
+            }
             updateBulkActions();
         }
 
@@ -3170,7 +3175,10 @@
             checkboxes.forEach(checkbox => {
                 checkbox.checked = false;
             });
-            document.getElementById('selectAllCheckbox').checked = false;
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            if (selectAllCheckbox) {
+                selectAllCheckbox.checked = false;
+            }
             selectedOrders.clear();
             updateBulkActions();
         }
