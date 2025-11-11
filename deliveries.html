@@ -186,6 +186,22 @@
         // Load deliveries
         async function loadDeliveries() {
             try {
+                // Récupérer les fillings et snacks personnalisés
+                const fillingsSnapshot = await db.collection('customFillings').get();
+                const snacksSnapshot = await db.collection('customSnacks').get();
+                
+                const fillingsMap = {};
+                fillingsSnapshot.forEach(doc => {
+                    const filling = doc.data();
+                    fillingsMap[filling.productId || doc.id] = filling.name || filling.productId;
+                });
+                
+                const snacksMap = {};
+                snacksSnapshot.forEach(doc => {
+                    const snack = doc.data();
+                    snacksMap[snack.productId || doc.id] = snack.name || snack.productId;
+                });
+                
                 // Récupérer toutes les classes (Bachelor et Master)
                 const classesSnapshot = await db.collection('classes').get();
                 
@@ -299,7 +315,9 @@
                         html += '<span style="color: #999;">Aucune</span>';
                     } else {
                         fillings.forEach(filling => {
-                            const fillingName = filling.replace('crepes-', '').charAt(0).toUpperCase() + filling.replace('crepes-', '').slice(1);
+                            // Utiliser le nom personnalisé ou le nom par défaut
+                            const fillingName = fillingsMap[filling] || 
+                                (filling.replace('crepes-', '').charAt(0).toUpperCase() + filling.replace('crepes-', '').slice(1));
                             html += `<span class="filling-item">${fillingName}: ${delivery.fillingsCount[filling]}</span>`;
                         });
                     }
@@ -312,7 +330,9 @@
                         html += '<span style="color: #999;">Aucun</span>';
                     } else {
                         snacks.forEach(snack => {
-                            html += `<span class="snack-item">${snack}: ${delivery.snacksCount[snack]}</span>`;
+                            // Utiliser le nom personnalisé ou le nom par défaut
+                            const snackName = snacksMap[snack] || snack;
+                            html += `<span class="snack-item">${snackName}: ${delivery.snacksCount[snack]}</span>`;
                         });
                     }
                     html += '</td>';
