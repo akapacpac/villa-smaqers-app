@@ -3049,55 +3049,54 @@
                 today.setHours(0, 0, 0, 0);
                 const todayStr = today.toISOString().split('T')[0]; // Format YYYY-MM-DD
                 
+                console.log('Date d\'aujourd\'hui pour filtrage:', todayStr);
+                
                 allClasses = [];
                 classesSnapshot.forEach(doc => {
                     const classData = { id: doc.id, ...doc.data() };
                     
-                    // Vérifier si la classe est d'aujourd'hui
+                    // Vérifier si la classe est d'aujourd'hui - STRICT: doit avoir date ou createdAt d'aujourd'hui
                     let isToday = false;
                     
                     // Utiliser le champ date si disponible (format YYYY-MM-DD)
                     if (classData.date) {
                         isToday = classData.date === todayStr;
+                        console.log(`Classe ${classData.room}: date=${classData.date}, isToday=${isToday}`);
                     } else if (classData.createdAt) {
                         // Sinon utiliser createdAt
                         const createdDate = classData.createdAt.toDate ? classData.createdAt.toDate() : new Date(classData.createdAt);
                         const createdDay = new Date(createdDate.getFullYear(), createdDate.getMonth(), createdDate.getDate());
                         createdDay.setHours(0, 0, 0, 0);
                         isToday = createdDay.getTime() === today.getTime();
-                    }
-                    
-                    // Si la classe n'a pas de createdAt, vérifier les schedules
-                    if (!isToday && classData.schedules && classData.schedules.length > 0) {
-                        // Vérifier si au moins un schedule est d'aujourd'hui
-                        const hasTodaySchedule = classData.schedules.some(schedule => {
-                            if (schedule.createdAt) {
-                                const scheduleDate = schedule.createdAt.toDate ? schedule.createdAt.toDate() : new Date(schedule.createdAt);
-                                const scheduleDay = new Date(scheduleDate.getFullYear(), scheduleDate.getMonth(), scheduleDate.getDate());
-                                scheduleDay.setHours(0, 0, 0, 0);
-                                return scheduleDay.getTime() === today.getTime();
-                            }
-                            return false;
-                        });
-                        isToday = hasTodaySchedule;
-                    }
-                    
-                    // Ne garder que les classes d'aujourd'hui
-                    if (!isToday) {
+                        console.log(`Classe ${classData.room}: createdAt=${createdDate.toISOString()}, isToday=${isToday}`);
+                    } else {
+                        // Si pas de date ni createdAt, on ignore la classe (trop ancienne)
+                        console.log(`Classe ${classData.room}: pas de date ni createdAt, ignorée`);
                         return;
                     }
                     
-                    // Filtrer les schedules pour ne garder que ceux d'aujourd'hui
+                    // Si la classe n'est pas d'aujourd'hui, on l'ignore complètement
+                    if (!isToday) {
+                        console.log(`Classe ${classData.room}: pas d'aujourd'hui, ignorée`);
+                        return;
+                    }
+                    
+                    // Filtrer les schedules pour ne garder QUE ceux d'aujourd'hui
                     if (classData.schedules && classData.schedules.length > 0) {
                         classData.schedules = classData.schedules.filter(schedule => {
                             if (schedule.createdAt) {
                                 const scheduleDate = schedule.createdAt.toDate ? schedule.createdAt.toDate() : new Date(schedule.createdAt);
                                 const scheduleDay = new Date(scheduleDate.getFullYear(), scheduleDate.getMonth(), scheduleDate.getDate());
                                 scheduleDay.setHours(0, 0, 0, 0);
-                                return scheduleDay.getTime() === today.getTime();
+                                const isScheduleToday = scheduleDay.getTime() === today.getTime();
+                                if (!isScheduleToday) {
+                                    console.log(`Schedule ${schedule.startTime}-${schedule.endTime}: pas d'aujourd'hui, ignoré`);
+                                }
+                                return isScheduleToday;
                             }
-                            // Si pas de createdAt, garder le schedule (ancien format)
-                            return true;
+                            // Si pas de createdAt sur le schedule, on l'ignore (trop ancien)
+                            console.log(`Schedule ${schedule.startTime}-${schedule.endTime}: pas de createdAt, ignoré`);
+                            return false;
                         });
                     }
                     
@@ -3110,8 +3109,13 @@
                             return timeA.localeCompare(timeB);
                         });
                         allClasses.push(classData);
+                        console.log(`Classe ${classData.room}: ajoutée avec ${classData.schedules.length} schedule(s) d'aujourd'hui`);
+                    } else {
+                        console.log(`Classe ${classData.room}: aucun schedule d'aujourd'hui, ignorée`);
                     }
                 });
+                
+                console.log(`Total classes d'aujourd'hui: ${allClasses.length}`);
                 
                 // Sort classes by room number (natural sort - ordre croissant: 104, 156, 345-378, etc.)
                 allClasses.sort((a, b) => {
