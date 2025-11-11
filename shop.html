@@ -1855,7 +1855,7 @@
         }
 
         async function updateOrderStatus(orderId, newStatus) {
-            if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'member')) {
+            if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'member' && currentUser.role !== 'boss')) {
                 showMessage('Seuls les administrateurs et membres peuvent modifier les statuts', 'error');
                 return;
             }
@@ -1900,7 +1900,7 @@
         }
 
         async function loadAllOrdersWithFilters(statusFilter, productFilter, classFilter, sortFilter) {
-            if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'member')) return;
+            if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'member' && currentUser.role !== 'boss')) return;
 
             try {
                 const querySnapshot = await db.collection('orders').get();
