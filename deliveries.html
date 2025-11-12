@@ -300,13 +300,19 @@
                     const numA = parseInt(classroomA.replace(/\D/g, '')) || 0;
                     const numB = parseInt(classroomB.replace(/\D/g, '')) || 0;
                     
+                    console.log(`Tri: Salle ${classroomA} (${numA}) vs Salle ${classroomB} (${numB})`);
+                    
                     // Si les numéros sont différents, trier par numéro
                     if (numA !== numB) {
-                        return numA - numB; // Ordre croissant des numéros de salle
+                        const result = numA - numB; // Ordre croissant des numéros de salle
+                        console.log(`  -> Résultat: ${result} (${numA < numB ? classroomA + ' avant ' + classroomB : classroomB + ' avant ' + classroomA})`);
+                        return result;
                     }
                     // Si même numéro, trier alphabétiquement par le nom complet
                     return classroomA.localeCompare(classroomB, undefined, { numeric: true, sensitivity: 'base' });
                 });
+                
+                console.log('Groupes triés:', sortedGroups.map(g => `Salle ${g.classroom} - ${g.deliveryTimeStr}`));
                 
                 // Calculer les compteurs de produits pour chaque groupe
                 const deliveriesWithCounts = sortedGroups.map(group => {
