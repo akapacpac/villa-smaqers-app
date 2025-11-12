@@ -213,6 +213,7 @@
         // Load deliveries
         async function loadDeliveries() {
             try {
+                console.log('Chargement des livraisons...');
                 // Récupérer les fillings et snacks personnalisés
                 const fillingsSnapshot = await db.collection('customFillings').get();
                 const snacksSnapshot = await db.collection('customSnacks').get();
@@ -231,6 +232,7 @@
                 
                 // Récupérer les commandes filtrées par programme (comme dans shop.html)
                 const program = getCurrentProgram();
+                console.log('Programme actuel:', program);
                 let ordersSnapshot;
                 try {
                     ordersSnapshot = await db.collection('orders')
@@ -242,6 +244,7 @@
                     ordersSnapshot = await db.collection('orders').get();
                 }
                 
+                console.log('Nombre total de commandes récupérées:', ordersSnapshot.size);
                 const orders = [];
                 ordersSnapshot.forEach((doc) => {
                     const orderData = { id: doc.id, ...doc.data() };
@@ -250,11 +253,14 @@
                         return;
                     }
                     // Filtrer : uniquement les commandes en attente (pending)
-                    if (orderData.status !== 'pending') {
+                    // Si pas de statut défini, on considère que c'est en attente
+                    if (orderData.status && orderData.status !== 'pending') {
                         return;
                     }
                     orders.push(orderData);
                 });
+                
+                console.log('Nombre de commandes en attente:', orders.length);
                 
                 // Grouper les commandes par salle ET par heure de livraison
                 const groups = {};
@@ -425,11 +431,18 @@
         
         // Fonction pour confirmer une commande (double-clic)
         async function confirmOrder(orderId) {
+            if (!orderId) {
+                console.error('confirmOrder: orderId manquant');
+                return;
+            }
+            
             try {
+                console.log('Confirmation de la commande:', orderId);
                 await db.collection('orders').doc(orderId).update({
                     status: 'confirmed'
                 });
                 
+                console.log('Commande confirmée avec succès');
                 // Recharger la liste pour faire disparaître la commande confirmée
                 loadDeliveries();
             } catch (error) {
