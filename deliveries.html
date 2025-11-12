@@ -286,17 +286,17 @@
                     groups[groupKey].orders.push(order);
                 });
                 
-                // Convertir en tableau et trier par heure de livraison (croissant)
+                // Convertir en tableau et trier par heure de livraison (croissant), puis par salle (croissant)
                 const sortedGroups = Object.values(groups).sort((a, b) => {
                     const timeA = a.deliveryTime.getTime();
                     const timeB = b.deliveryTime.getTime();
                     if (timeA !== timeB) {
                         return timeA - timeB; // Ordre croissant (plus proche en haut)
                     }
-                    // Si même heure, trier par salle
+                    // Si même heure, trier par salle en ordre croissant
                     const numA = parseInt(a.classroom.toString().replace(/\D/g, '')) || 0;
                     const numB = parseInt(b.classroom.toString().replace(/\D/g, '')) || 0;
-                    return numA - numB;
+                    return numA - numB; // Ordre croissant des numéros de salle
                 });
                 
                 // Calculer les compteurs de produits pour chaque groupe
