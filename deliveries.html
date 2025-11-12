@@ -294,9 +294,18 @@
                         return timeA - timeB; // Ordre croissant (plus proche en haut)
                     }
                     // Si même heure, trier par salle en ordre croissant
-                    const numA = parseInt(a.classroom.toString().replace(/\D/g, '')) || 0;
-                    const numB = parseInt(b.classroom.toString().replace(/\D/g, '')) || 0;
-                    return numA - numB; // Ordre croissant des numéros de salle
+                    // Extraire le numéro de la salle (gérer les formats "104", "Salle 104", etc.)
+                    const classroomA = a.classroom.toString().trim();
+                    const classroomB = b.classroom.toString().trim();
+                    const numA = parseInt(classroomA.replace(/\D/g, '')) || 0;
+                    const numB = parseInt(classroomB.replace(/\D/g, '')) || 0;
+                    
+                    // Si les numéros sont différents, trier par numéro
+                    if (numA !== numB) {
+                        return numA - numB; // Ordre croissant des numéros de salle
+                    }
+                    // Si même numéro, trier alphabétiquement par le nom complet
+                    return classroomA.localeCompare(classroomB, undefined, { numeric: true, sensitivity: 'base' });
                 });
                 
                 // Calculer les compteurs de produits pour chaque groupe
