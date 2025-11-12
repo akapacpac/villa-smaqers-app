@@ -1431,6 +1431,11 @@
                 }
 
                 const program = getCurrentProgram();
+                
+                // Déterminer si c'est un snack ou une crêpe
+                const isSnack = customSnacks.some(snack => snack.productId === pendingOrder.product);
+                const isCrepe = customFillings.some(filling => filling.productId === pendingOrder.product);
+                
                 const orderData = {
                     userId: currentUser.uid,
                     userEmail: currentUser.email,
@@ -1454,47 +1459,74 @@
 
                 // Utiliser une transaction pour s'assurer que le stock est décrémenté atomiquement
                 await db.runTransaction(async (transaction) => {
-                    // Vérifier le stock global pour le programme actuel
-                    const stockRef = db.collection('stock').doc(program);
-                    const stockDoc = await transaction.get(stockRef);
-                    
-                    if (!stockDoc.exists) {
-                        throw new Error('Stock global non trouvé');
-                    }
-                    
-                    const currentGlobalStock = stockDoc.data().quantity || 0;
-                    if (currentGlobalStock <= 0) {
-                        throw new Error('Stock global insuffisant');
-                    }
-                    
-                    // Vérifier le status du filling pour le programme actuel
-                    const fillingRef = db.collection('fillingStatus').doc(program);
-                    const fillingDoc = await transaction.get(fillingRef);
-                    
-                    if (fillingDoc.exists) {
-                        const fillingData = fillingDoc.data();
-                        const fillingStatus = fillingData[pendingOrder.product];
+                    if (isSnack) {
+                        // GESTION DES SNACKS
+                        const snackStockRef = db.collection('snackStock').doc(program);
+                        const snackStockDoc = await transaction.get(snackStockRef);
                         
-                        // Si limité, vérifier qu'il reste du filling
-                        if (fillingStatus !== 'unlimited' && fillingStatus !== undefined) {
-                            if (fillingStatus <= 0) {
-                                throw new Error('Filling insuffisant pour ce type de crêpe');
-                            }
-                            
-                            // Décrémenter le filling
-                            const newFillingData = { ...fillingData };
-                            newFillingData[pendingOrder.product] = fillingStatus - 1;
-                            newFillingData.lastUpdated = new Date();
-                            
-                            transaction.set(fillingRef, newFillingData);
+                        if (!snackStockDoc.exists) {
+                            throw new Error('Stock des snacks non trouvé');
                         }
+                        
+                        const snackStockData = snackStockDoc.data() || {};
+                        const currentSnackStock = snackStockData[pendingOrder.product] || 0;
+                        
+                        if (currentSnackStock <= 0) {
+                            throw new Error('Stock du snack insuffisant');
+                        }
+                        
+                        // Décrémenter le stock du snack
+                        const updatedSnackStock = { ...snackStockData };
+                        updatedSnackStock[pendingOrder.product] = currentSnackStock - 1;
+                        updatedSnackStock.lastUpdated = new Date();
+                        
+                        transaction.set(snackStockRef, updatedSnackStock);
+                    } else if (isCrepe) {
+                        // GESTION DES CRÊPES (code existant)
+                        // Vérifier le stock global pour le programme actuel
+                        const stockRef = db.collection('stock').doc(program);
+                        const stockDoc = await transaction.get(stockRef);
+                        
+                        if (!stockDoc.exists) {
+                            throw new Error('Stock global non trouvé');
+                        }
+                        
+                        const currentGlobalStock = stockDoc.data().quantity || 0;
+                        if (currentGlobalStock <= 0) {
+                            throw new Error('Stock global insuffisant');
+                        }
+                        
+                        // Vérifier le status du filling pour le programme actuel
+                        const fillingRef = db.collection('fillingStatus').doc(program);
+                        const fillingDoc = await transaction.get(fillingRef);
+                        
+                        if (fillingDoc.exists) {
+                            const fillingData = fillingDoc.data();
+                            const fillingStatus = fillingData[pendingOrder.product];
+                            
+                            // Si limité, vérifier qu'il reste du filling
+                            if (fillingStatus !== 'unlimited' && fillingStatus !== undefined) {
+                                if (fillingStatus <= 0) {
+                                    throw new Error('Filling insuffisant pour ce type de crêpe');
+                                }
+                                
+                                // Décrémenter le filling
+                                const newFillingData = { ...fillingData };
+                                newFillingData[pendingOrder.product] = fillingStatus - 1;
+                                newFillingData.lastUpdated = new Date();
+                                
+                                transaction.set(fillingRef, newFillingData);
+                            }
+                        }
+                        
+                        // Décrémenter le stock global
+                        transaction.update(stockRef, {
+                            quantity: currentGlobalStock - 1,
+                            lastUpdated: new Date()
+                        });
+                    } else {
+                        throw new Error('Produit non reconnu (ni snack ni crêpe)');
                     }
-                    
-                    // Décrémenter le stock global
-                    transaction.update(stockRef, {
-                        quantity: currentGlobalStock - 1,
-                        lastUpdated: new Date()
-                    });
                     
                     // Ajouter la commande
                     transaction.set(db.collection('orders').doc(), orderData);
@@ -2549,34 +2581,46 @@
         // Vérifier le stock au chargement de la page
         async function checkStockOnLoad() {
             try {
-                // Vérifier chaque produit
-                const products = ['crepes-sucre', 'crepes-nutella', 'crepes-confiture'];
-                let hasAnyStock = false;
+                // S'assurer que customFillings est chargé
+                if (customFillings.length === 0) {
+                    await loadCustomFillings();
+                }
                 
-                for (const product of products) {
-                    const canOrder = await canOrderProduct(product);
-                    const button = document.querySelector(`button[onclick*="${product}"]`);
-                    
-                    if (button) {
-                        if (!canOrder) {
-                            button.disabled = true;
-                            button.textContent = 'Rupture de stock';
-                            button.style.background = '#ccc';
-                            button.style.cursor = 'not-allowed';
-                        } else {
-                            button.disabled = false;
-                            button.textContent = 'Commander';
-                            button.style.background = '#667eea';
-                            button.style.cursor = 'pointer';
-                            hasAnyStock = true;
+                // Vérifier tous les fillings personnalisés (crêpes)
+                let hasAnyCrepeStock = false;
+                
+                for (const filling of customFillings) {
+                    const canOrder = await canOrderProduct(filling.productId);
+                    if (canOrder) {
+                        hasAnyCrepeStock = true;
+                        break; // Si au moins un filling est disponible, on a du stock
+                    }
+                }
+                
+                // Vérifier aussi les snacks
+                if (customSnacks.length === 0) {
+                    await loadCustomSnacks();
+                }
+                
+                let hasAnySnackStock = false;
+                const program = getCurrentProgram();
+                const snackStockDoc = await db.collection('snackStock').doc(program).get();
+                if (snackStockDoc.exists) {
+                    const snackStockData = snackStockDoc.data() || {};
+                    for (const snack of customSnacks) {
+                        const stock = snackStockData[snack.productId] || 0;
+                        if (stock > 0) {
+                            hasAnySnackStock = true;
+                            break;
                         }
                     }
                 }
                 
                 // Afficher/masquer le message de stock épuisé
+                // Le message ne s'affiche que si TOUS les produits (crêpes ET snacks) sont en rupture
                 const noStockMessage = document.getElementById('noStockMessage');
                 if (noStockMessage) {
-                    if (hasAnyStock) {
+                    if (hasAnyCrepeStock || hasAnySnackStock) {
                         noStockMessage.style.display = 'none';
                     } else {
                         noStockMessage.style.display = 'block';
@@ -3050,25 +3094,55 @@
             try {
                 const program = getCurrentProgram();
                 
-                // Vérifier le stock global pour le programme actuel
-                const stockDoc = await db.collection('stock').doc(program).get();
-                if (!stockDoc.exists) return false;
+                // S'assurer que customSnacks est chargé
+                if (customSnacks.length === 0) {
+                    await loadCustomSnacks();
+                }
                 
-                const globalStock = stockDoc.data().quantity || 0;
-                if (globalStock <= 0) return false;
+                // Déterminer si c'est un snack ou une crêpe
+                const isSnack = customSnacks.some(snack => snack.productId === productType);
+                const isCrepe = customFillings.some(filling => filling.productId === productType);
                 
-                // Vérifier le status du filling pour le programme actuel
-                const fillingDoc = await db.collection('fillingStatus').doc(program).get();
-                if (!fillingDoc.exists) return true; // Pas de status = OK
-                
-                const data = fillingDoc.data();
-                const fillingStatus = data[productType];
-                
-                // Si illimité, OK tant qu'il y a du stock global
-                if (fillingStatus === 'unlimited') return true;
-                
-                // Si limité, vérifier qu'il reste du filling
-                return fillingStatus > 0;
+                if (isSnack) {
+                    // GESTION DES SNACKS
+                    const snackStockDoc = await db.collection('snackStock').doc(program).get();
+                    if (!snackStockDoc.exists) {
+                        console.log('canOrderProduct: snackStock document n\'existe pas pour', program);
+                        return false;
+                    }
+                    
+                    const snackStockData = snackStockDoc.data() || {};
+                    const snackStock = snackStockData[productType] || 0;
+                    
+                    console.log('canOrderProduct snack:', { productType, program, snackStock, snackStockData });
+                    
+                    return snackStock > 0;
+                } else if (isCrepe) {
+                    // GESTION DES CRÊPES (code existant)
+                    // Vérifier le stock global pour le programme actuel
+                    const stockDoc = await db.collection('stock').doc(program).get();
+                    if (!stockDoc.exists) return false;
+                    
+                    const globalStock = stockDoc.data().quantity || 0;
+                    if (globalStock <= 0) return false;
+                    
+                    // Vérifier le status du filling pour le programme actuel
+                    const fillingDoc = await db.collection('fillingStatus').doc(program).get();
+                    if (!fillingDoc.exists) return true; // Pas de status = OK
+                    
+                    const data = fillingDoc.data();
+                    const fillingStatus = data[productType];
+                    
+                    // Si illimité, OK tant qu'il y a du stock global
+                    if (fillingStatus === 'unlimited') return true;
+                    
+                    // Si limité, vérifier qu'il reste du filling
+                    return fillingStatus > 0;
+                } else {
+                    // Produit non reconnu
+                    console.warn('Produit non reconnu dans canOrderProduct:', productType);
+                    return false;
+                }
                 
             } catch (error) {
                 console.error('Erreur lors de la vérification du stock:', error);
@@ -4474,11 +4548,20 @@
                 
                 // Mettre à jour le stock
                 snackStock[productId] = quantity;
-                await db.collection('snackStock').doc(program).set({
+                const updatedData = {
                     ...snackStock,
                     program: program,
                     lastUpdated: new Date()
-                });
+                };
+                
+                console.log('updateSnackStock:', { productId, program, quantity, updatedData });
+                
+                await db.collection('snackStock').doc(program).set(updatedData);
+                
+                // Vérifier que la mise à jour a bien été effectuée
+                const verifyDoc = await db.collection('snackStock').doc(program).get();
+                const verifyData = verifyDoc.exists ? verifyDoc.data() : {};
+                console.log('Vérification après updateSnackStock:', verifyData);
                 
                 // Mettre à jour l'affichage
                 const stockDisplay = document.getElementById(`snackStock_${productId}`);
@@ -4509,7 +4592,10 @@
                 loadRestockHistory();
                 
                 // Recharger les produits dans la page de commande pour mettre à jour l'affichage
-                loadProductsForOrders();
+                // Attendre un peu pour s'assurer que Firebase a bien mis à jour
+                setTimeout(() => {
+                    loadProductsForOrders();
+                }, 500);
                 
             } catch (error) {
                 console.error('Erreur lors de la mise à jour du stock:', error);
