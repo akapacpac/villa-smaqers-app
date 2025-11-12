@@ -287,32 +287,34 @@
                 });
                 
                 // Convertir en tableau et trier par heure de livraison (croissant), puis par salle (croissant)
-                const sortedGroups = Object.values(groups).sort((a, b) => {
+                const groupsArray = Object.values(groups);
+                
+                // Fonction pour extraire le numéro de salle
+                function getClassroomNumber(classroom) {
+                    const str = classroom.toString().trim();
+                    const num = parseInt(str.replace(/\D/g, '')) || 0;
+                    return num;
+                }
+                
+                const sortedGroups = groupsArray.sort((a, b) => {
+                    // D'abord trier par heure de livraison
                     const timeA = a.deliveryTime.getTime();
                     const timeB = b.deliveryTime.getTime();
                     if (timeA !== timeB) {
                         return timeA - timeB; // Ordre croissant (plus proche en haut)
                     }
-                    // Si même heure, trier par salle en ordre croissant
-                    // Extraire le numéro de la salle (gérer les formats "104", "Salle 104", etc.)
-                    const classroomA = a.classroom.toString().trim();
-                    const classroomB = b.classroom.toString().trim();
-                    const numA = parseInt(classroomA.replace(/\D/g, '')) || 0;
-                    const numB = parseInt(classroomB.replace(/\D/g, '')) || 0;
                     
-                    console.log(`Tri: Salle ${classroomA} (${numA}) vs Salle ${classroomB} (${numB})`);
+                    // Si même heure, trier par numéro de salle en ordre croissant
+                    const numA = getClassroomNumber(a.classroom);
+                    const numB = getClassroomNumber(b.classroom);
                     
-                    // Si les numéros sont différents, trier par numéro
                     if (numA !== numB) {
-                        const result = numA - numB; // Ordre croissant des numéros de salle
-                        console.log(`  -> Résultat: ${result} (${numA < numB ? classroomA + ' avant ' + classroomB : classroomB + ' avant ' + classroomA})`);
-                        return result;
+                        return numA - numB; // Ordre croissant des numéros de salle
                     }
+                    
                     // Si même numéro, trier alphabétiquement par le nom complet
-                    return classroomA.localeCompare(classroomB, undefined, { numeric: true, sensitivity: 'base' });
+                    return a.classroom.toString().localeCompare(b.classroom.toString(), undefined, { numeric: true, sensitivity: 'base' });
                 });
-                
-                console.log('Groupes triés:', sortedGroups.map(g => `Salle ${g.classroom} - ${g.deliveryTimeStr}`));
                 
                 // Calculer les compteurs de produits pour chaque groupe
                 const deliveriesWithCounts = sortedGroups.map(group => {
