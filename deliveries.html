@@ -206,8 +206,8 @@
                 return savedProgram;
             }
             
-            // Par défaut, retourner 'master' (synchronisé sur Master)
-            return 'master';
+            // Par défaut, retourner 'bachelor'
+            return 'bachelor';
         }
         
         // Load deliveries
@@ -249,12 +249,10 @@
                     if (orderData.program && orderData.program !== program) {
                         return;
                     }
-                    // Filtrer : uniquement les commandes confirmées ou en attente (pas les livrées)
-                    // Exclure explicitement les commandes avec status 'delivered'
-                    if (orderData.status === 'delivered') {
+                    // Filtrer : uniquement les commandes en attente (pending)
+                    if (orderData.status !== 'pending') {
                         return;
                     }
-                    // Si pas de statut défini, on considère que c'est en attente (on l'inclut)
                     orders.push(orderData);
                 });
                 
@@ -397,7 +395,7 @@
                         
                         const rowColor = index % 2 === 0 ? '#fff' : '#f8f9fa';
                         html += `
-                            <tr style="background: ${rowColor};">
+                            <tr style="background: ${rowColor}; cursor: pointer;" ondblclick="confirmOrder('${order.id}')" title="Double-cliquez pour confirmer la commande">
                                 <td style="padding: 12px;">${orderDate} ${orderTime}</td>
                                 <td style="padding: 12px;">${userName}</td>
                                 <td style="padding: 12px;">${userEmail}</td>
@@ -422,6 +420,21 @@
                 document.getElementById('deliveriesList').innerHTML = `
                     <div class="error">Erreur lors du chargement des livraisons: ${error.message}</div>
                 `;
+            }
+        }
+        
+        // Fonction pour confirmer une commande (double-clic)
+        async function confirmOrder(orderId) {
+            try {
+                await db.collection('orders').doc(orderId).update({
+                    status: 'confirmed'
+                });
+                
+                // Recharger la liste pour faire disparaître la commande confirmée
+                loadDeliveries();
+            } catch (error) {
+                console.error('Erreur lors de la confirmation de la commande:', error);
+                alert('Erreur lors de la confirmation: ' + error.message);
             }
         }
         
