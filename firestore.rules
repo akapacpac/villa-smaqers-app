@@ -1,58 +1,9 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Règles pour les utilisateurs
-    match /users/{userId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == userId;
-      // Permettre aux admins/boss de modifier tous les profils
-      allow update, delete: if request.auth != null && 
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'boss');
-    }
-    
-    // Règles pour les commandes
-    match /orders/{orderId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow update, delete: if request.auth != null;
-    }
-    
-    // Règles pour les classes
-    match /classes/{classId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
-    }
-    
-    // Règles pour les fillings personnalisés
-    match /customFillings/{fillingId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
-    }
-    
-    // Règles pour les snacks personnalisés
-    match /customSnacks/{snackId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
-    }
-    
-    // Règles pour le stock (plus permissif pour éviter les erreurs)
-    match /stock/{stockId} {
-      allow read, write: if request.auth != null;
-    }
-    
-    // Règles pour le stock des snacks (plus permissif)
-    match /snackStock/{snackStockId} {
-      allow read, write: if request.auth != null;
-    }
-    
-    // Règles pour le statut des fillings (plus permissif)
-    match /fillingStatus/{fillingStatusId} {
-      allow read, write: if request.auth != null;
-    }
-    
-    // Règles pour l'historique des restocks
-    match /restockHistory/{historyId} {
+    // Règles permissives pour tous les documents - similaire à l'état précédent
+    // Permet l'accès à tous les utilisateurs authentifiés
+    match /{document=**} {
       allow read, write: if request.auth != null;
     }
   }
