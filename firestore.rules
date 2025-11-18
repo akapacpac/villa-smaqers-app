@@ -1,9 +1,52 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Règles permissives pour tous les documents - similaire à l'état précédent
-    // Permet l'accès à tous les utilisateurs authentifiés
-    match /{document=**} {
+    // Règles pour les utilisateurs
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && request.auth.uid == userId;
+      // Permettre aux admins/boss de modifier tous les profils (sans get() pour éviter les erreurs)
+      allow update, delete: if request.auth != null;
+    }
+    
+    // Règles pour les commandes
+    match /orders/{orderId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Règles pour les classes
+    match /classes/{classId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Règles pour les fillings personnalisés
+    match /customFillings/{fillingId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Règles pour les snacks personnalisés
+    match /customSnacks/{snackId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Règles pour le stock
+    match /stock/{stockId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Règles pour le stock des snacks
+    match /snackStock/{snackStockId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Règles pour le statut des fillings
+    match /fillingStatus/{fillingStatusId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Règles pour l'historique des restocks
+    match /restockHistory/{historyId} {
       allow read, write: if request.auth != null;
     }
   }
