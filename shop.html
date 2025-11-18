@@ -2901,7 +2901,7 @@
                 
                 let hasAnySnackStock = false;
                 const program = getCurrentProgram();
-                const snackStockDoc = await db.collection('snackStock').doc(program).get({ source: 'server' });
+                const snackStockDoc = await db.collection('snackStock').doc(program).get();
                 if (snackStockDoc.exists) {
                     const snackStockData = snackStockDoc.data() || {};
                     for (const snack of customSnacks) {
@@ -2945,8 +2945,7 @@
                 const program = getCurrentProgram();
                 
                 // Charger le stock global pour le programme actuel
-                // Utiliser source: 'server' pour forcer la lecture depuis le serveur et éviter les erreurs de cache
-                const stockDoc = await db.collection('stock').doc(program).get({ source: 'server' });
+                const stockDoc = await db.collection('stock').doc(program).get();
                 if (stockDoc.exists) {
                     currentStock = stockDoc.data().quantity || 0;
                 } else {
@@ -2959,7 +2958,7 @@
                 }
                 
                 // Charger les status des fillings pour le programme actuel
-                const fillingDoc = await db.collection('fillingStatus').doc(program).get({ source: 'server' });
+                const fillingDoc = await db.collection('fillingStatus').doc(program).get();
                 if (fillingDoc.exists) {
                     const data = fillingDoc.data();
                     fillingStatus = {
@@ -2990,23 +2989,7 @@
                 
             } catch (error) {
                 console.error('Erreur lors du chargement du stock:', error);
-                // Si l'erreur est "client is offline", essayer avec le cache
-                if (error.message && error.message.includes('offline')) {
-                    try {
-                        console.log('Tentative de chargement depuis le cache...');
-                        const program = getCurrentProgram();
-                        const stockDoc = await db.collection('stock').doc(program).get({ source: 'cache' });
-                        if (stockDoc.exists) {
-                            currentStock = stockDoc.data().quantity || 0;
-                            updateStockDisplay();
-                        }
-                    } catch (cacheError) {
-                        console.error('Erreur même avec le cache:', cacheError);
-                        showMessage('Erreur de connexion. Vérifiez votre connexion internet.', 'error');
-                    }
-                } else {
                 showMessage('Erreur lors du chargement du stock: ' + error.message, 'error');
-                }
             }
         }
 
@@ -3232,7 +3215,7 @@
         async function checkStock() {
             try {
                 const program = getCurrentProgram();
-                const stockDoc = await db.collection('stock').doc(program).get({ source: 'server' });
+                const stockDoc = await db.collection('stock').doc(program).get();
                 if (stockDoc.exists) {
                     return stockDoc.data().quantity || 0;
                 }
@@ -3419,7 +3402,7 @@
                 
                 if (isSnack) {
                     // GESTION DES SNACKS
-                    const snackStockDoc = await db.collection('snackStock').doc(program).get({ source: 'server' });
+                    const snackStockDoc = await db.collection('snackStock').doc(program).get();
                     if (!snackStockDoc.exists) {
                         console.log('canOrderProduct: snackStock document n\'existe pas pour', program);
                         return false;
@@ -3434,7 +3417,7 @@
                 } else if (isCrepe) {
                     // GESTION DES CRÊPES (code existant)
                 // Vérifier le stock global pour le programme actuel
-                const stockDoc = await db.collection('stock').doc(program).get({ source: 'server' });
+                const stockDoc = await db.collection('stock').doc(program).get();
                 if (!stockDoc.exists) return false;
                 
                 const globalStock = stockDoc.data().quantity || 0;
@@ -4839,8 +4822,7 @@
                 }
                 
                 // Charger le stock actuel des snacks
-                // Utiliser source: 'server' pour forcer la lecture depuis le serveur
-                const snackStockDoc = await db.collection('snackStock').doc(program).get({ source: 'server' });
+                const snackStockDoc = await db.collection('snackStock').doc(program).get();
                 const snackStock = snackStockDoc.exists ? snackStockDoc.data() : {};
                 
                 // Afficher chaque snack avec son stock
@@ -4897,7 +4879,7 @@
                 }
                 
                 // Charger le stock actuel
-                const snackStockDoc = await db.collection('snackStock').doc(program).get({ source: 'server' });
+                const snackStockDoc = await db.collection('snackStock').doc(program).get();
                 const snackStock = snackStockDoc.exists ? snackStockDoc.data() : {};
                 const previousStock = snackStock[productId] || 0;
                 
@@ -5063,7 +5045,7 @@
                         const program = getCurrentProgram();
                         console.log('Loading snacks for program:', program, 'Current user:', currentUser?.role, 'Current view:', currentView);
                         
-                        const snackStockDoc = await db.collection('snackStock').doc(program).get({ source: 'server' });
+                        const snackStockDoc = await db.collection('snackStock').doc(program).get();
                         const snackStock = snackStockDoc.exists ? snackStockDoc.data() : {};
                         console.log('Snack stock data:', snackStock);
                         
