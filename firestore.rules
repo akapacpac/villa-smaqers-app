@@ -36,22 +36,24 @@ service cloud.firestore {
       allow write: if request.auth != null;
     }
     
-    // Règles pour le stock
+    // Règles pour le stock (plus permissif pour éviter les erreurs)
     match /stock/{stockId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      allow read, write: if request.auth != null;
     }
     
-    // Règles pour le stock des snacks
+    // Règles pour le stock des snacks (plus permissif)
     match /snackStock/{snackStockId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      allow read, write: if request.auth != null;
     }
     
-    // Règles pour le statut des fillings
+    // Règles pour le statut des fillings (plus permissif)
     match /fillingStatus/{fillingStatusId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      allow read, write: if request.auth != null;
+    }
+    
+    // Règles pour l'historique des restocks
+    match /restockHistory/{historyId} {
+      allow read, write: if request.auth != null;
     }
   }
 }
