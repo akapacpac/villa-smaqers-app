@@ -577,6 +577,7 @@
                             <tr>
                                 <th>Nom complet</th>
                                 <th>Email</th>
+                                <th>Email vérifié</th>
                                 <th>Programme</th>
                                 <th>Rôle actuel</th>
                                 <th>Date d'inscription</th>
@@ -616,10 +617,20 @@
                             new Date(userData.createdAt).toLocaleDateString('fr-FR')) : 
                         'N/A';
 
+                    // Vérifier si l'email est vérifié (depuis Firestore ou Firebase Auth)
+                    const emailVerified = userData.emailVerified === true;
+                    const emailVerifiedBadge = emailVerified 
+                        ? '<span style="color: #28a745; font-weight: 600;">✓ Vérifié</span>'
+                        : '<span style="color: #dc3545; font-weight: 600;">✗ Non vérifié</span>';
+                    
                     tableHTML += `
                         <tr>
                             <td>${fullName}</td>
                             <td>${userData.email}</td>
+                            <td>
+                                ${emailVerifiedBadge}
+                                ${!emailVerified ? `<button onclick="verifyUserEmail('${userData.email}')" class="btn-update" style="margin-left: 10px;">Valider</button>` : ''}
+                            </td>
                             <td style="position: relative; padding: 8px; overflow: visible;">
                                 <span class="role-badge" style="background: ${userProgram === 'master' ? '#667eea' : '#28a745'}; color: white; position: relative; z-index: 1;" onclick="showProgramDropdown('${doc.id}', event)">
                                     ${programText}
@@ -1079,6 +1090,56 @@
             } catch (error) {
                 console.error('Erreur lors de la suppression:', error);
                 showMessage('Erreur lors de la suppression: ' + error.message, 'error');
+            }
+        }
+
+        // Fonction pour valider un email
+        async function verifyUserEmail(email) {
+            if (!confirm(`Voulez-vous valider l'email ${email} ?\n\nCette action marquera l'email comme vérifié dans Firebase.`)) {
+                return;
+            }
+
+            try {
+                // Obtenir le token d'authentification
+                const user = auth.currentUser;
+                if (!user) {
+                    throw new Error('Utilisateur non authentifié');
+                }
+                
+                const idToken = await user.getIdToken();
+                
+                // Appeler la Firebase Function via HTTP
+                const response = await fetch('https://us-central1-villa-smaqers-brises.cloudfunctions.net/verifyUserEmail', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${idToken}`
+                    },
+                    body: JSON.stringify({ email: email })
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.error || 'Erreur lors de la validation');
+                }
+                
+                showMessage(`Email ${email} validé avec succès !`, 'success');
+                
+                // Mettre à jour le document Firestore pour refléter le changement
+                const usersSnapshot = await db.collection('users').where('email', '==', email).get();
+                if (!usersSnapshot.empty) {
+                    await db.collection('users').doc(usersSnapshot.docs[0].id).update({
+                        emailVerified: true
+                    });
+                }
+                
+                // Recharger la liste
+                loadUsers();
+                
+            } catch (error) {
+                console.error('Erreur lors de la validation:', error);
+                showMessage('Erreur lors de la validation: ' + error.message, 'error');
             }
         }
 
