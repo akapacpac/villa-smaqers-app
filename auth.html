@@ -430,8 +430,17 @@
                         }, 1000);
                         return;
                     } catch (loginError) {
-                        // Si la connexion échoue, l'email est vraiment bloqué
-                        showError('Cet email est temporairement bloqué. Veuillez attendre quelques minutes ou utiliser un autre email.');
+                        // Afficher le vrai message d'erreur
+                        console.error('Erreur de connexion:', loginError);
+                        if (loginError.code === 'auth/too-many-requests') {
+                            showError('Cet email est temporairement bloqué. Veuillez attendre quelques minutes ou utiliser un autre email.');
+                        } else if (loginError.code === 'auth/wrong-password') {
+                            showError('Mot de passe incorrect. Utilisez le bon mot de passe ou cliquez sur "Se connecter" pour vous connecter avec ce compte.');
+                        } else if (loginError.code === 'auth/user-disabled') {
+                            showError('Ce compte a été désactivé. Contactez un administrateur.');
+                        } else {
+                            showError('Erreur de connexion: ' + (loginError.message || loginError.code || 'Erreur inconnue'));
+                        }
                     }
                 } else {
                     showError('Erreur d\'inscription: ' + error.message);
