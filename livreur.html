@@ -25,6 +25,7 @@
         // Initialiser Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        const auth = firebase.auth();
     </script>
     
     <style>
@@ -99,39 +100,6 @@
             background: #f8f9fa;
         }
         
-        tbody tr.delivered {
-            opacity: 0.5;
-            text-decoration: line-through;
-        }
-        
-        .room-cell {
-            font-weight: 600;
-            color: #333;
-        }
-        
-        .time-cell {
-            font-weight: 600;
-            color: #28a745;
-        }
-        
-        .filling-item {
-            display: inline-block;
-            background: #e3f2fd;
-            padding: 4px 8px;
-            border-radius: 4px;
-            margin: 2px;
-            font-size: 0.9rem;
-        }
-        
-        .snack-item {
-            display: inline-block;
-            background: #fff3e0;
-            padding: 4px 8px;
-            border-radius: 4px;
-            margin: 2px;
-            font-size: 0.9rem;
-        }
-        
         .loading {
             text-align: center;
             padding: 40px;
@@ -155,14 +123,6 @@
             border-radius: 8px;
             margin: 20px 0;
             text-align: center;
-        }
-        
-        .order-row {
-            position: relative;
-        }
-        
-        .order-row.marking {
-            background: #fff3cd !important;
         }
         
         /* Styles pour mobile - masquer certaines colonnes */
@@ -202,63 +162,45 @@
     </div>
 
     <script>
-        // Calculate delivery time (middle of class)
-        function calculateDeliveryTime(startTime, endTime) {
-            const [startHour, startMin] = startTime.split(':').map(Number);
-            const [endHour, endMin] = endTime.split(':').map(Number);
-            
-            const now = new Date();
-            const startDate = new Date(now);
-            startDate.setHours(startHour, startMin, 0, 0);
-            
-            const endDate = new Date(now);
-            endDate.setHours(endHour, endMin, 0, 0);
-            
-            // Si l'heure de fin est avant l'heure de début (ex: 23:00 - 01:00), ajouter un jour
-            if (endHour < startHour || (endHour === startHour && endMin < startMin)) {
-                endDate.setDate(endDate.getDate() + 1);
-            }
-            
-            // Middle time
-            const middleTime = new Date((startDate.getTime() + endDate.getTime()) / 2);
-            
-            return middleTime;
-        }
-        
-        // Format time to HH:MM
-        function formatTime(date) {
-            if (!(date instanceof Date)) {
-                date = new Date(date);
-            }
-            const hours = String(date.getHours()).padStart(2, '0');
-            const minutes = String(date.getMinutes()).padStart(2, '0');
-            return `${hours}:${minutes}`;
-        }
-        
         // Fonction pour obtenir les initiales d'un nom de produit
         function getProductInitials(productName) {
             if (!productName) return '';
-            // Enlever "Crêpes" si présent et prendre les initiales des mots restants
-            const words = productName.replace(/Crêpes\s*/i, '').split(/\s+/);
+            const words = productName.replace(/Crêpes\s*/i, '').split(/\s+/).filter(w => w.length > 0);
             return words.map(word => word.charAt(0).toUpperCase()).join('');
         }
         
-        // Fonction pour déterminer le programme actuel (synchronisé sur Master)
-        function getCurrentProgram() {
-            // Vérifier dans l'URL ou le localStorage
+        // Fonction pour déterminer le programme actuel
+        async function getCurrentProgram() {
+            // Vérifier dans l'URL
             const urlParams = new URLSearchParams(window.location.search);
             const programParam = urlParams.get('program');
             if (programParam === 'master' || programParam === 'bachelor') {
                 return programParam;
             }
             
-            // Sinon, vérifier le localStorage
+            // Vérifier le localStorage
             const savedProgram = localStorage.getItem('userProgram');
             if (savedProgram === 'master' || savedProgram === 'bachelor') {
                 return savedProgram;
             }
             
-            // Par défaut, retourner 'master' (synchronisé sur Master)
+            // Essayer de récupérer depuis l'utilisateur connecté
+            const user = auth.currentUser;
+            if (user) {
+                try {
+                    const userDoc = await db.collection('users').doc(user.uid).get();
+                    if (userDoc.exists) {
+                        const userData = userDoc.data();
+                        if (userData.program === 'master' || userData.program === 'bachelor') {
+                            return userData.program;
+                        }
+                    }
+                } catch (error) {
+                    console.warn('Erreur lors de la récupération du programme utilisateur:', error);
+                }
+            }
+            
+            // Par défaut, retourner 'master'
             return 'master';
         }
         
@@ -285,7 +227,6 @@
                 
                 showMessage('✅ Commande marquée comme livrée', 'success');
                 
-                // Recharger les livraisons après un court délai
                 setTimeout(() => {
                     loadDeliveries();
                 }, 500);
@@ -315,34 +256,33 @@
                     snacksMap[snack.productId || doc.id] = snack.name || snack.productId;
                 });
                 
-                // Récupérer les commandes filtrées par programme ET statut "confirmed"
-                const program = getCurrentProgram();
-                let ordersSnapshot;
-                try {
-                    // Essayer de filtrer par programme et statut
-                    ordersSnapshot = await db.collection('orders')
-                        .where('program', '==', program)
-                        .where('status', '==', 'confirmed')
-                        .get();
-                } catch (error) {
-                    // Si l'index composite n'existe pas, charger toutes les commandes et filtrer en JavaScript
-                    console.warn('Index composite manquant, chargement sans filtre:', error);
-                    ordersSnapshot = await db.collection('orders').get();
-                }
+                // Récupérer le programme actuel
+                const program = await getCurrentProgram();
+                
+                // Charger toutes les commandes
+                const ordersSnapshot = await db.collection('orders').get();
                 
                 const orders = [];
                 ordersSnapshot.forEach((doc) => {
                     const orderData = { id: doc.id, ...doc.data() };
-                    // Filtrer par programme et statut si on a chargé toutes les commandes
+                    
+                    // Filtrer par programme
                     if (orderData.program && orderData.program !== program) {
                         return;
                     }
+                    
                     // Uniquement les commandes confirmées
                     if (orderData.status !== 'confirmed') {
                         return;
                     }
+                    
                     orders.push(orderData);
                 });
+                
+                if (orders.length === 0) {
+                    document.getElementById('deliveriesList').innerHTML = '<div class="error">Aucune commande confirmée à livrer</div>';
+                    return;
+                }
                 
                 // Grouper les commandes par salle ET par heure de livraison
                 const groups = {};
@@ -354,7 +294,7 @@
                     
                     if (!deliveryTime) return;
                     
-                    const deliveryTimeStr = formatTime(deliveryTime);
+                    const deliveryTimeStr = deliveryTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
                     const groupKey = `${classroom}_${deliveryTimeStr}`;
                     
                     if (!groups[groupKey]) {
@@ -368,26 +308,24 @@
                     groups[groupKey].orders.push(order);
                 });
                 
-                // Convertir en tableau et trier par heure de livraison (croissant)
+                // Convertir en tableau et trier
                 const sortedGroups = Object.values(groups).sort((a, b) => {
                     const timeA = a.deliveryTime.getTime();
                     const timeB = b.deliveryTime.getTime();
                     if (timeA !== timeB) {
-                        return timeA - timeB; // Ordre croissant (plus proche en haut)
+                        return timeA - timeB;
                     }
-                    // Si même heure, trier par salle
                     const numA = parseInt(a.classroom.toString().replace(/\D/g, '')) || 0;
                     const numB = parseInt(b.classroom.toString().replace(/\D/g, '')) || 0;
                     return numA - numB;
                 });
                 
-                // Calculer les compteurs de produits pour chaque groupe
+                // Calculer les compteurs de produits
                 const deliveriesWithCounts = sortedGroups.map(group => {
                     const productsCount = {};
                     
                     group.orders.forEach(order => {
                         if (order.product) {
-                            // Obtenir le nom du produit
                             let productName = '';
                             if (order.product.startsWith('crepes-')) {
                                 productName = fillingsMap[order.product] || 
@@ -413,32 +351,23 @@
                 });
                 
                 // Afficher les livraisons
-                const deliveriesListDiv = document.getElementById('deliveriesList');
-                if (deliveriesWithCounts.length === 0) {
-                    deliveriesListDiv.innerHTML = '<div class="error">Aucune commande confirmée à livrer</div>';
-                    return;
-                }
-                
                 let html = '';
                 
-                deliveriesWithCounts.forEach((delivery, groupIndex) => {
-                    // Créer le texte des compteurs de produits
+                deliveriesWithCounts.forEach((delivery) => {
                     const countTexts = Object.entries(delivery.productsCount)
                         .map(([initials, count]) => `${initials}: ${count}`)
                         .join(', ');
                     
                     html += `
                         <div style="margin-bottom: 30px; border: 2px solid #28a745; border-radius: 10px; overflow: hidden;">
-                            <div style="background: linear-gradient(135deg, #28a745, #1e7e34); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;">
-                                <div>
-                                    <h3 style="margin: 0; font-size: 1.3rem; font-weight: bold;">
-                                        📍 Salle ${delivery.classroom} - 🕐 Livraison: ${delivery.deliveryTimeStr}
-                                        ${countTexts ? `<span style="margin-left: 20px; font-size: 1rem; opacity: 0.9;">${countTexts}</span>` : ''}
-                                    </h3>
-                                    <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 0.9rem;">
-                                        ${delivery.orders.length} commande(s) confirmée(s)
-                                    </p>
-                                </div>
+                            <div style="background: linear-gradient(135deg, #28a745, #1e7e34); color: white; padding: 15px 20px;">
+                                <h3 style="margin: 0; font-size: 1.3rem; font-weight: bold;">
+                                    📍 Salle ${delivery.classroom} - 🕐 Livraison: ${delivery.deliveryTimeStr}
+                                    ${countTexts ? `<span style="margin-left: 20px; font-size: 1rem; opacity: 0.9;">${countTexts}</span>` : ''}
+                                </h3>
+                                <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 0.9rem;">
+                                    ${delivery.orders.length} commande(s) confirmée(s)
+                                </p>
                             </div>
                             <table style="width: 100%; margin: 0;">
                                 <thead>
@@ -456,10 +385,10 @@
                     
                     delivery.orders.forEach((order, index) => {
                         const orderDate = order.orderDate || (order.createdAt ? 
-                            (order.createdAt.toDate ? order.createdAt.toDate().toLocaleDateString() : new Date(order.createdAt).toLocaleDateString()) : 
+                            (order.createdAt.toDate ? order.createdAt.toDate().toLocaleDateString('fr-FR') : new Date(order.createdAt).toLocaleDateString('fr-FR')) : 
                             'N/A');
                         const orderTime = order.orderTime || (order.createdAt ? 
-                            (order.createdAt.toDate ? order.createdAt.toDate().toLocaleTimeString() : new Date(order.createdAt).toLocaleTimeString()) : 
+                            (order.createdAt.toDate ? order.createdAt.toDate().toLocaleTimeString('fr-FR') : new Date(order.createdAt).toLocaleTimeString('fr-FR')) : 
                             '');
                         const userName = order.userName || 'N/A';
                         const userEmail = order.userEmail || 'N/A';
@@ -481,9 +410,8 @@
                                            vote === 'green' ? '<span style="color: #28a745; font-weight: bold;">🟢 Verte</span>' : 
                                            'N/A';
                         
-                        const rowColor = index % 2 === 0 ? '#fff' : '#f8f9fa';
                         html += `
-                            <tr class="order-row" data-order-id="${order.id}" style="background: ${rowColor};" ondblclick="markOrderAsDelivered('${order.id}')" title="Double-cliquez pour marquer comme livrée">
+                            <tr ondblclick="markOrderAsDelivered('${order.id}')" title="Double-cliquez pour marquer comme livrée">
                                 <td class="mobile-hide" style="padding: 12px;">${orderDate} ${orderTime}</td>
                                 <td style="padding: 12px;">${userName}</td>
                                 <td class="mobile-hide" style="padding: 12px;">${userEmail}</td>
@@ -501,7 +429,7 @@
                     `;
                 });
                 
-                deliveriesListDiv.innerHTML = html;
+                document.getElementById('deliveriesList').innerHTML = html;
                 
             } catch (error) {
                 console.error('Erreur lors du chargement des livraisons:', error);
@@ -514,9 +442,8 @@
         // Charger les livraisons au démarrage
         loadDeliveries();
         
-        // Recharger toutes les 10 secondes pour avoir les données à jour
+        // Recharger toutes les 10 secondes
         setInterval(loadDeliveries, 10000);
     </script>
 </body>
 </html>
-
