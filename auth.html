@@ -304,10 +304,9 @@
                 const userCredential = await auth.signInWithEmailAndPassword(email, password);
                 const user = userCredential.user;
                 
-                // Vérifier si l'email est vérifié
+                // Avertir si l'email n'est pas vérifié, mais permettre la connexion
                 if (!user.emailVerified) {
-                    showError('Veuillez vérifier votre email avant de vous connecter. Vérifiez votre boîte de réception.');
-                    return;
+                    showError('⚠️ Votre email n\'est pas encore vérifié. Vous pouvez quand même vous connecter, mais pensez à vérifier votre email.');
                 }
                 
                 // Récupérer le profil utilisateur depuis Firestore
@@ -329,26 +328,30 @@
                     if (blacklistDoc.exists) {
                         showError('Ce compte a été supprimé définitivement. Contactez un administrateur.');
                         await auth.signOut();
+                        isLoggingIn = false;
                         return;
                     }
                     
-                    const userDoc = await db.collection('users').doc(user.uid).get();
+                    // Vérifier si le profil existe (on l'a déjà récupéré plus haut, mais on vérifie à nouveau)
                     if (!userDoc.exists) {
                         showError('Ce compte n\'existe plus. Contactez un administrateur.');
                         await auth.signOut();
+                        isLoggingIn = false;
                         return;
                     }
                 } catch (error) {
                     console.error('Erreur lors de la vérification du compte:', error);
                 }
 
+                // Marquer la connexion comme réussie
+                isLoggingIn = false;
                 showSuccess('Connexion réussie ! Redirection...');
+                
                 // Nettoyer le flag de chargement de page pour la prochaine fois
                 sessionStorage.removeItem('authPageLoaded');
-                setTimeout(() => {
-                    isLoggingIn = false;
-                    window.location.href = 'shop.html';
-                }, 1000);
+                
+                // Redirection immédiate sans délai
+                window.location.href = 'shop.html';
                 
             } catch (error) {
                 console.error('Erreur de connexion:', error);
