@@ -378,18 +378,37 @@
                 const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                 const user = userCredential.user;
                 
+                // Attendre un peu pour s'assurer que le token d'authentification est disponible
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
                 // Envoyer l'email de vérification
                 await user.sendEmailVerification();
                 
-                // Sauvegarder le profil dans Firestore
-                await db.collection('users').doc(user.uid).set({
-                    firstName: firstName,
-                    lastName: lastName,
-                    email: email,
-                    role: role,
-                    program: program, // Bachelor or Master
-                    createdAt: new Date()
-                });
+                // Sauvegarder le profil dans Firestore (avec retry en cas d'erreur de permissions)
+                try {
+                    await db.collection('users').doc(user.uid).set({
+                        firstName: firstName,
+                        lastName: lastName,
+                        email: email,
+                        role: role,
+                        program: program, // Bachelor or Master
+                        createdAt: new Date(),
+                        emailVerified: user.emailVerified || false
+                    });
+                } catch (firestoreError) {
+                    console.error('Erreur lors de la création du profil Firestore:', firestoreError);
+                    // Réessayer après un court délai
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    await db.collection('users').doc(user.uid).set({
+                        firstName: firstName,
+                        lastName: lastName,
+                        email: email,
+                        role: role,
+                        program: program,
+                        createdAt: new Date(),
+                        emailVerified: user.emailVerified || false
+                    });
+                }
                 
                 showSuccess('Compte créé ! Vérifiez votre email pour activer votre compte.<br><br><strong>⚠️ ATTENTION : Vérifiez vos spams !</strong>');
                 
